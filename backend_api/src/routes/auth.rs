@@ -65,12 +65,11 @@ async fn send_oauth_request(
     });
 }
 
-#[get("auth")]
+#[get("init")]
 pub async fn start_discord_oauth(
     oauth_client: Data<OAuthClient>,
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
-    // save pkce, csrf for later
     let (pkce_challange, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
     let (mut auth_url, mut csrf_token) = oauth_client.get_url(pkce_challange.clone());
 

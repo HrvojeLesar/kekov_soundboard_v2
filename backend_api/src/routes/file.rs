@@ -11,7 +11,7 @@ use actix_web::{
     HttpResponse,
 };
 use futures_util::TryStreamExt;
-use log::error;
+use log::error;
 use snowflake::SnowflakeIdGenerator;
 
 use crate::{error::errors::KekServerError, models::sound_file::SoundFile, utils::GenericSuccess};
@@ -98,16 +98,16 @@ pub async fn upload_file(
             Err(e) => {
                 error!("{}", e);
                 delete_file(file).await?;
-            },
+            }
         }
     }
 
     if successfully_uploaded.len() == 0 {
-        return Err(KekServerError::NoFilesUploadedError)
+        return Err(KekServerError::NoFilesUploadedError);
     }
 
     // TODO: return nicer response (an actual response)
-    // maybe with more info on failed files 
+    // maybe with more info on failed files
     // or only successfully uploded ones
     return Ok(HttpResponse::Ok().json(successfully_uploaded));
 }

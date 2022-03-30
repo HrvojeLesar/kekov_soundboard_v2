@@ -32,7 +32,10 @@ impl FromRequest for AuthorizedUser {
 
     type Future = Pin<Box<dyn Future<Output = Result<Self, Self::Error>>>>;
 
-    fn from_request(req: &actix_web::HttpRequest, _payload: &mut actix_web::dev::Payload) -> Self::Future {
+    fn from_request(
+        req: &actix_web::HttpRequest,
+        _payload: &mut actix_web::dev::Payload,
+    ) -> Self::Future {
         let req = req.clone();
 
         return Box::pin(async move {
@@ -69,9 +72,7 @@ async fn get_discord_user_from_token(access_token: &str) -> Result<DiscordUser, 
     return Ok(resp.json().await?);
 }
 
-pub async fn validate_request(
-    req: &ServiceRequest,
-) -> Result<AuthorizedUser, KekServerError> {
+pub async fn validate_request(req: &ServiceRequest) -> Result<AuthorizedUser, KekServerError> {
     let token = get_auth_token(req).await?;
     let discord_user = get_discord_user_from_token(&token).await?;
 
@@ -106,5 +107,4 @@ mod tests {
         let token = get_auth_token(&req).await.unwrap();
         assert_eq!(token, "auth_token");
     }
-
 }

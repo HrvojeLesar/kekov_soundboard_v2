@@ -23,10 +23,26 @@ pub enum KekServerError {
     SerdeJsonParseError(#[from] serde_json::Error),
     #[error(transparent)]
     OAuthConfigurationError(#[from] oauth2::ConfigurationError),
+    #[error(transparent)]
+    MultipartError(#[from] actix_multipart::MultipartError),
+    #[error(transparent)]
+    BlockingError(#[from] actix_web::error::BlockingError),
+    #[error(transparent)]
+    IOError(#[from] std::io::Error),
+    #[error("Provided files faild to upload")]
+    NoFilesUploadedError,
     #[error("Recieved request has no session cookie set")]
     SessionCookieNotSet,
     #[error("Invalid Authorization Credentials")]
     InvalidCredentialsError,
+    #[error("Disallowed mime type")]
+    DisallowedMimeTypeError,
+    #[error("Unable to get mime from file")]
+    UnableToGetMimeError,
+    #[error("Wrong mime type")]
+    WrongMimeTypeError,
+    #[error("File too large")]
+    FileTooLargeError,
     #[error("Enviroment Error")]
     EnvError(#[from] dotenv::Error),
     #[error("Error while parsing JSON: {0}")]

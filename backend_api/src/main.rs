@@ -1,4 +1,4 @@
-use std::{fs::File, io::BufReader};
+use std::{fs::File, io::BufReader, sync::{atomic::AtomicI32, Arc, Mutex}};
 
 use actix_web::{
     App, HttpServer, web::Data
@@ -7,7 +7,8 @@ use routes::auth::{auth_callback, revoke_token, start_discord_oauth};
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
 
-use dotenv::dotenv;
+use dotenv::dotenv;
+use snowflake::SnowflakeIdGenerator;
 
 mod database;
 mod discord_client_config;
@@ -16,6 +17,7 @@ mod middleware;
 mod oauth_client;
 mod routes;
 mod utils;
+mod models;
 
 // #[cfg(debug_assertions)]
 #[actix_web::main]
@@ -66,14 +68,28 @@ async fn main() -> std::io::Result<()> {
             .expect("Failed to create database connection pool!"),
     );
 
+    let snowflake_thread_id = Arc::new(Mutex::new(0));
+
     return HttpServer::new(move || {
+
+        // Per thread snowflake generator
+        let snowflakes;
+        {
+            let id_arc = snowflake_thread_id.clone();
+            let mut lock = id_arc.lock().unwrap();
+            snowflakes = Data::new(Mutex::new(SnowflakeIdGenerator::new(*lock, 1)));
+            *lock += 1;
+        }
+
         App::new()
             .wrap(actix_web::middleware::Logger::default())
             .app_data(oauth.clone()) // oauth2::basic::BasicClient
             .app_data(pool.clone())
+            .app_data(snowflakes)
             .service(start_discord_oauth)
             .service(auth_callback)
             .service(revoke_token)
+            .service(routes::file::upload_file)
     })
     // .bind_rustls(&bind_address, config)?
     .bind(bind_address)?

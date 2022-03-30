@@ -1,11 +1,11 @@
-.env 
-.vscode
+*.env 
+*.vscode
 
 # rust
 backend_api/target
-backend_api/Cargo.lock
+# backend_api/Cargo.lock
 
 # private, public keys for tls testing
 *.pem
 
-todo
+todo.md

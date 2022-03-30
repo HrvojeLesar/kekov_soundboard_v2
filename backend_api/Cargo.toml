@@ -27,7 +27,10 @@ actix-identity = "0.4.0-beta.9"
 futures-util = "0.3.21"
 anyhow = "1.0"
 uuid = { version = "0.8.2", features = ["v4"] }
-moka = { version = "0.7", features = ["future"] }
+rs-snowflake = "*"
+lazy_static = "1.4.0"
+mime = "0.3"
+infer = "0.7.0"
 
 # change runtime back to rustls
 # sqlx = { version = "0.5", features = ["runtime-actix-rustls", "postgres", "chrono", "offline", "macros", "migrate"] }

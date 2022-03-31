@@ -1,7 +1,5 @@
 use actix_web::web::{scope, ServiceConfig};
 
-use crate::middleware::auth_middleware::AuthService;
-
 mod auth;
 mod file;
 pub mod not_found;

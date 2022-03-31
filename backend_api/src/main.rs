@@ -5,7 +5,7 @@ use std::{
 };
 
 use actix_web::{web::Data, App, HttpServer};
-use routes::auth::{auth_callback, revoke_token, start_discord_oauth};
+use routes::routes_config;
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
 
@@ -87,10 +87,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(oauth.clone()) // oauth2::basic::BasicClient
             .app_data(pool.clone())
             .app_data(snowflakes)
-            .service(start_discord_oauth)
-            .service(auth_callback)
-            .service(revoke_token)
-            .service(routes::file::upload_file)
+            .configure(routes_config)
     })
     // .bind_rustls(&bind_address, config)?
     .bind(bind_address)?

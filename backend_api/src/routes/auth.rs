@@ -1,7 +1,7 @@
 use actix_web::{
     get,
     http::header::LOCATION,
-    web::{Data, Form, Query},
+    web::{scope, Data, Form, Query, ServiceConfig},
     HttpResponse,
 };
 use awc::Client;
@@ -46,6 +46,15 @@ pub struct RevokeToken {
     token_type: Option<TokenType>,
 }
 
+pub fn config(cfg: &mut ServiceConfig) {
+    cfg.service(
+        scope("auth")
+            .service(auth_init)
+            .service(auth_callback)
+            .service(auth_revoke),
+    );
+}
+
 async fn send_oauth_request(
     request: oauth2::HttpRequest,
 ) -> Result<oauth2::HttpResponse, KekServerError> {
@@ -88,7 +97,7 @@ async fn fetch_access_token(
 }
 
 #[get("init")]
-pub async fn start_discord_oauth(
+pub async fn auth_init(
     oauth_client: Data<OAuthClient>,
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
@@ -209,7 +218,7 @@ pub async fn auth_callback(
 }
 
 #[get("revoke")]
-pub async fn revoke_token(
+pub async fn auth_revoke(
     oauth_client: Data<OAuthClient>,
     db_pool: Data<PgPool>,
     Form(revoke_token): Form<RevokeToken>,
@@ -235,7 +244,7 @@ pub async fn revoke_token(
         )))?;
     }
 
-    // TODO: do some db stuff for user
+    // TODO: do some db stuff for user like removing recovery token from db
     match request.request_async(send_oauth_request).await {
         Ok(_) => (),
         Err(err) => return Err(KekServerError::RevocationRequestTokenError(Box::new(err))),
@@ -253,12 +262,10 @@ mod tests {
         App,
     };
 
-    use crate::{database, oauth_client, routes::auth::AuthCallbackParams};
-
-    use super::start_discord_oauth;
+    use crate::{database, oauth_client, routes::auth::{AuthCallbackParams, auth_init}};
 
     #[actix_web::test]
-    async fn test_start_discord_oauth() {
+    async fn test_auth_init() {
         let pool = Data::new(
             database::create_pool()
                 .await
@@ -270,7 +277,7 @@ mod tests {
             App::new()
                 .app_data(pool.clone())
                 .app_data(oauth.clone()) // oauth2::basic::BasicClient
-                .service(start_discord_oauth),
+                .service(auth_init),
         )
         .await;
 

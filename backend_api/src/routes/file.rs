@@ -15,8 +15,7 @@ use log::error;
 use snowflake::SnowflakeIdGenerator;
 
 use crate::{
-    error::errors::KekServerError,
-    middleware::auth_middleware::{self, AuthService},
+    error::errors::KekServerError, middleware::auth_middleware::AuthService,
     models::sound_file::SoundFile,
 };
 use lazy_static::lazy_static;

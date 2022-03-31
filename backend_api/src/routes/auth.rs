@@ -217,6 +217,10 @@ pub async fn auth_callback(
     }
 }
 
+// TODO: maybe change revoke to usable only by logged in user i.e.
+// only when Authorization header is used with token
+// current implementation might be a bit illogical
+// but works fine
 #[get("revoke")]
 pub async fn auth_revoke(
     oauth_client: Data<OAuthClient>,

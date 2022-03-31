@@ -4,6 +4,7 @@ use crate::middleware::auth_middleware::AuthService;
 
 mod auth;
 mod file;
+pub mod not_found;
 
 pub fn routes_config(cfg: &mut ServiceConfig) {
     cfg.service(

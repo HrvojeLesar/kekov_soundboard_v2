@@ -1,11 +1,11 @@
 use std::{
     fs::File,
     io::BufReader,
-    sync::{atomic::AtomicI32, Arc, Mutex},
+    sync::{Arc, Mutex},
 };
 
 use actix_web::{web::Data, App, HttpServer};
-use routes::routes_config;
+use routes::{routes_config, not_found::not_found};
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
 
@@ -88,6 +88,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(pool.clone())
             .app_data(snowflakes)
             .configure(routes_config)
+            .default_service(actix_web::web::to(not_found))
     })
     // .bind_rustls(&bind_address, config)?
     .bind(bind_address)?

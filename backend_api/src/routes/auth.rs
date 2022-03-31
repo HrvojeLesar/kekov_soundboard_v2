@@ -7,13 +7,18 @@ use actix_web::{
 use awc::Client;
 use chrono::Utc;
 use oauth2::{
-    AccessToken, AuthorizationCode, PkceCodeChallenge, PkceCodeVerifier, RefreshToken,
-    StandardRevocableToken,
+    basic::BasicTokenType, AccessToken, AuthorizationCode, EmptyExtraTokenFields,
+    PkceCodeChallenge, PkceCodeVerifier, RefreshToken, StandardRevocableToken,
+    StandardTokenResponse, TokenResponse,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
-use crate::{error::errors::KekServerError, oauth_client::OAuthClient, utils::GenericSuccess};
+use crate::{
+    error::errors::KekServerError,
+    oauth_client::OAuthClient,
+    utils::{auth::get_discord_user_from_token, GenericSuccess},
+};
 
 #[derive(Serialize, Deserialize)]
 struct AuthInit {
@@ -63,6 +68,23 @@ async fn send_oauth_request(
         headers,
         body: response.body().await?.to_vec(),
     });
+}
+
+async fn fetch_access_token(
+    oauth_client: Data<OAuthClient>,
+    params_code: String,
+    pkce_verifier: String,
+) -> Result<StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>, KekServerError> {
+    return match oauth_client
+        .get_client()
+        .exchange_code(AuthorizationCode::new(params_code))
+        .set_pkce_verifier(PkceCodeVerifier::new(pkce_verifier))
+        .request_async(send_oauth_request)
+        .await
+    {
+        Ok(resp) => Ok(resp),
+        Err(err) => return Err(KekServerError::RequestTokenError(Box::new(err))),
+    };
 }
 
 #[get("init")]
@@ -136,16 +158,8 @@ pub async fn auth_callback(
                 return Err(KekServerError::AuthorizationTimeExpiredError);
             }
 
-            let token = match oauth_client
-                .get_client()
-                .exchange_code(AuthorizationCode::new(params_code))
-                .set_pkce_verifier(PkceCodeVerifier::new(state.pkce_verifier))
-                .request_async(send_oauth_request)
-                .await
-            {
-                Ok(resp) => resp,
-                Err(err) => return Err(KekServerError::RequestTokenError(Box::new(err))),
-            };
+            let access_token =
+                fetch_access_token(oauth_client, params_code, state.pkce_verifier).await?;
 
             sqlx::query!(
                 "
@@ -157,11 +171,35 @@ pub async fn auth_callback(
             .execute(&mut transaction)
             .await?;
 
+            // TODO: store refresh token for later use
+
+            let user = get_discord_user_from_token(access_token.access_token().secret()).await?;
+            if let None = sqlx::query!(
+                "
+                SELECT * FROM users
+                WHERE id = $1
+                ",
+                *user.get_id() as i64
+            )
+            .fetch_optional(&mut transaction)
+            .await?
+            {
+                sqlx::query!(
+                    "
+                    INSERT INTO users (id, username, avatar)
+                    VALUES ($1, $2, $3)
+                    ",
+                    *user.get_id() as i64,
+                    *user.get_username(),
+                    user.get_avatar()
+                )
+                .execute(&mut transaction)
+                .await?;
+            }
+
             transaction.commit().await?;
 
-            // TODO: do some db stuff for user
-
-            return Ok(HttpResponse::Ok().json(token));
+            return Ok(HttpResponse::Ok().json(access_token));
         } else {
             return Err(KekServerError::InvalidCredentialsError);
         }

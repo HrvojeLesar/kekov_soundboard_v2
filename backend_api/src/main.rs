@@ -1,23 +1,25 @@
-use std::{fs::File, io::BufReader, sync::{atomic::AtomicI32, Arc, Mutex}};
-
-use actix_web::{
-    App, HttpServer, web::Data
+use std::{
+    fs::File,
+    io::BufReader,
+    sync::{atomic::AtomicI32, Arc, Mutex},
 };
+
+use actix_web::{web::Data, App, HttpServer};
 use routes::auth::{auth_callback, revoke_token, start_discord_oauth};
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
 
-use dotenv::dotenv;
+use dotenv::dotenv;
 use snowflake::SnowflakeIdGenerator;
 
 mod database;
 mod discord_client_config;
 mod error;
 mod middleware;
+mod models;
 mod oauth_client;
 mod routes;
 mod utils;
-mod models;
 
 // #[cfg(debug_assertions)]
 #[actix_web::main]
@@ -71,7 +73,6 @@ async fn main() -> std::io::Result<()> {
     let snowflake_thread_id = Arc::new(Mutex::new(0));
 
     return HttpServer::new(move || {
-
         // Per thread snowflake generator
         let snowflakes;
         {

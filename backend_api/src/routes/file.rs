@@ -1,6 +1,6 @@
 use std::{
-    fs::{File, OpenOptions},
-    io::{Read, Write},
+    fs::File,
+    io::Write,
     sync::{Arc, Mutex},
 };
 
@@ -14,7 +14,7 @@ use futures_util::TryStreamExt;
 use log::error;
 use snowflake::SnowflakeIdGenerator;
 
-use crate::{error::errors::KekServerError, models::sound_file::SoundFile, utils::GenericSuccess};
+use crate::{error::errors::KekServerError, models::sound_file::SoundFile};
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -57,7 +57,6 @@ pub async fn upload_file(
     while let Some(mut field) = payload.try_next().await? {
         if mime::AUDIO != field.content_type().type_() {
             continue;
-            // return Err(KekServerError::DisallowedMimeTypeError);
         }
 
         let id;

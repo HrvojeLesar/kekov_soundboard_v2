@@ -1,16 +1,7 @@
 use actix_web::{dev::ServiceRequest, http::header::AUTHORIZATION, FromRequest, HttpMessage};
-use serde::Deserialize;
 use std::{future::Future, pin::Pin};
 
-use crate::error::errors::KekServerError;
-
-#[derive(Debug, Deserialize)]
-struct DiscordUser {
-    id: String,
-    username: String,
-    bot: Option<bool>,
-    verified: Option<bool>,
-}
+use crate::{error::errors::KekServerError, models::discord_user::DiscordUser};
 
 pub struct AuthorizedUser {
     access_token: String,
@@ -47,7 +38,7 @@ impl FromRequest for AuthorizedUser {
     }
 }
 
-async fn get_auth_token(req: &ServiceRequest) -> Result<String, KekServerError> {
+async fn get_access_token(req: &ServiceRequest) -> Result<String, KekServerError> {
     let token = req
         .headers()
         .get("Authorization")
@@ -58,7 +49,7 @@ async fn get_auth_token(req: &ServiceRequest) -> Result<String, KekServerError> 
     return Ok(token.to_owned());
 }
 
-async fn get_discord_user_from_token(access_token: &str) -> Result<DiscordUser, KekServerError> {
+pub async fn get_discord_user_from_token(access_token: &str) -> Result<DiscordUser, KekServerError> {
     let mut resp = awc::Client::new()
         .get("https://discord.com/api/v9/users/@me")
         .append_header((AUTHORIZATION, format!("Bearer {}", access_token)))
@@ -73,7 +64,7 @@ async fn get_discord_user_from_token(access_token: &str) -> Result<DiscordUser, 
 }
 
 pub async fn validate_request(req: &ServiceRequest) -> Result<AuthorizedUser, KekServerError> {
-    let token = get_auth_token(req).await?;
+    let token = get_access_token(req).await?;
     let discord_user = get_discord_user_from_token(&token).await?;
 
     return Ok(AuthorizedUser {
@@ -86,7 +77,7 @@ pub async fn validate_request(req: &ServiceRequest) -> Result<AuthorizedUser, Ke
 mod tests {
     use actix_web::{http::header::AUTHORIZATION, test::TestRequest};
 
-    use super::{get_auth_token, get_discord_user_from_token};
+    use super::{get_access_token, get_discord_user_from_token};
 
     #[actix_web::test]
     async fn test_validate_discord_token() {
@@ -104,7 +95,7 @@ mod tests {
         let req = req
             .append_header((AUTHORIZATION, "auth_token"))
             .to_srv_request();
-        let token = get_auth_token(&req).await.unwrap();
+        let token = get_access_token(&req).await.unwrap();
         assert_eq!(token, "auth_token");
     }
 }

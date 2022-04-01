@@ -30,7 +30,7 @@ lazy_static! {
 }
 
 pub fn config(cfg: &mut ServiceConfig) {
-    cfg.service(scope("files").wrap(AuthService).service(upload_file));
+    cfg.service(scope("/files").wrap(AuthService).service(upload_file));
 }
 
 async fn delete_file(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
@@ -96,7 +96,7 @@ async fn insert_valid_files(
 
 // TODO: Save file to some disk location
 // instead of directory of running process
-#[post("/upload")]
+#[post("upload")]
 pub async fn upload_file(
     mut payload: Multipart,
     snowflake: Data<Mutex<SnowflakeIdGenerator>>,

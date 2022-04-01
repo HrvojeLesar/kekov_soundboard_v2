@@ -48,7 +48,7 @@ pub struct RevokeToken {
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
-        scope("auth")
+        scope("/auth")
             .service(auth_init)
             .service(auth_callback)
             .service(auth_revoke),
@@ -96,7 +96,7 @@ async fn fetch_access_token(
     };
 }
 
-#[get("init")]
+#[get("/init")]
 pub async fn auth_init(
     oauth_client: Data<OAuthClient>,
     db_pool: Data<PgPool>,
@@ -143,7 +143,7 @@ pub async fn auth_init(
         }));
 }
 
-#[get("callback")]
+#[get("/callback")]
 pub async fn auth_callback(
     oauth_client: Data<OAuthClient>,
     db_pool: Data<PgPool>,
@@ -219,7 +219,7 @@ pub async fn auth_callback(
 // only when Authorization header is used with token
 // current implementation might be a bit illogical
 // but works fine
-#[get("revoke")]
+#[get("/revoke")]
 pub async fn auth_revoke(
     oauth_client: Data<OAuthClient>,
     Form(revoke_token): Form<RevokeToken>,

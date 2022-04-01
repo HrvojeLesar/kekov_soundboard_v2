@@ -3,24 +3,24 @@ use std::{fmt::Display, str::FromStr};
 use serde::{Deserialize, Deserializer, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct DiscordUser {
+pub struct User {
     #[serde(deserialize_with = "deserialize_string_to_number")]
     id: u64,
-    username: String,
-    avatar: Option<String>,
+    discord_username: String,
+    discord_avatar: Option<String>,
 }
 
-impl DiscordUser {
+impl User {
     pub fn get_id(&self) -> &u64 {
         return &self.id;
     }
 
     pub fn get_username(&self) -> &String {
-        return &self.username;
+        return &self.discord_username;
     }
 
     pub fn get_avatar(&self) -> Option<&String> {
-        return self.avatar.as_ref();
+        return self.discord_avatar.as_ref();
     }
 }
 

@@ -1,11 +1,11 @@
 use actix_web::{dev::ServiceRequest, http::header::AUTHORIZATION, FromRequest, HttpMessage};
 use std::{future::Future, pin::Pin};
 
-use crate::{error::errors::KekServerError, models::discord_user::DiscordUser};
+use crate::{error::errors::KekServerError, models::discord_user::User};
 
 pub struct AuthorizedUser {
     access_token: String,
-    discord_user: DiscordUser,
+    discord_user: User,
 }
 
 impl AuthorizedUser {
@@ -13,7 +13,7 @@ impl AuthorizedUser {
         return &self.access_token;
     }
 
-    pub fn get_discord_user(&self) -> &DiscordUser {
+    pub fn get_discord_user(&self) -> &User {
         return &self.discord_user;
     }
 }
@@ -51,7 +51,7 @@ async fn get_access_token(req: &ServiceRequest) -> Result<String, KekServerError
 
 pub async fn get_discord_user_from_token(
     access_token: &str,
-) -> Result<DiscordUser, KekServerError> {
+) -> Result<User, KekServerError> {
     let mut resp = awc::Client::new()
         .get("https://discord.com/api/v9/users/@me")
         .append_header((AUTHORIZATION, format!("Bearer {}", access_token)))

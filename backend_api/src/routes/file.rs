@@ -4,7 +4,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use actix_multipart::Multipart;
+use actix_multipart::{Field, Multipart};
 use actix_web::{
     post,
     web::{self, scope, Data, ServiceConfig},
@@ -13,10 +13,11 @@ use actix_web::{
 use futures_util::TryStreamExt;
 use log::error;
 use snowflake::SnowflakeIdGenerator;
+use sqlx::PgPool;
 
 use crate::{
     error::errors::KekServerError, middleware::auth_middleware::AuthService,
-    models::sound_file::SoundFile,
+    models::sound_file::SoundFile, utils::auth::AuthorizedUser,
 };
 use lazy_static::lazy_static;
 
@@ -33,12 +34,12 @@ pub fn config(cfg: &mut ServiceConfig) {
 }
 
 async fn delete_file(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
-    web::block(move || std::fs::remove_file(sound_file.get_file_name())).await??;
+    web::block(move || std::fs::remove_file(sound_file.get_id().to_string())).await??;
     return Ok(());
 }
 
 async fn validate_audio_mime(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
-    let mime = web::block(move || infer::get_from_path(sound_file.get_file_name())).await??;
+    let mime = web::block(move || infer::get_from_path(sound_file.get_id().to_string())).await??;
 
     let mime = match mime {
         Some(m) => m,
@@ -52,10 +53,55 @@ async fn validate_audio_mime(sound_file: Arc<SoundFile>) -> Result<(), KekServer
     return Ok(());
 }
 
+fn parse_display_name(field: &Field) -> String {
+    let display_name = field.name().trim();
+
+    if display_name != "" {
+        return display_name.to_string();
+    } else if let Some(name) = field.content_disposition().get_filename() {
+        return name.to_string();
+    } else if let Some(name) = field.content_disposition().get_filename_ext() {
+        return name.to_string();
+    } else {
+        return "".to_string();
+    }
+}
+
+async fn insert_valid_files(
+    files: Vec<Arc<SoundFile>>,
+    db_pool: Data<PgPool>,
+) -> Result<Vec<Arc<SoundFile>>, KekServerError> {
+    let mut uploaded = Vec::with_capacity(files.len());
+    let mut transaction = db_pool.begin().await?;
+    for file in files {
+        match validate_audio_mime(Arc::clone(&file)).await {
+            Ok(_) => {
+                file.insert(&mut transaction).await?;
+                uploaded.push(file);
+            }
+            Err(e) => {
+                error!("{}", e);
+                delete_file(file).await?;
+            }
+        }
+    }
+    transaction.commit().await?;
+
+    if uploaded.len() == 0 {
+        return Err(KekServerError::NoFilesUploadedError);
+    }
+
+    return Ok(uploaded);
+}
+
+// TODO: Save file to some disk location
+// instead of directory of running process
 #[post("/upload")]
 pub async fn upload_file(
     mut payload: Multipart,
     snowflake: Data<Mutex<SnowflakeIdGenerator>>,
+    user: AuthorizedUser,
+    db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
     let mut uploaded_files_size = 0;
     let mut max_file_size_exceeded = false;
@@ -72,12 +118,16 @@ pub async fn upload_file(
             id = lock.generate();
         }
 
-        let sound_file = Arc::new(SoundFile::new(id.to_string(), field.name().to_string()));
+        let sound_file = Arc::new(SoundFile::new(
+            id,
+            parse_display_name(&field),
+            *user.get_discord_user().get_id(),
+        ));
         files.push(Arc::clone(&sound_file));
 
         let moved_file = Arc::clone(&sound_file);
         let mut file_handle =
-            web::block(move || File::create(&*moved_file.get_file_name())).await??;
+            web::block(move || File::create(&*moved_file.get_id().to_string())).await??;
 
         while let Some(chunk) = field.try_next().await? {
             uploaded_files_size += chunk.len();
@@ -97,23 +147,7 @@ pub async fn upload_file(
         return Err(KekServerError::FileTooLargeError);
     }
 
-    let mut successfully_uploaded = Vec::with_capacity(files.len());
-    for file in files {
-        match validate_audio_mime(Arc::clone(&file)).await {
-            Ok(_) => successfully_uploaded.push(file),
-            Err(e) => {
-                error!("{}", e);
-                delete_file(file).await?;
-            }
-        }
-    }
+    let uploaded_files = insert_valid_files(files, db_pool).await?;
 
-    if successfully_uploaded.len() == 0 {
-        return Err(KekServerError::NoFilesUploadedError);
-    }
-
-    // TODO: return nicer response (an actual response)
-    // maybe with more info on failed files
-    // or only successfully uploded ones
-    return Ok(HttpResponse::Ok().json(successfully_uploaded));
+    return Ok(HttpResponse::Ok().json(uploaded_files));
 }

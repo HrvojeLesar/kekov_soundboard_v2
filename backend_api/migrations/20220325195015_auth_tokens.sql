@@ -1,4 +1,3 @@
--- Add migration script here
 CREATE TABLE state (
     csrf_token VARCHAR(30) PRIMARY KEY,
     pkce_verifier VARCHAR(50),

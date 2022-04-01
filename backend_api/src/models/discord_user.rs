@@ -1,6 +1,6 @@
 use std::{fmt::Display, str::FromStr};
 
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DiscordUser {

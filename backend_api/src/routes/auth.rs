@@ -180,8 +180,6 @@ pub async fn auth_callback(
             .execute(&mut transaction)
             .await?;
 
-            // TODO: store refresh token for later use
-
             let user = get_discord_user_from_token(access_token.access_token().secret()).await?;
             if let None = sqlx::query!(
                 "
@@ -224,7 +222,6 @@ pub async fn auth_callback(
 #[get("revoke")]
 pub async fn auth_revoke(
     oauth_client: Data<OAuthClient>,
-    db_pool: Data<PgPool>,
     Form(revoke_token): Form<RevokeToken>,
 ) -> Result<HttpResponse, KekServerError> {
     let client = oauth_client.get_client();
@@ -248,7 +245,6 @@ pub async fn auth_revoke(
         )))?;
     }
 
-    // TODO: do some db stuff for user like removing recovery token from db
     match request.request_async(send_oauth_request).await {
         Ok(_) => (),
         Err(err) => return Err(KekServerError::RevocationRequestTokenError(Box::new(err))),
@@ -266,7 +262,10 @@ mod tests {
         App,
     };
 
-    use crate::{database, oauth_client, routes::auth::{AuthCallbackParams, auth_init}};
+    use crate::{
+        database, oauth_client,
+        routes::auth::{auth_init, AuthCallbackParams},
+    };
 
     #[actix_web::test]
     async fn test_auth_init() {

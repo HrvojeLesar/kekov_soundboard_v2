@@ -49,7 +49,9 @@ async fn get_access_token(req: &ServiceRequest) -> Result<String, KekServerError
     return Ok(token.to_owned());
 }
 
-pub async fn get_discord_user_from_token(access_token: &str) -> Result<DiscordUser, KekServerError> {
+pub async fn get_discord_user_from_token(
+    access_token: &str,
+) -> Result<DiscordUser, KekServerError> {
     let mut resp = awc::Client::new()
         .get("https://discord.com/api/v9/users/@me")
         .append_header((AUTHORIZATION, format!("Bearer {}", access_token)))

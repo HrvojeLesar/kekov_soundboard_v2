@@ -186,7 +186,7 @@ pub async fn auth_callback(
                 SELECT * FROM users
                 WHERE id = $1
                 ",
-                *user.get_id() as i64
+                *user.get_id()
             )
             .fetch_optional(&mut transaction)
             .await?
@@ -196,7 +196,7 @@ pub async fn auth_callback(
                     INSERT INTO users (id, username, avatar)
                     VALUES ($1, $2, $3)
                     ",
-                    *user.get_id() as i64,
+                    *user.get_id(),
                     *user.get_username(),
                     user.get_avatar()
                 )

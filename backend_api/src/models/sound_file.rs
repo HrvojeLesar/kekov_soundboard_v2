@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use sqlx::{Postgres, Transaction};
+use sqlx::{FromRow, Postgres, Transaction};
 
 use crate::error::errors::KekServerError;
 
@@ -7,17 +7,17 @@ use crate::error::errors::KekServerError;
 pub struct SoundFile {
     /// unique file_name generated as snowflake
     // #[serde(skip)]
-    id: i64,
-    display_name: String,
+    pub id: i64,
+    pub display_name: Option<String>,
     #[serde(skip)]
-    owner: Option<u64>,
+    pub owner: Option<i64>,
 }
 
 impl SoundFile {
-    pub fn new(id: i64, display_name: String, owner: u64) -> Self {
+    pub fn new(id: i64, display_name: String, owner: i64) -> Self {
         return Self {
             id,
-            display_name,
+            display_name: Some(display_name),
             owner: Some(owner),
         };
     }
@@ -26,11 +26,11 @@ impl SoundFile {
         return &self.id;
     }
 
-    pub fn get_display_name(&self) -> &String {
-        return &self.display_name;
+    pub fn get_display_name(&self) -> Option<&String> {
+        return self.display_name.as_ref();
     }
 
-    pub fn get_owner(&self) -> Option<&u64> {
+    pub fn get_owner(&self) -> Option<&i64> {
         return self.owner.as_ref();
     }
 
@@ -39,7 +39,7 @@ impl SoundFile {
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), KekServerError> {
         let owner = match self.get_owner() {
-            Some(o) => Some(*o as i64),
+            Some(o) => Some(*o),
             None => None,
         };
 
@@ -55,5 +55,45 @@ impl SoundFile {
         .execute(transaction)
         .await?;
         return Ok(());
+    }
+
+    pub async fn delete_static(
+        id: i64,
+        owner: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Option<Self>, KekServerError> {
+        let rows_deleted = sqlx::query_as!(
+            Self,
+            "
+            DELETE FROM files
+            WHERE id = $1 AND owner = $2
+            RETURNING *
+            ",
+            id,
+            owner
+        )
+        .fetch_optional(transaction)
+        .await?;
+        return Ok(rows_deleted);
+    }
+
+    pub async fn delete_multiple_static(
+        ids: &Vec<i64>,
+        owner: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<Self>, KekServerError> {
+        let rows_deleted = sqlx::query_as!(
+            Self,
+            "
+            DELETE FROM files
+            WHERE id = ANY($1) AND owner = $2
+            RETURNING *
+            ",
+            ids,
+            owner
+        )
+        .fetch_all(transaction)
+        .await?;
+        return Ok(rows_deleted);
     }
 }

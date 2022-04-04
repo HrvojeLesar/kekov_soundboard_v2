@@ -10,5 +10,6 @@ pub fn routes_config(cfg: &mut ServiceConfig) {
         scope("/v1")
             .configure(auth::config)
             .configure(file::config)
+            .configure(user::config)
     );
 }

@@ -1,7 +1,7 @@
 use std::{
     fs::File,
     io::BufReader,
-    sync::{Arc, Mutex},
+    sync::{Arc, Mutex}, time::UNIX_EPOCH,
 };
 
 use actix_web::{web::Data, App, HttpServer};
@@ -78,7 +78,8 @@ async fn main() -> std::io::Result<()> {
         {
             let id_arc = snowflake_thread_id.clone();
             let mut lock = id_arc.lock().unwrap();
-            snowflakes = Data::new(Mutex::new(SnowflakeIdGenerator::new(*lock, 1)));
+            let epoch = UNIX_EPOCH + std::time::Duration::from_millis(1640991600000); // epoch start time 01.01.2022. 00:00
+            snowflakes = Data::new(Mutex::new(SnowflakeIdGenerator::with_epoch(*lock, 1, epoch)));
             *lock += 1;
         }
 

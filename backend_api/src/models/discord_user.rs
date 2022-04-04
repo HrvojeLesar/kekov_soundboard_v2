@@ -5,13 +5,15 @@ use serde::{Deserialize, Deserializer, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
     #[serde(deserialize_with = "deserialize_string_to_number")]
-    id: u64,
+    id: i64,
+    #[serde(rename = "username")]
     discord_username: String,
+    #[serde(rename = "avatar")]
     discord_avatar: Option<String>,
 }
 
 impl User {
-    pub fn get_id(&self) -> &u64 {
+    pub fn get_id(&self) -> &i64 {
         return &self.id;
     }
 

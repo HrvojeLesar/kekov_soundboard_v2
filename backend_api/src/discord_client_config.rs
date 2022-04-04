@@ -1,5 +1,4 @@
 use oauth2::{AuthUrl, ClientId, ClientSecret, RedirectUrl, RevocationUrl, Scope, TokenUrl};
-use std::env;
 
 pub struct DiscordClientConfig {
     pub client_id: ClientId,
@@ -15,10 +14,10 @@ impl DiscordClientConfig {
     pub fn new() -> Self {
         Self {
             client_id: ClientId::new(
-                env::var("DISCORD_CLIENT_ID").expect("DISCORD_CLIENT_ID must be set!"),
+                dotenv::var("DISCORD_CLIENT_ID").expect("DISCORD_CLIENT_ID must be set!"),
             ),
             client_secret: ClientSecret::new(
-                env::var("DISCORD_CLIENT_SECRET").expect("DISCORD_CLIENT_SECRET must be set!"),
+                dotenv::var("DISCORD_CLIENT_SECRET").expect("DISCORD_CLIENT_SECRET must be set!"),
             ),
             scopes: vec![
                 Scope::new("identify".to_string()),

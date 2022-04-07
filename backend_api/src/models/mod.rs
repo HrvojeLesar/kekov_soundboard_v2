@@ -1,4 +1,4 @@
 pub mod sound_file;
-pub mod discord_user;
+pub mod user;
 pub mod guild;
 pub mod state;

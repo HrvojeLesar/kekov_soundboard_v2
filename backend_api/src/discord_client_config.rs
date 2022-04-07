@@ -4,6 +4,7 @@ pub struct DiscordClientConfig {
     pub client_id: ClientId,
     pub client_secret: ClientSecret,
     pub scopes: Vec<Scope>,
+    pub bot_scopes: Vec<Scope>,
     pub redirect_url: RedirectUrl,
     pub auth_url: AuthUrl,
     pub token_url: TokenUrl,
@@ -22,6 +23,9 @@ impl DiscordClientConfig {
             scopes: vec![
                 Scope::new("identify".to_string()),
                 Scope::new("email".to_string()),
+            ],
+            bot_scopes: vec![
+                Scope::new("bot".to_string()),
             ],
             redirect_url: RedirectUrl::new("https://localhost:8080/authcallback".to_string())
                 .expect("Requires valid redirect url!"),

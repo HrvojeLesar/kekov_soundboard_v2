@@ -7,16 +7,15 @@ use actix_web::{
 use awc::Client;
 use chrono::Utc;
 use oauth2::{
-    basic::BasicTokenType, AccessToken, AuthorizationCode, EmptyExtraTokenFields,
-    PkceCodeChallenge, PkceCodeVerifier, RefreshToken, StandardRevocableToken,
-    StandardTokenResponse, TokenResponse,
+    basic::BasicTokenType, url::Url, AccessToken, AuthorizationCode, CsrfToken, PkceCodeChallenge,
+    PkceCodeVerifier, RefreshToken, StandardRevocableToken, StandardTokenResponse, TokenResponse,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
+use sqlx::{PgPool, Postgres, Transaction};
 
 use crate::{
     error::errors::KekServerError,
-    oauth_client::OAuthClient,
+    oauth_client::{GuildTokenField, OAuthClient},
     utils::{auth::get_discord_user_from_token, GenericSuccess},
 };
 
@@ -51,7 +50,8 @@ pub fn config(cfg: &mut ServiceConfig) {
         scope("/auth")
             .service(auth_init)
             .service(auth_callback)
-            .service(auth_revoke),
+            .service(auth_revoke)
+            .service(bot_invite),
     );
 }
 
@@ -83,7 +83,7 @@ async fn fetch_access_token(
     oauth_client: Data<OAuthClient>,
     params_code: String,
     pkce_verifier: String,
-) -> Result<StandardTokenResponse<EmptyExtraTokenFields, BasicTokenType>, KekServerError> {
+) -> Result<StandardTokenResponse<GuildTokenField, BasicTokenType>, KekServerError> {
     return match oauth_client
         .get_client()
         .exchange_code(AuthorizationCode::new(params_code))
@@ -96,33 +96,37 @@ async fn fetch_access_token(
     };
 }
 
-#[get("/init")]
-pub async fn auth_init(
-    oauth_client: Data<OAuthClient>,
-    db_pool: Data<PgPool>,
-) -> Result<HttpResponse, KekServerError> {
-    let (pkce_challange, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
-    let (mut auth_url, mut csrf_token) = oauth_client.get_url(pkce_challange.clone());
-
-    let mut transaction = db_pool.begin().await?;
+async fn check_collision(
+    transaction: &mut Transaction<'_, Postgres>,
+    auth_url: &mut Url,
+    csrf_token: &mut CsrfToken,
+    pkce_challange: PkceCodeChallenge,
+    oauth_client_url_fn: impl Fn(PkceCodeChallenge) -> (Url, CsrfToken),
+) -> Result<(), KekServerError> {
     loop {
-        let res = sqlx::query!(
+        if let Some(_) = sqlx::query!(
             "
             SELECT * FROM state
             WHERE csrf_token = $1
             ",
             csrf_token.secret()
         )
-        .fetch_optional(&mut transaction)
-        .await?;
-
-        if let Some(_) = res {
-            (auth_url, csrf_token) = oauth_client.get_url(pkce_challange.clone());
+        .fetch_optional(&mut *transaction)
+        .await?
+        {
+            (*auth_url, *csrf_token) = oauth_client_url_fn(pkce_challange.clone());
         } else {
             break;
         }
     }
+    return Ok(());
+}
 
+async fn insert_state(
+    transaction: &mut Transaction<'_, Postgres>,
+    csrf_token: CsrfToken,
+    pkce_verifier: PkceCodeVerifier,
+) -> Result<(), KekServerError> {
     sqlx::query!(
         "
         INSERT INTO state (csrf_token, pkce_verifier)
@@ -131,8 +135,29 @@ pub async fn auth_init(
         csrf_token.secret(),
         pkce_verifier.secret(),
     )
-    .execute(&mut transaction)
+    .execute(transaction)
     .await?;
+    return Ok(());
+}
+
+async fn create_url(
+    oauth_client_url_fn: impl Fn(PkceCodeChallenge) -> (Url, CsrfToken),
+    db_pool: Data<PgPool>,
+) -> Result<HttpResponse, KekServerError> {
+    let (pkce_challange, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
+    let (mut auth_url, mut csrf_token) = oauth_client_url_fn(pkce_challange.clone());
+
+    let mut transaction = db_pool.begin().await?;
+
+    check_collision(
+        &mut transaction,
+        &mut auth_url,
+        &mut csrf_token,
+        pkce_challange,
+        oauth_client_url_fn,
+    )
+    .await?;
+    insert_state(&mut transaction, csrf_token, pkce_verifier).await?;
 
     transaction.commit().await?;
 
@@ -141,6 +166,24 @@ pub async fn auth_init(
         .json(AuthInit {
             url: auth_url.to_string(),
         }));
+}
+
+#[get("/init")]
+pub async fn auth_init(
+    oauth_client: Data<OAuthClient>,
+    db_pool: Data<PgPool>,
+) -> Result<HttpResponse, KekServerError> {
+    let url_getter_fn = |pkce: PkceCodeChallenge| oauth_client.get_url(pkce);
+    return Ok(create_url(url_getter_fn, db_pool).await?);
+}
+
+#[get("/botinvite")]
+pub async fn bot_invite(
+    oauth_client: Data<OAuthClient>,
+    db_pool: Data<PgPool>,
+) -> Result<HttpResponse, KekServerError> {
+    let url_getter_fn = |pkce: PkceCodeChallenge| oauth_client.get_bot_url(pkce);
+    return Ok(create_url(url_getter_fn, db_pool).await?);
 }
 
 #[get("/callback")]
@@ -180,6 +223,7 @@ pub async fn auth_callback(
             .execute(&mut transaction)
             .await?;
 
+            // Adds user to database
             let user = get_discord_user_from_token(access_token.access_token().secret()).await?;
             if let None = sqlx::query!(
                 "
@@ -202,6 +246,35 @@ pub async fn auth_callback(
                 )
                 .execute(&mut transaction)
                 .await?;
+            }
+
+            // Adds guild to database
+            // TODO: If guild exists mark as active (if bot was previously in guild)
+            // TODO: Refactor to make this a function (&mut transaction has move problems in function)
+            if let Some(guild) = &access_token.extra_fields().guild {
+                if let None = sqlx::query!(
+                    "
+                    SELECT * FROM guild
+                    WHERE id = $1
+                    ",
+                    guild.get_id()
+                )
+                .fetch_optional(&mut transaction)
+                .await?
+                {
+                    sqlx::query!(
+                        "
+                        INSERT INTO guild (id, name, icon, icon_hash)
+                        VALUES ($1, $2, $3, $4)
+                        ",
+                        guild.get_id(),
+                        guild.get_name(),
+                        guild.get_icon(),
+                        guild.get_icon_hash()
+                    )
+                    .execute(&mut transaction)
+                    .await?;
+                }
             }
 
             transaction.commit().await?;

@@ -15,6 +15,7 @@ use sqlx::{PgPool, Postgres, Transaction};
 
 use crate::{
     error::errors::KekServerError,
+    models::{discord_user::User, guild::Guild, state::State},
     oauth_client::{GuildTokenField, OAuthClient},
     utils::{auth::get_discord_user_from_token, GenericSuccess},
 };
@@ -194,85 +195,47 @@ pub async fn auth_callback(
 ) -> Result<HttpResponse, KekServerError> {
     if let (Some(params_code), Some(params_state)) = (auth_params.code, auth_params.state) {
         let mut transaction = db_pool.begin().await?;
-        let auth_state = sqlx::query!(
-            "
-            SELECT * FROM state
-            WHERE csrf_token = $1
-            ",
-            params_state
-        )
-        .fetch_optional(&mut transaction)
-        .await?;
+        let auth_state = State::get_with_token(&params_state, &mut transaction).await?;
 
         if let Some(state) = auth_state {
-            let duration = state.expires.signed_duration_since(Utc::now());
+            let duration = state.get_expires_date().signed_duration_since(Utc::now());
             if duration.num_seconds() < 0 {
                 return Err(KekServerError::AuthorizationTimeExpiredError);
             }
 
-            let access_token =
-                fetch_access_token(oauth_client, params_code, state.pkce_verifier).await?;
-
-            sqlx::query!(
-                "
-                DELETE FROM state
-                WHERE csrf_token = $1
-                ",
-                state.csrf_token
+            let access_token = fetch_access_token(
+                oauth_client,
+                params_code,
+                state.get_pkce_verifier().to_string(),
             )
-            .execute(&mut transaction)
             .await?;
 
-            // Adds user to database
+            State::delete_state(state.get_csrf_token(), &mut transaction).await?;
+
             let user = get_discord_user_from_token(access_token.access_token().secret()).await?;
-            if let None = sqlx::query!(
-                "
-                SELECT * FROM users
-                WHERE id = $1
-                ",
-                *user.get_id()
-            )
-            .fetch_optional(&mut transaction)
-            .await?
-            {
-                sqlx::query!(
-                    "
-                    INSERT INTO users (id, username, avatar)
-                    VALUES ($1, $2, $3)
-                    ",
-                    *user.get_id(),
-                    *user.get_username(),
-                    user.get_avatar()
+            if let None = User::get_with_id(user.get_id(), &mut transaction).await? {
+                User::insert_user(
+                    user.get_id(),
+                    user.get_username(),
+                    user.get_avatar(),
+                    &mut transaction,
                 )
-                .execute(&mut transaction)
                 .await?;
             }
 
             // Adds guild to database
             // TODO: If guild exists mark as active (if bot was previously in guild)
             // TODO: Refactor to make this a function (&mut transaction has move problems in function)
+            // TODO: Doesn't move when typed &mut *transaction
             if let Some(guild) = &access_token.extra_fields().guild {
-                if let None = sqlx::query!(
-                    "
-                    SELECT * FROM guild
-                    WHERE id = $1
-                    ",
-                    guild.get_id()
-                )
-                .fetch_optional(&mut transaction)
-                .await?
-                {
-                    sqlx::query!(
-                        "
-                        INSERT INTO guild (id, name, icon, icon_hash)
-                        VALUES ($1, $2, $3, $4)
-                        ",
+                if let None = Guild::get_guild_from_id(guild.get_id(), &mut transaction).await? {
+                    Guild::insert_guild(
                         guild.get_id(),
                         guild.get_name(),
                         guild.get_icon(),
-                        guild.get_icon_hash()
+                        guild.get_icon_hash(),
+                        &mut transaction,
                     )
-                    .execute(&mut transaction)
                     .await?;
                 }
             }

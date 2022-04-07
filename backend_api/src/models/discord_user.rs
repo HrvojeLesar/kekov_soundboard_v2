@@ -1,29 +1,62 @@
-use std::{fmt::Display, str::FromStr};
+use serde::{Deserialize, Serialize};
+use sqlx::{Postgres, Transaction};
 
-use serde::{Deserialize, Deserializer, Serialize};
-
-use crate::utils::deserialize_string_to_number;
+use crate::{error::errors::KekServerError, utils::deserialize_string_to_number};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
     #[serde(deserialize_with = "deserialize_string_to_number")]
     id: i64,
-    #[serde(rename = "username")]
-    discord_username: String,
-    #[serde(rename = "avatar")]
-    discord_avatar: Option<String>,
+    username: String,
+    avatar: Option<String>,
 }
 
 impl User {
+    pub async fn get_with_id(
+        id: &i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Option<Self>, KekServerError> {
+        return Ok(sqlx::query_as!(
+            Self,
+            "
+            SELECT * FROM users
+            WHERE id = $1
+            ",
+            id
+        )
+        .fetch_optional(&mut *transaction)
+        .await?);
+    }
+
+    pub async fn insert_user(
+        id: &i64,
+        username: &String,
+        avatar: Option<&String>,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), KekServerError> {
+        sqlx::query!(
+            "
+            INSERT INTO users (id, username, avatar)
+            VALUES ($1, $2, $3)
+            ",
+            id,
+            username,
+            avatar,
+        )
+        .execute(&mut *transaction)
+        .await?;
+        return Ok(());
+    }
+
     pub fn get_id(&self) -> &i64 {
         return &self.id;
     }
 
     pub fn get_username(&self) -> &String {
-        return &self.discord_username;
+        return &self.username;
     }
 
     pub fn get_avatar(&self) -> Option<&String> {
-        return self.discord_avatar.as_ref();
+        return self.avatar.as_ref();
     }
 }

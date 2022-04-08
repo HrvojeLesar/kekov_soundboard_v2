@@ -1,11 +1,15 @@
 use serde::{Deserialize, Serialize};
 use sqlx::{Postgres, Transaction};
 
-use crate::{error::errors::KekServerError, utils::deserialize_string_to_number};
+use crate::{
+    error::errors::KekServerError, utils::deserialize_string_to_number,
+    utils::serialize_i64_to_string,
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
     #[serde(deserialize_with = "deserialize_string_to_number")]
+    #[serde(serialize_with = "serialize_i64_to_string")]
     id: i64,
     username: String,
     avatar: Option<String>,

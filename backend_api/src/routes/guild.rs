@@ -62,11 +62,9 @@ pub async fn delete_sound_from_guild(
 
     let mut transaction = db_pool.begin().await?;
 
-    // guild_file_exist(&guild_id, &file_id, &mut transaction).await?;
+    guild_file_exist(&guild_id, &file_id, &mut transaction).await?;
 
     let user_guilds = autorized_user.get_guilds().await?;
-
-    println!("User guilds:{:#?}", user_guilds);
 
     if user_guilds
         .iter()

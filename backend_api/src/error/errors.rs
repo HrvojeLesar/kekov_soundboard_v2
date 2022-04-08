@@ -35,6 +35,8 @@ pub enum KekServerError {
     SessionCookieNotSet,
     #[error("Invalid Authorization Credentials")]
     InvalidCredentialsError,
+    #[error("Discord request error")]
+    DiscordRequestError,
     #[error("Disallowed mime type")]
     DisallowedMimeTypeError,
     #[error("Unable to get mime from file")]

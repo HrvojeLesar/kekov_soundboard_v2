@@ -15,7 +15,7 @@ use sqlx::{PgPool, Postgres, Transaction};
 
 use crate::{
     error::errors::KekServerError,
-    models::{discord_user::User, guild::Guild, state::State},
+    models::{guild::Guild, state::State, user::User},
     oauth_client::{GuildTokenField, OAuthClient},
     utils::{auth::get_discord_user_from_token, GenericSuccess},
 };
@@ -225,8 +225,6 @@ pub async fn auth_callback(
 
             // Adds guild to database
             // TODO: If guild exists mark as active (if bot was previously in guild)
-            // TODO: Refactor to make this a function (&mut transaction has move problems in function)
-            // TODO: Doesn't move when typed &mut *transaction
             if let Some(guild) = &access_token.extra_fields().guild {
                 if let None = Guild::get_guild_from_id(guild.get_id(), &mut transaction).await? {
                     Guild::insert_guild(

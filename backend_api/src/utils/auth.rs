@@ -1,7 +1,7 @@
 use actix_web::{dev::ServiceRequest, http::header::AUTHORIZATION, FromRequest, HttpMessage};
 use std::{future::Future, pin::Pin};
 
-use crate::{error::errors::KekServerError, models::discord_user::User};
+use crate::{error::errors::KekServerError, models::user::User};
 
 pub struct AuthorizedUser {
     access_token: String,
@@ -49,9 +49,7 @@ async fn get_access_token(req: &ServiceRequest) -> Result<String, KekServerError
     return Ok(token.to_owned());
 }
 
-pub async fn get_discord_user_from_token(
-    access_token: &str,
-) -> Result<User, KekServerError> {
+pub async fn get_discord_user_from_token(access_token: &str) -> Result<User, KekServerError> {
     let mut resp = awc::Client::new()
         .get("https://discord.com/api/v9/users/@me")
         .append_header((AUTHORIZATION, format!("Bearer {}", access_token)))

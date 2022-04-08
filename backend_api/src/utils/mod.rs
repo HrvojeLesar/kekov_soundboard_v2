@@ -1,6 +1,13 @@
 use std::str::FromStr;
 
-use serde::{Deserialize, Serialize, Deserializer};
+use actix_http::{encoding::Decoder, Payload};
+use actix_web::http::header::AUTHORIZATION;
+use awc::ClientResponse;
+use serde::{Deserialize, Deserializer, Serialize};
+
+use crate::error::errors::KekServerError;
+
+use self::auth::AuthorizedUser;
 
 pub mod auth;
 
@@ -42,4 +49,22 @@ where
         StringOrNum::String(s) => s.parse::<T>().map_err(serde::de::Error::custom),
         StringOrNum::Number(n) => Ok(n),
     };
+}
+
+pub async fn make_discord_get_request(
+    autorized_user: AuthorizedUser,
+    url: &str,
+) -> Result<ClientResponse<Decoder<Payload>>, KekServerError> {
+    let resp = awc::Client::new()
+        .get(format!("https://discord.com/api/v9{}", url))
+        .append_header((
+            AUTHORIZATION,
+            format!("Bearer {}", autorized_user.get_access_token()),
+        ))
+        .send()
+        .await?;
+    if resp.status().is_client_error() {
+        return Err(KekServerError::DiscordRequestError);
+    }
+    return Ok(resp);
 }

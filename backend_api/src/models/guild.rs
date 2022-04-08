@@ -60,6 +60,23 @@ impl Guild {
         return Ok(());
     }
 
+    pub async fn get_existing_guilds(
+        guilds: &Vec<Self>,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<Self>, KekServerError> {
+        let ids = guilds.iter().map(|guild| guild.id).collect::<Vec<i64>>();
+        return Ok(sqlx::query_as!(
+            Self,
+            "
+            SELECT * FROM guild
+            WHERE id = ANY($1)
+            ",
+            &ids
+        )
+        .fetch_all(transaction)
+        .await?);
+    }
+
     pub fn get_id(&self) -> &i64 {
         return &self.id;
     }

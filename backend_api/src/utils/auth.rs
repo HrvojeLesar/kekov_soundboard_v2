@@ -1,7 +1,12 @@
 use actix_web::{dev::ServiceRequest, http::header::AUTHORIZATION, FromRequest, HttpMessage};
 use std::{future::Future, pin::Pin};
 
-use crate::{error::errors::KekServerError, models::user::User};
+use crate::{
+    error::errors::KekServerError,
+    models::{guild::Guild, user::User},
+};
+
+use super::{make_discord_get_request, USERGUILDS};
 
 pub struct AuthorizedUser {
     access_token: String,
@@ -15,6 +20,13 @@ impl AuthorizedUser {
 
     pub fn get_discord_user(&self) -> &User {
         return &self.discord_user;
+    }
+
+    pub async fn get_guilds(&self) -> Result<Vec<Guild>, KekServerError> {
+        return Ok(make_discord_get_request(&self, USERGUILDS)
+            .await?
+            .json()
+            .await?);
     }
 }
 

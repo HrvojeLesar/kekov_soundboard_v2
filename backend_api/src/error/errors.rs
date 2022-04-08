@@ -1,6 +1,6 @@
-use actix_web::{ResponseError, http::StatusCode, HttpResponse};
-use oauth2::{basic::BasicErrorResponseType, StandardErrorResponse, RevocationErrorResponseType};
-use serde::{Deserialize, Serialize};
+use actix_web::{http::StatusCode, HttpResponse, ResponseError};
+use oauth2::{basic::BasicErrorResponseType, RevocationErrorResponseType, StandardErrorResponse};
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -10,9 +10,25 @@ pub enum KekServerError {
     #[error(transparent)]
     PayloadError(#[from] actix_web::error::PayloadError),
     #[error(transparent)]
-    RequestTokenError(#[from] Box<oauth2::RequestTokenError<KekServerError, StandardErrorResponse<BasicErrorResponseType>>>),
+    RequestTokenError(
+        #[from]
+        Box<
+            oauth2::RequestTokenError<
+                KekServerError,
+                StandardErrorResponse<BasicErrorResponseType>,
+            >,
+        >,
+    ),
     #[error(transparent)]
-    RevocationRequestTokenError(#[from] Box<oauth2::RequestTokenError<KekServerError, StandardErrorResponse<RevocationErrorResponseType>>>),
+    RevocationRequestTokenError(
+        #[from]
+        Box<
+            oauth2::RequestTokenError<
+                KekServerError,
+                StandardErrorResponse<RevocationErrorResponseType>,
+            >,
+        >,
+    ),
     #[error(transparent)]
     CookieParseError(#[from] actix_web::cookie::ParseError),
     #[error(transparent)]
@@ -55,6 +71,10 @@ pub enum KekServerError {
     CanceledAuthError,
     #[error("Time to authorize expired")]
     AuthorizationTimeExpiredError,
+    #[error("Invalid guild id error")]
+    InvalidGuildIdError,
+    #[error("Invalid file id error")]
+    InvalidFileIdError,
     #[error("{0}")]
     Other(String),
 }
@@ -68,28 +88,23 @@ struct ApiError<'a> {
 impl ResponseError for KekServerError {
     fn status_code(&self) -> StatusCode {
         match self {
-            KekServerError::InvalidCredentialsError => {
-                StatusCode::UNAUTHORIZED
-            },
+            KekServerError::InvalidCredentialsError => StatusCode::UNAUTHORIZED,
             KekServerError::EnvError(..) => StatusCode::UNAUTHORIZED,
             _ => StatusCode::UNAUTHORIZED,
         }
     }
 
     fn error_response(&self) -> HttpResponse {
-        return HttpResponse::build(self.status_code()).json(
-            ApiError {
-                error: match self {
-                    _ => "Catch all error",
-                },
-                description: &self.to_string(),
+        return HttpResponse::build(self.status_code()).json(ApiError {
+            error: match self {
+                _ => "Catch all error",
             },
-        );
+            description: &self.to_string(),
+        });
     }
-
 }
 
-pub struct ErrorHelpers{}
+pub struct ErrorHelpers {}
 
 impl ErrorHelpers {
     pub fn e500<E: std::fmt::Debug + std::fmt::Display + 'static>(err: E) -> actix_web::Error {
@@ -97,4 +112,3 @@ impl ErrorHelpers {
         return actix_web::error::ErrorInternalServerError(err);
     }
 }
-

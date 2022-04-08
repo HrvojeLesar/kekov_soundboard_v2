@@ -10,7 +10,7 @@ use crate::{
     error::errors::KekServerError,
     middleware::auth_middleware::AuthService,
     models::{guild::Guild, sound_file::SoundFile, user::User},
-    utils::{auth::AuthorizedUser, make_discord_get_request},
+    utils::{auth::AuthorizedUser, make_discord_get_request, USERGUILDS},
 };
 
 pub fn config(cfg: &mut ServiceConfig) {
@@ -92,17 +92,14 @@ pub async fn delete_multiple_user_files(
 
 #[get("/guilds")]
 pub async fn get_user_guilds(
-    user: AuthorizedUser,
+    authorited_user: AuthorizedUser,
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
     // get users guilds
     // return matching active guilds from db
     let mut transaction = db_pool.begin().await?;
 
-    let user_guilds = make_discord_get_request(user, "/users/@me/guilds")
-        .await?
-        .json()
-        .await?;
+    let user_guilds = authorited_user.get_guilds().await?;
     let guilds = Guild::get_existing_guilds(&user_guilds, &mut transaction).await?;
 
     transaction.commit().await?;

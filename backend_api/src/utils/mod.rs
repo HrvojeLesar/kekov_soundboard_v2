@@ -11,6 +11,8 @@ use self::auth::AuthorizedUser;
 
 pub mod auth;
 
+pub const USERGUILDS: &str = "/users/@me/guilds";
+
 #[derive(Serialize, Deserialize)]
 pub struct GenericSuccess {
     pub success: String,
@@ -52,7 +54,7 @@ where
 }
 
 pub async fn make_discord_get_request(
-    autorized_user: AuthorizedUser,
+    autorized_user: &AuthorizedUser,
     url: &str,
 ) -> Result<ClientResponse<Decoder<Payload>>, KekServerError> {
     let resp = awc::Client::new()

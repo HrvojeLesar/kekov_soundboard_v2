@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Postgres, Transaction};
+use sqlx::{Postgres, Transaction};
 
 use crate::error::errors::KekServerError;
 
@@ -95,5 +95,21 @@ impl SoundFile {
         .fetch_all(transaction)
         .await?;
         return Ok(rows_deleted);
+    }
+
+    pub async fn get_file_from_id(
+        id: &i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Option<Self>, KekServerError> {
+        return Ok(sqlx::query_as!(
+            Self,
+            "
+            SELECT * FROM files
+            WHERE id = $1
+            ",
+            id
+        )
+        .fetch_optional(&mut *transaction)
+        .await?);
     }
 }

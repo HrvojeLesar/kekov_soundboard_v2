@@ -55,6 +55,8 @@ pub enum KekServerError {
     DiscordRequestError,
     #[error("Disallowed mime type")]
     DisallowedMimeTypeError,
+    #[error("Not in guild error")]
+    NotInGuildError,
     #[error("Unable to get mime from file")]
     UnableToGetMimeError,
     #[error("Wrong mime type")]

@@ -3,6 +3,8 @@ use sqlx::{Postgres, Transaction};
 
 use crate::error::errors::KekServerError;
 
+use super::sound_file::SoundFile;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GuildFile {
     guild_id: i64,
@@ -44,5 +46,22 @@ impl GuildFile {
         .execute(&mut *transaction)
         .await?;
         return Ok(());
+    }
+
+    pub async fn get_guild_files(
+        guild_id: &i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<SoundFile>, KekServerError> {
+        return Ok(sqlx::query_as!(
+            SoundFile,
+            "
+            SELECT files.* FROM files
+            INNER JOIN guild_file ON guild_file.guild_id = $1
+            AND files.id = guild_file.file_id
+            ",
+            guild_id,
+        )
+        .fetch_all(&mut *transaction)
+        .await?);
     }
 }

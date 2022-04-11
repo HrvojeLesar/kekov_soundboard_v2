@@ -1,5 +1,5 @@
 use actix_web::{
-    delete, post,
+    delete, get, post,
     web::{scope, Data, Path, ServiceConfig},
     HttpResponse,
 };
@@ -19,7 +19,8 @@ pub fn config(cfg: &mut ServiceConfig) {
         scope("/guilds")
             .wrap(AuthService)
             .service(add_sound_to_guild)
-            .service(delete_sound_from_guild),
+            .service(delete_sound_from_guild)
+            .service(get_guild_files),
     );
 }
 
@@ -43,7 +44,7 @@ async fn guild_file_exist(
 async fn is_user_in_guild(
     authorized_user: &AuthorizedUser,
     guild_id: &i64,
-) -> Result<(), KekServerError> {
+) -> Result<bool, KekServerError> {
     let user_guilds = authorized_user.get_guilds().await?;
 
     if user_guilds
@@ -53,7 +54,7 @@ async fn is_user_in_guild(
     {
         return Err(KekServerError::NotInGuildError);
     }
-    return Ok(());
+    return Ok(true);
 }
 
 async fn validate_query(
@@ -99,4 +100,20 @@ pub async fn delete_sound_from_guild(
     transaction.commit().await?;
 
     return Ok(HttpResponse::Ok().finish());
+}
+
+#[get("/{guild_id}")]
+pub async fn get_guild_files(
+    db_pool: Data<PgPool>,
+    authorized_user: AuthorizedUser,
+    guild_id: Path<i64>,
+) -> Result<HttpResponse, KekServerError> {
+    let guild_id = guild_id.into_inner();
+    if is_user_in_guild(&authorized_user, &guild_id).await? {
+        let mut transaction = db_pool.begin().await?;
+        let files = GuildFile::get_guild_files(&guild_id, &mut transaction).await?;
+        transaction.commit().await?;
+        return Ok(HttpResponse::Ok().json(files));
+    }
+    return Ok(HttpResponse::Ok().json("[]"));
 }

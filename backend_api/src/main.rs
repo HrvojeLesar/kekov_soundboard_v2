@@ -20,6 +20,7 @@ mod models;
 mod oauth_client;
 mod routes;
 mod utils;
+mod ws;
 
 // #[cfg(debug_assertions)]
 #[actix_web::main]

@@ -4,6 +4,7 @@ mod auth;
 mod file;
 mod user;
 mod guild;
+mod ws;
 pub mod not_found;
 
 pub fn routes_config(cfg: &mut ServiceConfig) {
@@ -13,5 +14,6 @@ pub fn routes_config(cfg: &mut ServiceConfig) {
             .configure(file::config)
             .configure(user::config)
             .configure(guild::config)
+            .configure(ws::config)
     );
 }

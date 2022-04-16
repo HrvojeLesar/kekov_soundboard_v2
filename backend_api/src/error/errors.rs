@@ -45,6 +45,10 @@ pub enum KekServerError {
     BlockingError(#[from] actix_web::error::BlockingError),
     #[error(transparent)]
     IOError(#[from] std::io::Error),
+    #[error(transparent)]
+    WsClientError(#[from] awc::error::WsClientError),
+    #[error(transparent)]
+    ActixWebError(#[from] actix_web::Error),
     #[error("Provided files faild to upload")]
     NoFilesUploadedError,
     #[error("Recieved request has no session cookie set")]

@@ -9,7 +9,7 @@ use crate::{
     error::errors::KekServerError,
     middleware::auth_middleware::AuthService,
     models::{guild::Guild, guild_file::GuildFile, sound_file::SoundFile},
-    utils::{auth::AuthorizedUser, validation::{validate_query, is_user_in_guild}},
+    utils::{auth::AuthorizedUser, validation::{validate_guild_and_file_ids, is_user_in_guild}},
 };
 
 type GuildFileIds = Path<(i64, i64)>;
@@ -33,12 +33,14 @@ pub async fn add_sound_to_guild(
     let (guild_id, file_id) = path.into_inner();
     let mut transaction = db_pool.begin().await?;
 
-    if validate_query(&authorized_user, &guild_id, &file_id, &mut transaction).await? {
+    if validate_guild_and_file_ids(&authorized_user, &guild_id, &file_id, &mut transaction).await? {
         GuildFile::insert_guild_file(&guild_id, &file_id, &mut transaction).await?;
+        transaction.commit().await?;
+        return Ok(HttpResponse::Created().finish());
+    } else {
+        return Err(KekServerError::NotInGuildError);
     }
-    transaction.commit().await?;
 
-    return Ok(HttpResponse::Created().finish());
 }
 
 #[delete("/{guild_id}/{file_id}")]
@@ -50,12 +52,14 @@ pub async fn delete_sound_from_guild(
     let (guild_id, file_id) = path.into_inner();
     let mut transaction = db_pool.begin().await?;
 
-    if validate_query(&authorized_user, &guild_id, &file_id, &mut transaction).await? {
+    if validate_guild_and_file_ids(&authorized_user, &guild_id, &file_id, &mut transaction).await? {
         GuildFile::delete_guild_file(&guild_id, &file_id, &mut transaction).await?;
+        transaction.commit().await?;
+        return Ok(HttpResponse::Ok().finish());
+    } else {
+        return Err(KekServerError::NotInGuildError);
     }
-    transaction.commit().await?;
 
-    return Ok(HttpResponse::Ok().finish());
 }
 
 #[get("/{guild_id}")]

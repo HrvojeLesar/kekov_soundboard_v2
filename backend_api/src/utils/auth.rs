@@ -1,4 +1,5 @@
 use actix_web::{dev::ServiceRequest, http::header::AUTHORIZATION, FromRequest, HttpMessage};
+use log::debug;
 use std::{future::Future, pin::Pin};
 
 use crate::{
@@ -45,6 +46,7 @@ impl FromRequest for AuthorizedUser {
             if let Some(user) = req.extensions_mut().remove::<AuthorizedUser>() {
                 return Ok(user);
             }
+            debug!("AuthorizedUser is added to extensions with middlware.\nPossible reason for missing user.");
             return Err(KekServerError::RequestExtensionsError);
         });
     }

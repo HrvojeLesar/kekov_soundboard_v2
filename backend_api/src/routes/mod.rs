@@ -5,6 +5,8 @@ mod file;
 mod user;
 mod guild;
 mod ws;
+mod controls;
+
 pub mod not_found;
 
 pub fn routes_config(cfg: &mut ServiceConfig) {
@@ -15,5 +17,6 @@ pub fn routes_config(cfg: &mut ServiceConfig) {
             .configure(user::config)
             .configure(guild::config)
             .configure(ws::config)
+            .configure(controls::config)
     );
 }

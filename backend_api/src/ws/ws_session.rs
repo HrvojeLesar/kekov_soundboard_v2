@@ -1,21 +1,28 @@
 use std::time::{Duration, Instant};
 
-use actix::{Actor, ActorContext, AsyncContext, Handler, StreamHandler};
+use actix::{
+    fut, Actor, ActorContext, ActorFutureExt, Addr, AsyncContext, ContextFutureSpawner, Handler,
+    StreamHandler, WrapFuture,
+};
 use actix_http::ws;
 use actix_web_actors::ws::WebsocketContext;
-use log::{debug, error, warn};
+use log::{error, warn};
+
+use super::ws_server::{Connect, Controls, ControlsServer, ControlsServerMessage};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(10);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(20);
 
 pub struct ControlsSession {
     heartbeat: Instant,
+    server_address: Addr<ControlsServer>,
 }
 
 impl ControlsSession {
-    pub fn new() -> Self {
+    pub fn new(server_address: Addr<ControlsServer>) -> Self {
         return Self {
             heartbeat: Instant::now(),
+            server_address,
         };
     }
 
@@ -36,6 +43,41 @@ impl Actor for ControlsSession {
 
     fn started(&mut self, ctx: &mut Self::Context) {
         self.heartbeat(ctx);
+
+        let address = ctx.address();
+        self.server_address
+            .send(Connect::new(address))
+            .into_actor(self)
+            .then(|resp, actor, ctx| {
+                return fut::ready(());
+            })
+            .wait(ctx);
+    }
+}
+
+impl Handler<ControlsServerMessage> for ControlsSession {
+    type Result = ();
+
+    fn handle(&mut self, msg: ControlsServerMessage, ctx: &mut Self::Context) -> Self::Result {
+        ctx.text(msg.0);
+    }
+}
+
+impl Handler<Controls> for ControlsSession {
+    type Result = u64;
+
+    fn handle(&mut self, msg: Controls, ctx: &mut Self::Context) -> Self::Result {
+        match msg {
+            Controls::Play(p) => {
+                match serde_json::to_string(&p) {
+                    Ok(pl) => ctx.text(pl), 
+                    Err(e) => error!("ControlsSession play control send error: {}", e),
+                };
+            }
+            Controls::Stop => ctx.text("Very pog"),
+            Controls::GetQueue => ctx.text("Poggers"),
+        }
+        0
     }
 }
 
@@ -44,7 +86,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ControlsSession {
         let msg = match item {
             Ok(msg) => msg,
             Err(err) => {
-                error!("{}", err);
+                error!("ControlsSession actor error: {}", err);
                 ctx.stop();
                 return;
             }
@@ -56,10 +98,13 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ControlsSession {
                 ctx.pong(&msg);
             }
             ws::Message::Pong(_) => {
-                debug!("I'm pogging");
                 self.heartbeat = Instant::now();
             }
-            _ => unimplemented!(),
+            ws::Message::Close(reason) => {
+                ctx.close(reason);
+                ctx.stop();
+            }
+            _ => (),
         }
     }
 }

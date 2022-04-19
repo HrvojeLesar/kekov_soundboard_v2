@@ -49,6 +49,8 @@ pub enum KekServerError {
     WsClientError(#[from] awc::error::WsClientError),
     #[error(transparent)]
     ActixWebError(#[from] actix_web::Error),
+    #[error(transparent)]
+    ActixMailboxError(#[from] actix::MailboxError),
     #[error("Provided files faild to upload")]
     NoFilesUploadedError,
     #[error("Recieved request has no session cookie set")]
@@ -79,6 +81,8 @@ pub enum KekServerError {
     AuthorizationTimeExpiredError,
     #[error("Invalid guild id error")]
     InvalidGuildIdError,
+    #[error("Guild file does not exist")]
+    GuildFileDoesNotExistError,
     #[error("Invalid file id error")]
     InvalidFileIdError,
     #[error("{0}")]

@@ -64,4 +64,22 @@ impl GuildFile {
         .fetch_all(&mut *transaction)
         .await?);
     }
+
+    pub async fn get_guild_file(
+        guild_id: &i64,
+        file_id: &i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Option<Self>, KekServerError> {
+        return Ok(sqlx::query_as!(
+            Self,
+            "
+            SELECT * FROM guild_file
+            WHERE guild_id = $1 AND file_id = $2
+            ",
+            guild_id,
+            file_id
+        )
+        .fetch_optional(&mut *transaction)
+        .await?);
+    }
 }

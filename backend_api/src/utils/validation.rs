@@ -4,7 +4,7 @@ use crate::{error::errors::KekServerError, models::{guild::Guild, sound_file::So
 
 use super::auth::AuthorizedUser;
 
-pub async fn guild_file_exist(
+pub async fn guild_and_file_exist(
     guild_id: &i64,
     file_id: &i64,
     transaction: &mut Transaction<'_, Postgres>,
@@ -32,18 +32,17 @@ pub async fn is_user_in_guild(
         .find(|guild| *guild.get_id() == *guild_id)
         .is_none()
     {
-        return Err(KekServerError::NotInGuildError);
+        return Ok(false);
     }
     return Ok(true);
 }
 
-pub async fn validate_query(
+pub async fn validate_guild_and_file_ids(
     authorized_user: &AuthorizedUser,
     guild_id: &i64,
     file_id: &i64,
     transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<bool, KekServerError> {
-    guild_file_exist(guild_id, file_id, &mut *transaction).await?;
-    is_user_in_guild(&authorized_user, guild_id).await?;
-    return Ok(true);
+    guild_and_file_exist(guild_id, file_id, &mut *transaction).await?;
+    return Ok(is_user_in_guild(&authorized_user, guild_id).await?);
 }

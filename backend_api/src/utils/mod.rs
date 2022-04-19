@@ -10,6 +10,7 @@ use crate::error::errors::KekServerError;
 use self::auth::AuthorizedUser;
 
 pub mod auth;
+pub mod validation;
 
 pub const USERGUILDS: &str = "/users/@me/guilds";
 

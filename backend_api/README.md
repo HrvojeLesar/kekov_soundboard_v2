@@ -54,3 +54,19 @@ Json must contain files field that is an array of file ids.
 ### Delete a single file
 **DELETE** `/user/files/{file_id}`
 - Returns deleted file.
+
+## Websocket
+
+### Connecting to Websocket
+**GET** `/`
+Makes a connection to websocket server, localhost only.
+
+## Controls
+
+### Play
+**GET** `/play`
+Takes in a json payload with `file_id` and `guild_id`.
+
+### Stop
+**GET** `/stop`
+Takes in a json payload with `guild_id`.

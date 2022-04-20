@@ -9,3 +9,6 @@ backend_api/target
 *.pem
 
 todo.md
+
+bin
+obj

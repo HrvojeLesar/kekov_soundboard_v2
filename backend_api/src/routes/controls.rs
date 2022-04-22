@@ -15,7 +15,7 @@ use crate::{
         auth::AuthorizedUser,
         validation::{is_user_in_guild, validate_guild_and_file_ids},
     },
-    ws::ws_server::{Controls, ControlsServer, PlayControl},
+    ws::ws_server::{Controls, ControlsServer, PlayControl, ControlsServerMessage2},
 };
 
 pub fn config(cfg: &mut ServiceConfig) {
@@ -74,11 +74,14 @@ pub async fn play_request(
         .await?
         {
             Some(_) => {
+                // let resp = server_address
+                //     .send(Controls::Play(PlayControl::new(
+                //         *req_payload.get_guild_id(),
+                //         *req_payload.get_file_id(),
+                //     )))
+                //     .await?;
                 let resp = server_address
-                    .send(Controls::Play(PlayControl::new(
-                        *req_payload.get_guild_id(),
-                        *req_payload.get_file_id(),
-                    )))
+                    .send(ControlsServerMessage2::new_play(*req_payload.get_guild_id(), *req_payload.get_file_id()))
                     .await?;
                 transaction.commit().await?;
                 return Ok(HttpResponse::Ok().finish());

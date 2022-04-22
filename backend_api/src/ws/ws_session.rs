@@ -8,7 +8,7 @@ use actix_http::ws;
 use actix_web_actors::ws::WebsocketContext;
 use log::{error, warn};
 
-use super::ws_server::{Connect, Controls, ControlsServer, ControlsServerMessage};
+use super::ws_server::{Connect, Controls, ControlsServer, ControlsServerMessage, ControlsServerMessage2, OpCode};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(10);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(20);
@@ -78,6 +78,29 @@ impl Handler<Controls> for ControlsSession {
             Controls::GetQueue => ctx.text("Poggers"),
         }
         0
+    }
+}
+
+impl Handler<ControlsServerMessage2> for ControlsSession {
+    type Result = ();
+
+    fn handle(&mut self, msg: ControlsServerMessage2, ctx: &mut Self::Context) -> Self::Result {
+        // TODO: Optimize, make nicer
+        match msg.get_op_code() {
+            OpCode::Play => {
+                match serde_json::to_string(&msg) {
+                    Ok(pl) => ctx.text(pl), 
+                    Err(e) => error!("ControlsSession play control send error: {}", e),
+                };
+            },
+            OpCode::Connection => {
+                match serde_json::to_string(&msg) {
+                    Ok(m) => ctx.text(m), 
+                    Err(e) => error!("ControlsSession Connection send error: {}", e),
+                };
+            }
+            _ => ctx.text("Poggers"),
+        }
     }
 }
 

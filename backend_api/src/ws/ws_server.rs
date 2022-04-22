@@ -27,14 +27,44 @@ pub struct PlayControl {
     file_id: i64,
 }
 
-impl PlayControl {
-    pub fn new(guild_id: i64, file_id: i64) -> Self {
-        return Self { file_id, guild_id };
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum OpCode {
+    Connection,
+    Play,
+    Stop,
+}
+
+#[derive(Clone, Debug, Message, Serialize, Deserialize)]
+#[rtype(result = "()")]
+pub struct ControlsServerMessage2 {
+    op: OpCode,
+    #[serde(flatten)]
+    control: Option<Controls>,
+}
+
+impl ControlsServerMessage2 {
+    pub fn get_op_code(&self) -> &OpCode {
+        return &self.op;
+    }
+
+    pub fn new_connect() -> Self {
+        return Self {
+            op: OpCode::Connection,
+            control: None,
+        };
+    }
+
+    pub fn new_play(guild_id: i64, file_id: i64) -> Self {
+        return Self {
+            op: OpCode::Play,
+            control: Some(Controls::Play(PlayControl { guild_id, file_id })),
+        };
     }
 }
 
-#[derive(Debug, Message, Clone)]
+#[derive(Debug, Message, Clone, Serialize, Deserialize)]
 #[rtype(result = "u64")]
+#[serde(untagged)]
 pub enum Controls {
     Play(PlayControl),
     Stop,
@@ -73,6 +103,15 @@ impl ControlsServer {
         }
         return commands_sent;
     }
+
+    pub fn send_command2(&self, command: ControlsServerMessage2) -> u64 {
+        let mut commands_sent = 0;
+        for session in &self.sessions {
+            session.do_send(command.clone());
+            commands_sent += 1;
+        }
+        return commands_sent;
+    }
 }
 
 impl Supervised for ControlsServer {
@@ -92,7 +131,7 @@ impl Handler<Connect> for ControlsServer {
         self.sessions.push(msg.address);
         let last_address = self.sessions.last();
         match last_address {
-            Some(addr) => addr.do_send(ControlsServerMessage("Success".to_string())),
+            Some(addr) => addr.do_send(ControlsServerMessage2::new_connect()),
             None => (),
         }
     }
@@ -103,5 +142,13 @@ impl Handler<Controls> for ControlsServer {
 
     fn handle(&mut self, msg: Controls, _ctx: &mut Self::Context) -> Self::Result {
         return self.send_command(msg);
+    }
+}
+
+impl Handler<ControlsServerMessage2> for ControlsServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: ControlsServerMessage2, _ctx: &mut Self::Context) -> Self::Result {
+        self.send_command2(msg);
     }
 }

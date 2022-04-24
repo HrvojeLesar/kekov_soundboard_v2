@@ -1,11 +1,14 @@
-use actix::Addr;
+use std::time::{Instant, Duration};
+
+use actix::{Addr, clock::timeout};
 use actix_web::{
     get,
     web::{scope, Data, Json, ServiceConfig},
-    HttpResponse,
+    HttpResponse, post,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use tokio::sync::oneshot::channel;
 
 use crate::{
     error::errors::KekServerError,
@@ -15,13 +18,17 @@ use crate::{
         auth::AuthorizedUser,
         validation::{is_user_in_guild, validate_guild_and_file_ids},
     },
-    ws::ws_server::{Controls, ControlsServer, PlayControl, ControlsServerMessage2},
+    ws::{
+        ws_server::{Controls, ControlsServer, ControlsServerMessage2, PlayControl},
+        ws_session::WsSessionCommChannels,
+    },
 };
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/controls")
-            .wrap(AuthService)
+            .service(test_control)
+            // .wrap(AuthService)
             .service(play_request)
             .service(stop_request),
     );
@@ -81,7 +88,10 @@ pub async fn play_request(
                 //     )))
                 //     .await?;
                 let resp = server_address
-                    .send(ControlsServerMessage2::new_play(*req_payload.get_guild_id(), *req_payload.get_file_id()))
+                    .send(ControlsServerMessage2::new_play(
+                        *req_payload.get_guild_id(),
+                        *req_payload.get_file_id(),
+                    ))
                     .await?;
                 transaction.commit().await?;
                 return Ok(HttpResponse::Ok().finish());
@@ -107,5 +117,26 @@ pub async fn stop_request(
     }
     transaction.commit().await?;
 
+    return Ok(HttpResponse::Ok().finish());
+}
+
+// Possile implementation over channels instead of actors
+#[post("testcontrol")]
+pub async fn test_control(
+    server_address: Data<Addr<ControlsServer>>,
+    ws_channels: Data<WsSessionCommChannels<u8>>,
+    req_payload: Json<PlayPayload>,
+) -> Result<HttpResponse, KekServerError> {
+    let control = ControlsServerMessage2::new_play(*req_payload.get_guild_id(), *req_payload.get_file_id());
+    let id = control.get_id();
+
+    let (sender, receiver) = channel();
+    {
+        let mut t = ws_channels.write().await;
+        t.insert(id, sender);
+    }
+
+    server_address.send(control).await?;
+    let resp = timeout(Duration::from_secs(10), receiver).await??;
     return Ok(HttpResponse::Ok().finish());
 }

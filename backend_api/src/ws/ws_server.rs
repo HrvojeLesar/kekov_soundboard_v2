@@ -7,6 +7,7 @@ use actix::{
 use actix_web_actors::ws::WebsocketContext;
 use log::{debug, warn};
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use super::ws_session::ControlsSession;
 
@@ -25,6 +26,17 @@ pub struct PlayControl {
     // submitted_by: u64,
     guild_id: i64,
     file_id: i64,
+    voice_channel_id: Option<i64>,
+}
+
+impl PlayControl {
+    pub fn new(guild_id: i64, file_id: i64, voice_channel_id: Option<i64>) -> Self {
+        return Self {
+            guild_id,
+            file_id,
+            voice_channel_id,
+        };
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -32,12 +44,15 @@ pub enum OpCode {
     Connection,
     Play,
     Stop,
+    PlayResponse,
+    StopResponse,
 }
 
 #[derive(Clone, Debug, Message, Serialize, Deserialize)]
 #[rtype(result = "()")]
 pub struct ControlsServerMessage2 {
     op: OpCode,
+    message_id: u128,
     #[serde(flatten)]
     control: Option<Controls>,
 }
@@ -47,9 +62,14 @@ impl ControlsServerMessage2 {
         return &self.op;
     }
 
+    pub fn get_id(&self) -> u128 {
+        return self.message_id.clone();
+    }
+
     pub fn new_connect() -> Self {
         return Self {
             op: OpCode::Connection,
+            message_id: Uuid::new_v4().as_u128(),
             control: None,
         };
     }
@@ -57,7 +77,16 @@ impl ControlsServerMessage2 {
     pub fn new_play(guild_id: i64, file_id: i64) -> Self {
         return Self {
             op: OpCode::Play,
-            control: Some(Controls::Play(PlayControl { guild_id, file_id })),
+            message_id: Uuid::new_v4().as_u128(),
+            control: Some(Controls::Play(PlayControl::new(guild_id, file_id, None))),
+        };
+    }
+
+    pub fn new_stop() -> Self {
+        return Self {
+            op: OpCode::Play,
+            message_id: Uuid::new_v4().as_u128(),
+            control: Some(Controls::Stop),
         };
     }
 }
@@ -149,6 +178,6 @@ impl Handler<ControlsServerMessage2> for ControlsServer {
     type Result = ();
 
     fn handle(&mut self, msg: ControlsServerMessage2, _ctx: &mut Self::Context) -> Self::Result {
-        self.send_command2(msg);
+          self.send_command2(msg);
     }
 }

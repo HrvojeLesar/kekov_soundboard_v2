@@ -54,6 +54,11 @@ namespace KekovBot
             {
                 // find a voice channel with a connected user
                 var voiceChannel = guild.GetChannel(757546735584411658);
+                foreach (var channel in guild.Channels.Values)
+                {
+                    Console.WriteLine(channel.ToString());
+                }
+
                 var file = new FileInfo(@"./cj.wav");
                 await PlayTrack(voiceChannel, file);
             }

@@ -1,14 +1,23 @@
-use std::time::{Duration, Instant};
+use std::{
+    collections::HashMap,
+    time::{Duration, Instant},
+};
 
 use actix::{
     fut, Actor, ActorContext, ActorFutureExt, Addr, AsyncContext, ContextFutureSpawner, Handler,
     StreamHandler, WrapFuture,
 };
 use actix_http::ws;
+use actix_web::web::Data;
 use actix_web_actors::ws::WebsocketContext;
 use log::{error, warn};
+use tokio::sync::{oneshot::Sender, RwLock};
 
-use super::ws_server::{Connect, Controls, ControlsServer, ControlsServerMessage, ControlsServerMessage2, OpCode};
+use super::ws_server::{
+    Connect, Controls, ControlsServer, ControlsServerMessage, ControlsServerMessage2, OpCode,
+};
+
+pub type WsSessionCommChannels<T> = RwLock<HashMap<u128, Sender<T>>>;
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(10);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(20);
@@ -16,13 +25,18 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(20);
 pub struct ControlsSession {
     heartbeat: Instant,
     server_address: Addr<ControlsServer>,
+    communication_channels: Data<WsSessionCommChannels<u8>>,
 }
 
 impl ControlsSession {
-    pub fn new(server_address: Addr<ControlsServer>) -> Self {
+    pub fn new(
+        server_address: Addr<ControlsServer>,
+        communication_channels: Data<WsSessionCommChannels<u8>>,
+    ) -> Self {
         return Self {
             heartbeat: Instant::now(),
             server_address,
+            communication_channels,
         };
     }
 
@@ -35,6 +49,29 @@ impl ControlsSession {
                 context.ping(b"");
             }
         });
+    }
+
+    async fn handle_message(msg: ControlsServerMessage2, channels: Data<WsSessionCommChannels<u8>>) {
+        match msg.get_op_code() {
+            OpCode::PlayResponse => {
+                let sender;
+                {
+                    let mut lock = channels.write().await;
+                    sender = match lock.remove(&msg.get_id()) {
+                        Some(s) => s,
+                        None => return error!("WsSession lock error: Id not found!"),
+                    }
+                }
+                // TODO: make sender actually usefull info ?
+                match sender.send(123) {
+                    Ok(_) => (),
+                    Err(_) => {
+                        return error!("WsSession sender failed!\nPossible receiver dropped!")
+                    }
+                }
+            }
+            _ => (),
+        }
     }
 }
 
@@ -51,7 +88,7 @@ impl Actor for ControlsSession {
             .then(|resp, actor, ctx| {
                 return fut::ready(());
             })
-            .wait(ctx);
+            .wait(ctx); // WARN: might block
     }
 }
 
@@ -70,7 +107,7 @@ impl Handler<Controls> for ControlsSession {
         match msg {
             Controls::Play(p) => {
                 match serde_json::to_string(&p) {
-                    Ok(pl) => ctx.text(pl), 
+                    Ok(pl) => ctx.text(pl),
                     Err(e) => error!("ControlsSession play control send error: {}", e),
                 };
             }
@@ -89,13 +126,13 @@ impl Handler<ControlsServerMessage2> for ControlsSession {
         match msg.get_op_code() {
             OpCode::Play => {
                 match serde_json::to_string(&msg) {
-                    Ok(pl) => ctx.text(pl), 
+                    Ok(pl) => ctx.text(pl),
                     Err(e) => error!("ControlsSession play control send error: {}", e),
                 };
-            },
+            }
             OpCode::Connection => {
                 match serde_json::to_string(&msg) {
-                    Ok(m) => ctx.text(m), 
+                    Ok(m) => ctx.text(m),
                     Err(e) => error!("ControlsSession Connection send error: {}", e),
                 };
             }
@@ -126,6 +163,19 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ControlsSession {
             ws::Message::Close(reason) => {
                 ctx.close(reason);
                 ctx.stop();
+            }
+            ws::Message::Text(msg) => {
+                let channels = self.communication_channels.clone();
+                async move {
+                    let control_message: ControlsServerMessage2 = match serde_json::from_str(&msg) {
+                        Ok(c) => c,
+                        Err(e) => return error!("WsSession Error: {}", e),
+                    };
+                    
+                    ControlsSession::handle_message(control_message, channels).await;
+                }
+                .into_actor(self)
+                .wait(ctx);
             }
             _ => (),
         }

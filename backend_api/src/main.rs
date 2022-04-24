@@ -1,7 +1,7 @@
 use std::{
     fs::File,
     io::BufReader,
-    sync::{Arc, Mutex}, time::UNIX_EPOCH,
+    sync::{Arc, Mutex}, time::UNIX_EPOCH, collections::HashMap,
 };
 
 use actix::Actor;
@@ -12,7 +12,8 @@ use rustls_pemfile::{certs, pkcs8_private_keys};
 
 use dotenv::dotenv;
 use snowflake::SnowflakeIdGenerator;
-use ws::ws_server::ControlsServer;
+use tokio::sync::RwLock;
+use ws::{ws_server::ControlsServer, ws_session::WsSessionCommChannels};
 
 mod database;
 mod discord_client_config;
@@ -76,6 +77,7 @@ async fn main() -> std::io::Result<()> {
     let snowflake_thread_id = Arc::new(Mutex::new(0));
 
     let controls_server = Data::new(ControlsServer::new());
+    let ws_channels: Data<WsSessionCommChannels<u8>> = Data::new(RwLock::new(HashMap::new()));
 
     return HttpServer::new(move || {
         // Per thread snowflake generator
@@ -93,13 +95,14 @@ async fn main() -> std::io::Result<()> {
             .app_data(oauth.clone()) // oauth2::basic::BasicClient
             .app_data(pool.clone())
             .app_data(controls_server.clone())
+            .app_data(ws_channels.clone())
             .app_data(snowflakes)
             .configure(routes_config)
             .default_service(actix_web::web::to(not_found))
     })
     // .bind_rustls(&bind_address, config)?
     .bind(bind_address)?
-    .workers(1) 
+    // .workers(1) 
     .run()
     .await;
 }

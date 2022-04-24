@@ -1,6 +1,5 @@
 using System.Reactive.Linq;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Serialization;
 using Websocket.Client;
 
 namespace KekovBot
@@ -41,6 +40,9 @@ namespace KekovBot
                         case OpCode.Play:
                             {
                                 await Controls.Play(control);
+                                var response = new ControlMessage(OpCode.PlayResponse, control);
+                                var json_response = JsonConvert.SerializeObject(response);
+                                _client.Send(json_response);
                                 break;
                             }
                         case OpCode.Stop:

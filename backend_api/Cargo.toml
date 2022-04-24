@@ -42,3 +42,4 @@ chrono = "0.4"
 deadpool = "0.9.3"
 async-trait = "0.1.53"
 actix-codec = "0.5.0"
+tokio = { version = "1.17.0", features = ["sync", "time"] }

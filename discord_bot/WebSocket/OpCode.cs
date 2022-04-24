@@ -5,5 +5,7 @@ namespace KekovBot
         Connection,
         Play,
         Stop,
+        PlayResponse,
+        StopResponse,
     }
 }

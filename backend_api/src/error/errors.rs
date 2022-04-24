@@ -51,6 +51,10 @@ pub enum KekServerError {
     ActixWebError(#[from] actix_web::Error),
     #[error(transparent)]
     ActixMailboxError(#[from] actix::MailboxError),
+    #[error(transparent)]
+    TokioOneshotRecvError(#[from] tokio::sync::oneshot::error::RecvError),
+    #[error(transparent)]
+    ElapsedError(#[from] tokio::time::error::Elapsed),
     #[error("Provided files faild to upload")]
     NoFilesUploadedError,
     #[error("Recieved request has no session cookie set")]

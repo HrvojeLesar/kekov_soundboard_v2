@@ -29,44 +29,89 @@ namespace KekovBot
             {
                 Console.WriteLine($"Websocket reconnection happaned, type: {info.Type}");
             });
-            _client.MessageReceived.Subscribe(async msg =>
+            _client.MessageReceived.Subscribe(async msg => await HandleMessage(msg));
+        }
+
+        private async Task HandleMessage(ResponseMessage msg)
+        {
+            Console.WriteLine($"Message: {msg}");
+            try
             {
-                Console.WriteLine($"Message: {msg}");
-                try
+                ControlMessage? control = JsonConvert.DeserializeObject<ControlMessage>(msg.Text);
+                switch (control?.OpCode)
                 {
-                    ControlMessage? control = JsonConvert.DeserializeObject<ControlMessage>(msg.Text);
-                    switch (control?.OpCode)
+                    case OpCode.Play:
+                        {
+                            await Controls.Play(control);
+                            break;
+                        }
+                    case OpCode.Stop:
+                        {
+                            break;
+                        }
+                    case OpCode.Connection:
+                        {
+                            break;
+                        }
+                    // Do not reply, ignore
+                    case OpCode.StopResponse:
+                    case OpCode.PlayResponse:
+                        { break; }
+                    default:
+                        {
+                            for (var i = 0; i < 10; i++)
+                                Console.WriteLine("IMPLEMENT MISSING OP CODES!");
+                            System.Environment.Exit(1);
+                            break;
+                        }
+                }
+
+                var respOpCode = OpCodeConverter.ToResponse(control.OpCode);
+                if (respOpCode != null)
+                {
+                    var response = new ControlMessage((OpCode)respOpCode, control);
+                    var json_response = JsonConvert.SerializeObject(response);
+                    _client.Send(json_response);
+                }
+            }
+            catch (WebSocketException e)
+            {
+                HandleExceptions(e);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+        private void HandleExceptions(WebSocketException e)
+        {
+            switch (e.GetBaseException())
+            {
+                case InvalidGuildIdException:
                     {
-                        case OpCode.Play:
-                            {
-                                await Controls.Play(control);
-                                var response = new ControlMessage(OpCode.PlayResponse, control);
-                                var json_response = JsonConvert.SerializeObject(response);
-                                _client.Send(json_response);
-                                break;
-                            }
-                        case OpCode.Stop:
-                            {
-                                break;
-                            }
-                        case OpCode.Connection:
-                            {
-                                break;
-                            }
-                        default:
-                            {
-                                for (var i = 0; i < 10; i++)
-                                    Console.WriteLine("IMPLEMENT MISSING OP CODES!");
-                                System.Environment.Exit(1);
-                                break;
-                            }
+                        break;
                     }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                }
-            });
+                case GuildNotFoundException:
+                    {
+                        break;
+                    }
+                case ChannelNotFoundException:
+                    {
+                        break;
+                    }
+                case ChannelsEmptyException:
+                    {
+                        break;
+                    }
+                default:
+                    {
+                        for (var i = 0; i < 10; i++)
+                            Console.WriteLine("IMPLEMENT MISSING EXCEPTIONS");
+                        System.Environment.Exit(1);
+                        break;
+                    }
+            }
         }
     }
 }

@@ -1,10 +1,10 @@
-use std::time::{Instant, Duration};
+use std::time::{Duration, Instant};
 
-use actix::{Addr, clock::timeout};
+use actix::{clock::timeout, Addr};
 use actix_web::{
-    get,
+    get, post,
     web::{scope, Data, Json, ServiceConfig},
-    HttpResponse, post,
+    HttpResponse,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -62,12 +62,13 @@ impl StopPayload {
     }
 }
 
-#[get("play")]
+#[post("play")]
 pub async fn play_request(
     server_address: Data<Addr<ControlsServer>>,
     authorized_user: AuthorizedUser,
     req_payload: Json<PlayPayload>,
     db_pool: Data<PgPool>,
+    ws_channels: Data<WsSessionCommChannels<u8>>,
 ) -> Result<HttpResponse, KekServerError> {
     let mut transaction = db_pool.begin().await?;
 
@@ -81,19 +82,21 @@ pub async fn play_request(
         .await?
         {
             Some(_) => {
-                // let resp = server_address
-                //     .send(Controls::Play(PlayControl::new(
-                //         *req_payload.get_guild_id(),
-                //         *req_payload.get_file_id(),
-                //     )))
-                //     .await?;
-                let resp = server_address
-                    .send(ControlsServerMessage2::new_play(
-                        *req_payload.get_guild_id(),
-                        *req_payload.get_file_id(),
-                    ))
-                    .await?;
                 transaction.commit().await?;
+
+                let control = ControlsServerMessage2::new_play(
+                    *req_payload.get_guild_id(),
+                    *req_payload.get_file_id(),
+                );
+                let id = control.get_id();
+
+                let (sender, receiver) = channel();
+                {
+                    let mut lock = ws_channels.write().await;
+                    lock.insert(id, sender);
+                }
+                server_address.send(control).await?;
+                let resp = timeout(Duration::from_secs(10), receiver).await??;
                 return Ok(HttpResponse::Ok().finish());
             }
             None => return Err(KekServerError::GuildFileDoesNotExistError),
@@ -103,19 +106,31 @@ pub async fn play_request(
     }
 }
 
-#[get("stop")]
+#[post("stop")]
 pub async fn stop_request(
     server_address: Data<Addr<ControlsServer>>,
     authorized_user: AuthorizedUser,
     req_payload: Json<StopPayload>,
     db_pool: Data<PgPool>,
+    ws_channels: Data<WsSessionCommChannels<u8>>,
 ) -> Result<HttpResponse, KekServerError> {
     let transaction = db_pool.begin().await?;
-    let mut resp = 0;
-    if is_user_in_guild(&authorized_user, req_payload.get_guild_id()).await? {
-        resp = server_address.send(Controls::Stop).await?;
-    }
+    let is_user_in_guild = is_user_in_guild(&authorized_user, req_payload.get_guild_id()).await?;
     transaction.commit().await?;
+
+    if is_user_in_guild {
+        let control = ControlsServerMessage2::new_stop();
+        let id = control.get_id();
+
+        let (sender, receiver) = channel();
+        {
+            let mut lock = ws_channels.write().await;
+            lock.insert(id, sender);
+        }
+
+        server_address.send(control).await?;
+        let resp = timeout(Duration::from_secs(10), receiver).await??;
+    }
 
     return Ok(HttpResponse::Ok().finish());
 }
@@ -127,7 +142,8 @@ pub async fn test_control(
     ws_channels: Data<WsSessionCommChannels<u8>>,
     req_payload: Json<PlayPayload>,
 ) -> Result<HttpResponse, KekServerError> {
-    let control = ControlsServerMessage2::new_play(*req_payload.get_guild_id(), *req_payload.get_file_id());
+    let control =
+        ControlsServerMessage2::new_play(*req_payload.get_guild_id(), *req_payload.get_file_id());
     let id = control.get_id();
 
     let (sender, receiver) = channel();

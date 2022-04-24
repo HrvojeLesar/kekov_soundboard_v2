@@ -47,24 +47,50 @@ namespace KekovBot
             }
             else
             {
-                throw new Exception("ControlMessage GuildId is null");
+                throw new InvalidGuildIdException();
             }
 
             if (guild != null)
             {
-                // find a voice channel with a connected user
-                var voiceChannel = guild.GetChannel(757546735584411658);
-                foreach (var channel in guild.Channels.Values)
+                DiscordChannel? voiceChannel = null;
+                if (msg.VoiceChannelId != null)
                 {
-                    Console.WriteLine(channel.ToString());
+                    try
+                    {
+                        voiceChannel = guild.GetChannel((ulong)msg.VoiceChannelId);
+                    }
+                    catch (Exception)
+                    {
+                        throw new ChannelNotFoundException();
+                    }
+                }
+                else
+                {
+                    foreach (var channel in guild.Channels.Values)
+                    {
+                        if (channel.Type == ChannelType.Voice && channel.Users.Count >= 1)
+                        {
+                            voiceChannel = channel;
+                            break;
+                        }
+                    }
+                    throw new ChannelsEmptyException();
                 }
 
-                var file = new FileInfo(@"./cj.wav");
-                await PlayTrack(voiceChannel, file);
+                if (voiceChannel != null)
+                {
+                    var file = new FileInfo(@"./cj.wav");
+                    await PlayTrack(voiceChannel, file);
+                }
+                else
+                {
+                    throw new ChannelNotFoundException();
+                }
+
             }
             else
             {
-                throw new Exception("Guild not found");
+                throw new GuildNotFoundException();
             }
         }
     }

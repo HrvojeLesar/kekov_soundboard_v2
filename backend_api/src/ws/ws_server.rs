@@ -178,6 +178,6 @@ impl Handler<ControlsServerMessage2> for ControlsServer {
     type Result = ();
 
     fn handle(&mut self, msg: ControlsServerMessage2, _ctx: &mut Self::Context) -> Self::Result {
-          self.send_command2(msg);
+        self.send_command2(msg);
     }
 }

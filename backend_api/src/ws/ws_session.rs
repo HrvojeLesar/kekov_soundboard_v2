@@ -51,25 +51,29 @@ impl ControlsSession {
         });
     }
 
-    async fn handle_message(msg: ControlsServerMessage2, channels: Data<WsSessionCommChannels<u8>>) {
-        match msg.get_op_code() {
-            OpCode::PlayResponse => {
-                let sender;
-                {
-                    let mut lock = channels.write().await;
-                    sender = match lock.remove(&msg.get_id()) {
-                        Some(s) => s,
-                        None => return error!("WsSession lock error: Id not found!"),
-                    }
-                }
-                // TODO: make sender actually usefull info ?
-                match sender.send(123) {
-                    Ok(_) => (),
-                    Err(_) => {
-                        return error!("WsSession sender failed!\nPossible receiver dropped!")
-                    }
-                }
+    async fn handle_message(
+        msg: ControlsServerMessage2,
+        channels: Data<WsSessionCommChannels<u8>>,
+    ) {
+        // TODO: make sender actually usefull info ?
+        let sender;
+        {
+            let mut lock = channels.write().await;
+            sender = match lock.remove(&msg.get_id()) {
+                Some(s) => s,
+                None => return error!("WsSession lock error: Id not found!"),
             }
+        }
+
+        match msg.get_op_code() {
+            OpCode::PlayResponse => match sender.send(123) {
+                Ok(_) => (),
+                Err(_) => return error!("WsSession sender failed!\nPossible receiver dropped!"),
+            },
+            OpCode::StopResponse => match sender.send(3) {
+                Ok(_) => (),
+                Err(_) => return error!("WsSession sender failed!\nPossible receiver dropped!"),
+            },
             _ => (),
         }
     }
@@ -127,13 +131,19 @@ impl Handler<ControlsServerMessage2> for ControlsSession {
             OpCode::Play => {
                 match serde_json::to_string(&msg) {
                     Ok(pl) => ctx.text(pl),
-                    Err(e) => error!("ControlsSession play control send error: {}", e),
+                    Err(e) => error!("ControlsSession [Play] control send error: {}", e),
+                };
+            }
+            OpCode::Stop => {
+                match serde_json::to_string(&msg) {
+                    Ok(stop) => ctx.text(stop),
+                    Err(e) => error!("ControlsSession [Stop] control send error: {}", e),
                 };
             }
             OpCode::Connection => {
                 match serde_json::to_string(&msg) {
                     Ok(m) => ctx.text(m),
-                    Err(e) => error!("ControlsSession Connection send error: {}", e),
+                    Err(e) => error!("ControlsSession [Connection] send error: {}", e),
                 };
             }
             _ => ctx.text("Poggers"),
@@ -171,7 +181,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ControlsSession {
                         Ok(c) => c,
                         Err(e) => return error!("WsSession Error: {}", e),
                     };
-                    
+
                     ControlsSession::handle_message(control_message, channels).await;
                 }
                 .into_actor(self)

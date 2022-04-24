@@ -64,9 +64,9 @@ Makes a connection to websocket server, localhost only.
 ## Controls
 
 ### Play
-**GET** `/play`
+**POST** `/play`
 Takes in a json payload with `file_id` and `guild_id`.
 
 ### Stop
-**GET** `/stop`
+**POST** `/stop`
 Takes in a json payload with `guild_id`.

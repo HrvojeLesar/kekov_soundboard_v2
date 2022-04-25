@@ -27,7 +27,7 @@ Api available at route **/v1**.
 
 ### OAuth revoke
 [TODO]: <> (Make sure this is accurate with actual implementation)
-**GET** `/auth/revoke`
+**POST** `/auth/revoke`
 - Revokes token sent in form-data (token, optional token_type).
 
 ## File

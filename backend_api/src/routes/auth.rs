@@ -2,7 +2,7 @@ use actix_web::{
     get,
     http::header::LOCATION,
     web::{scope, Data, Form, Query, ServiceConfig},
-    HttpResponse,
+    HttpResponse, post,
 };
 use awc::Client;
 use chrono::Utc;
@@ -253,7 +253,7 @@ pub async fn auth_callback(
 // only when Authorization header is used with token
 // current implementation might be a bit illogical
 // but works fine
-#[get("/revoke")]
+#[post("/revoke")]
 pub async fn auth_revoke(
     oauth_client: Data<OAuthClient>,
     Form(revoke_token): Form<RevokeToken>,

@@ -1,49 +1,54 @@
+use std::{num::ParseIntError, str::FromStr};
+
 use serde::{Deserialize, Serialize};
 use sqlx::{Postgres, Transaction};
 
 use crate::{
     error::errors::KekServerError, utils::deserialize_string_to_number,
-    utils::serialize_i64_to_string,
+    utils::serialize_id_to_string,
 };
+
+use super::ids::GuildId;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Guild {
     #[serde(deserialize_with = "deserialize_string_to_number")]
-    #[serde(serialize_with = "serialize_i64_to_string")]
-    id: i64,
+    #[serde(serialize_with = "serialize_id_to_string")]
+    id: GuildId,
     name: String,
     icon: Option<String>,
     icon_hash: Option<String>,
 }
 
 impl Guild {
-    pub fn new(id: i64, name: String, icon: Option<String>, icon_hash: Option<String>) -> Self {
-        return Self {
-            id,
-            name,
-            icon,
-            icon_hash,
-        };
-    }
-
     pub async fn get_guild_from_id(
-        id: &i64,
+        id: &GuildId,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Option<Self>, KekServerError> {
-        return Ok(sqlx::query_as!(
-            Self,
+        match sqlx::query!(
             "
             SELECT * FROM guild
             WHERE id = $1
             ",
-            id
+            id.0 as i64
         )
         .fetch_optional(&mut *transaction)
-        .await?);
+        .await?
+        {
+            Some(r) => {
+                return Ok(Some(Self {
+                    id: GuildId(r.id as u64),
+                    name: r.name,
+                    icon: r.icon,
+                    icon_hash: r.icon_hash,
+                }));
+            }
+            None => return Ok(None),
+        }
     }
 
     pub async fn insert_guild(
-        id: &i64,
+        id: &GuildId,
         name: &String,
         icon: Option<&String>,
         icon_hash: Option<&String>,
@@ -54,7 +59,7 @@ impl Guild {
             INSERT INTO guild (id, name, icon, icon_hash)
             VALUES ($1, $2, $3, $4)
             ",
-            id,
+            id.0 as i64,
             name,
             icon,
             icon_hash
@@ -68,9 +73,8 @@ impl Guild {
         guilds: &Vec<Self>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Self>, KekServerError> {
-        let ids = guilds.iter().map(|guild| guild.id).collect::<Vec<i64>>();
-        return Ok(sqlx::query_as!(
-            Self,
+        let ids = guilds.iter().map(|guild| guild.id.0 as i64).collect::<Vec<i64>>();
+        let records = sqlx::query!(
             "
             SELECT * FROM guild
             WHERE id = ANY($1)
@@ -78,10 +82,18 @@ impl Guild {
             &ids
         )
         .fetch_all(transaction)
-        .await?);
+        .await?;
+        let guilds = records.into_iter().map(|r| Guild {
+            id: GuildId(r.id as u64),
+            name: r.name,
+            icon: r.icon,
+            icon_hash: r.icon_hash,
+        })
+        .collect::<Vec<Self>>();
+        return Ok(guilds);
     }
 
-    pub fn get_id(&self) -> &i64 {
+    pub fn get_id(&self) -> &GuildId {
         return &self.id;
     }
 

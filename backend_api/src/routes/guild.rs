@@ -8,11 +8,11 @@ use sqlx::{PgPool, Postgres, Transaction};
 use crate::{
     error::errors::KekServerError,
     middleware::auth_middleware::AuthService,
-    models::{guild::Guild, guild_file::GuildFile, sound_file::SoundFile},
+    models::{guild::Guild, guild_file::GuildFile, sound_file::SoundFile, ids::{GuildId, SoundFileId}},
     utils::{auth::AuthorizedUser, validation::{validate_guild_and_file_ids, is_user_in_guild}},
 };
 
-type GuildFileIds = Path<(i64, i64)>;
+type GuildFileIds = Path<(GuildId, SoundFileId)>;
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
@@ -66,7 +66,7 @@ pub async fn delete_sound_from_guild(
 pub async fn get_guild_files(
     db_pool: Data<PgPool>,
     authorized_user: AuthorizedUser,
-    guild_id: Path<i64>,
+    guild_id: Path<GuildId>,
 ) -> Result<HttpResponse, KekServerError> {
     let guild_id = guild_id.into_inner();
     if is_user_in_guild(&authorized_user, &guild_id).await? {

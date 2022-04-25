@@ -1,12 +1,12 @@
 use sqlx::{Transaction, Postgres};
 
-use crate::{error::errors::KekServerError, models::{guild::Guild, sound_file::SoundFile}};
+use crate::{error::errors::KekServerError, models::{guild::Guild, sound_file::SoundFile, ids::{GuildId, SoundFileId}}};
 
 use super::auth::AuthorizedUser;
 
 pub async fn guild_and_file_exist(
-    guild_id: &i64,
-    file_id: &i64,
+    guild_id: &GuildId,
+    file_id: &SoundFileId,
     transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), KekServerError> {
     match Guild::get_guild_from_id(&guild_id, &mut *transaction).await? {
@@ -23,7 +23,7 @@ pub async fn guild_and_file_exist(
 
 pub async fn is_user_in_guild(
     authorized_user: &AuthorizedUser,
-    guild_id: &i64,
+    guild_id: &GuildId,
 ) -> Result<bool, KekServerError> {
     let user_guilds = authorized_user.get_guilds().await?;
 
@@ -39,8 +39,8 @@ pub async fn is_user_in_guild(
 
 pub async fn validate_guild_and_file_ids(
     authorized_user: &AuthorizedUser,
-    guild_id: &i64,
-    file_id: &i64,
+    guild_id: &GuildId,
+    file_id: &SoundFileId,
     transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<bool, KekServerError> {
     guild_and_file_exist(guild_id, file_id, &mut *transaction).await?;

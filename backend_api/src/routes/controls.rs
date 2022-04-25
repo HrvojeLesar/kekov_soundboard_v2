@@ -13,7 +13,10 @@ use tokio::sync::oneshot::channel;
 use crate::{
     error::errors::KekServerError,
     middleware::auth_middleware::AuthService,
-    models::guild_file::GuildFile,
+    models::{
+        guild_file::GuildFile,
+        ids::{ChannelId, GuildId, SoundFileId},
+    },
     utils::{
         auth::AuthorizedUser,
         validation::{is_user_in_guild, validate_guild_and_file_ids},
@@ -36,30 +39,14 @@ pub fn config(cfg: &mut ServiceConfig) {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PlayPayload {
-    guild_id: i64,
-    file_id: i64,
-    channel_id: Option<i64>,
-}
-
-impl PlayPayload {
-    pub fn get_guild_id(&self) -> &i64 {
-        return &self.guild_id;
-    }
-
-    pub fn get_file_id(&self) -> &i64 {
-        return &self.file_id;
-    }
+    pub guild_id: GuildId,
+    pub file_id: SoundFileId,
+    pub channel_id: Option<ChannelId>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct StopPayload {
-    guild_id: i64,
-}
-
-impl StopPayload {
-    pub fn get_guild_id(&self) -> &i64 {
-        return &self.guild_id;
-    }
+    pub guild_id: GuildId,
 }
 
 #[post("play")]
@@ -73,10 +60,10 @@ pub async fn play_request(
     let mut transaction = db_pool.begin().await?;
 
     // TODO: Very slow (calls on discord api)
-    if is_user_in_guild(&authorized_user, req_payload.get_guild_id()).await? {
+    if is_user_in_guild(&authorized_user, &req_payload.guild_id).await? {
         match GuildFile::get_guild_file(
-            req_payload.get_guild_id(),
-            req_payload.get_file_id(),
+            &req_payload.guild_id,
+            &req_payload.file_id,
             &mut transaction,
         )
         .await?
@@ -84,10 +71,9 @@ pub async fn play_request(
             Some(_) => {
                 transaction.commit().await?;
 
-                let control = ControlsServerMessage2::new_play(
-                    *req_payload.get_guild_id(),
-                    *req_payload.get_file_id(),
-                );
+                let payload = req_payload.into_inner();
+                let control =
+                    ControlsServerMessage2::new_play(payload.guild_id, payload.file_id);
                 let id = control.get_id();
 
                 let (sender, receiver) = channel();
@@ -115,7 +101,7 @@ pub async fn stop_request(
     ws_channels: Data<WsSessionCommChannels>,
 ) -> Result<HttpResponse, KekServerError> {
     let transaction = db_pool.begin().await?;
-    let is_user_in_guild = is_user_in_guild(&authorized_user, req_payload.get_guild_id()).await?;
+    let is_user_in_guild = is_user_in_guild(&authorized_user, &req_payload.guild_id).await?;
     transaction.commit().await?;
 
     if is_user_in_guild {
@@ -142,8 +128,8 @@ pub async fn test_control(
     ws_channels: Data<WsSessionCommChannels>,
     req_payload: Json<PlayPayload>,
 ) -> Result<HttpResponse, KekServerError> {
-    let control =
-        ControlsServerMessage2::new_play(*req_payload.get_guild_id(), *req_payload.get_file_id());
+    let payload = req_payload.into_inner();
+    let control = ControlsServerMessage2::new_play(payload.guild_id, payload.file_id);
     let id = control.get_id();
 
     let (sender, receiver) = channel();

@@ -3,18 +3,20 @@ use sqlx::{Postgres, Transaction};
 
 use crate::error::errors::KekServerError;
 
+use super::ids::{SoundFileId, UserId};
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SoundFile {
     /// unique file_name generated as snowflake
     // #[serde(skip)]
-    pub id: i64,
+    pub id: SoundFileId,
     pub display_name: Option<String>,
     #[serde(skip)]
-    pub owner: Option<i64>,
+    pub owner: Option<UserId>,
 }
 
 impl SoundFile {
-    pub fn new(id: i64, display_name: String, owner: i64) -> Self {
+    pub fn new(id: SoundFileId, display_name: String, owner: UserId) -> Self {
         return Self {
             id,
             display_name: Some(display_name),
@@ -22,7 +24,7 @@ impl SoundFile {
         };
     }
 
-    pub fn get_id(&self) -> &i64 {
+    pub fn get_id(&self) -> &SoundFileId {
         return &self.id;
     }
 
@@ -30,7 +32,7 @@ impl SoundFile {
         return self.display_name.as_ref();
     }
 
-    pub fn get_owner(&self) -> Option<&i64> {
+    pub fn get_owner(&self) -> Option<&UserId> {
         return self.owner.as_ref();
     }
 
@@ -39,7 +41,7 @@ impl SoundFile {
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), KekServerError> {
         let owner = match self.get_owner() {
-            Some(o) => Some(*o),
+            Some(o) => Some(o.0 as i64),
             None => None,
         };
 
@@ -48,7 +50,7 @@ impl SoundFile {
             INSERT INTO files (id, display_name, owner)
             VALUES ($1, $2, $3)
             ",
-            self.get_id(),
+            self.get_id().0 as i64,
             self.get_display_name(),
             owner
         )
@@ -57,59 +59,128 @@ impl SoundFile {
         return Ok(());
     }
 
-    pub async fn delete_static(
-        id: i64,
-        owner: i64,
+    pub async fn delete(
+        id: &SoundFileId,
+        owner: &UserId,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Option<Self>, KekServerError> {
-        let rows_deleted = sqlx::query_as!(
-            Self,
+        match sqlx::query!(
             "
             DELETE FROM files
             WHERE id = $1 AND owner = $2
             RETURNING *
             ",
-            id,
-            owner
+            id.0 as i64,
+            owner.0 as i64
         )
         .fetch_optional(transaction)
-        .await?;
-        return Ok(rows_deleted);
+        .await?
+        {
+            Some(r) => {
+                let owner = match r.owner {
+                    Some(o) => Some(UserId(o as u64)),
+                    None => None,
+                };
+                return Ok(Some(Self {
+                    id: SoundFileId(r.id as u64),
+                    owner,
+                    display_name: r.display_name,
+                }));
+            }
+            None => return Ok(None),
+        }
     }
 
     pub async fn delete_multiple_static(
-        ids: &Vec<i64>,
-        owner: i64,
+        ids: &Vec<SoundFileId>,
+        owner: &UserId,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Self>, KekServerError> {
-        let rows_deleted = sqlx::query_as!(
-            Self,
+        let ids = ids.iter().map(|id| id.0 as i64).collect::<Vec<i64>>();
+        let records = sqlx::query!(
             "
             DELETE FROM files
             WHERE id = ANY($1) AND owner = $2
             RETURNING *
             ",
-            ids,
-            owner
+            &ids,
+            owner.0 as i64
         )
         .fetch_all(transaction)
         .await?;
+        let rows_deleted = records
+            .into_iter()
+            .map(|r| {
+                let owner = match r.owner {
+                    Some(o) => Some(UserId(o as u64)),
+                    None => None,
+                };
+                Self {
+                    id: SoundFileId(r.id as u64),
+                    owner,
+                    display_name: r.display_name,
+                }
+            })
+            .collect::<Vec<SoundFile>>();
         return Ok(rows_deleted);
     }
 
     pub async fn get_file_from_id(
-        id: &i64,
+        id: &SoundFileId,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Option<Self>, KekServerError> {
-        return Ok(sqlx::query_as!(
-            Self,
+        match sqlx::query!(
             "
             SELECT * FROM files
             WHERE id = $1
             ",
-            id
+            id.0 as i64
         )
         .fetch_optional(&mut *transaction)
-        .await?);
+        .await?
+        {
+            Some(r) => {
+                let owner = match r.owner {
+                    Some(o) => Some(UserId(o as u64)),
+                    None => None,
+                };
+                return Ok(Some(Self {
+                    id: SoundFileId(r.id as u64),
+                    owner,
+                    display_name: r.display_name,
+                }));
+            }
+            None => return Ok(None),
+        }
+    }
+
+    pub async fn get_user_files(
+        user: &UserId,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<Self>, KekServerError> {
+        let records = sqlx::query!(
+            "
+            SELECT * FROM files
+            WHERE owner = $1
+            ",
+            user.0 as i64
+        )
+        .fetch_all(&mut *transaction)
+        .await?;
+        let files = records
+            .into_iter()
+            .map(|r| {
+                let owner = match r.owner {
+                    Some(o) => Some(UserId(o as u64)),
+                    None => None,
+                };
+                Self {
+                    id: SoundFileId(r.id as u64),
+                    owner,
+                    display_name: r.display_name,
+                }
+            })
+            .collect();
+        return Ok(files);
     }
 }

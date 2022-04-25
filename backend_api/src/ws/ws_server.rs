@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::error::errors::KekServerError;
+use crate::{error::errors::KekServerError, models::ids::{GuildId, SoundFileId, ChannelId}};
 
 use super::ws_session::ControlsSession;
 
@@ -27,13 +27,13 @@ pub struct Connect {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PlayControl {
     // submitted_by: u64,
-    guild_id: i64,
-    file_id: i64,
-    voice_channel_id: Option<i64>,
+    guild_id: GuildId,
+    file_id: SoundFileId,
+    voice_channel_id: Option<ChannelId>,
 }
 
 impl PlayControl {
-    pub fn new(guild_id: i64, file_id: i64, voice_channel_id: Option<i64>) -> Self {
+    pub fn new(guild_id: GuildId, file_id: SoundFileId, voice_channel_id: Option<ChannelId>) -> Self {
         return Self {
             guild_id,
             file_id,
@@ -101,7 +101,7 @@ impl ControlsServerMessage2 {
         };
     }
 
-    pub fn new_play(guild_id: i64, file_id: i64) -> Self {
+    pub fn new_play(guild_id: GuildId, file_id: SoundFileId) -> Self {
         return Self {
             op: OpCode::Play,
             message_id: Uuid::new_v4().as_u128(),

@@ -5,7 +5,7 @@ use actix_web::http::header::AUTHORIZATION;
 use awc::ClientResponse;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-use crate::error::errors::KekServerError;
+use crate::{error::errors::KekServerError, models::ids::Id};
 
 use self::auth::AuthorizedUser;
 
@@ -59,6 +59,13 @@ where
     S: Serializer,
 {
     return serializer.serialize_str(&num.to_string());
+}
+
+pub fn serialize_id_to_string<S>(num: &dyn Id, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    return serializer.serialize_str(&num.get_id().to_string());
 }
 
 pub async fn make_discord_get_request(

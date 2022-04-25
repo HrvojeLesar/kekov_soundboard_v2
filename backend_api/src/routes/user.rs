@@ -9,7 +9,7 @@ use sqlx::PgPool;
 use crate::{
     error::errors::KekServerError,
     middleware::auth_middleware::AuthService,
-    models::{guild::Guild, sound_file::SoundFile, user::User},
+    models::{guild::Guild, sound_file::SoundFile, user::User, ids::SoundFileId},
     utils::{auth::AuthorizedUser, make_discord_get_request, USERGUILDS},
 };
 
@@ -30,18 +30,7 @@ pub async fn get_user_files(
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
     let mut transaction = db_pool.begin().await?;
-
-    let files = sqlx::query_as!(
-        SoundFile,
-        "
-        SELECT * FROM files
-        WHERE owner = $1
-        ",
-        *user.get_discord_user().get_id()
-    )
-    .fetch_all(&mut transaction)
-    .await?;
-
+    let files = SoundFile::get_user_files(user.get_discord_user().get_id(), &mut transaction).await?;
     transaction.commit().await?;
     return Ok(HttpResponse::Ok().json(files));
 }
@@ -50,13 +39,13 @@ pub async fn get_user_files(
 pub async fn delete_user_file(
     user: AuthorizedUser,
     db_pool: Data<PgPool>,
-    file_id: Path<i64>,
+    file_id: Path<SoundFileId>,
 ) -> Result<HttpResponse, KekServerError> {
     let mut transaction = db_pool.begin().await?;
 
-    let deleted_file = SoundFile::delete_static(
-        file_id.into_inner(),
-        *user.get_discord_user().get_id(),
+    let deleted_file = SoundFile::delete(
+        &file_id.into_inner(),
+        user.get_discord_user().get_id(),
         &mut transaction,
     )
     .await?;
@@ -67,7 +56,7 @@ pub async fn delete_user_file(
 
 #[derive(Serialize, Deserialize)]
 pub struct FilesToDelete {
-    pub files: Vec<i64>,
+    pub files: Vec<SoundFileId>,
 }
 
 #[delete("/files")]
@@ -80,7 +69,7 @@ pub async fn delete_multiple_user_files(
 
     let deleted_files = SoundFile::delete_multiple_static(
         &file_ids.files,
-        *user.get_discord_user().get_id(),
+        user.get_discord_user().get_id(),
         &mut transaction,
     )
     .await?;

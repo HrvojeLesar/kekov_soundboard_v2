@@ -17,7 +17,7 @@ use sqlx::PgPool;
 
 use crate::{
     error::errors::KekServerError, middleware::auth_middleware::AuthService,
-    models::sound_file::SoundFile, utils::auth::AuthorizedUser,
+    models::{sound_file::SoundFile, ids::SoundFileId}, utils::auth::AuthorizedUser,
 };
 use lazy_static::lazy_static;
 
@@ -34,12 +34,12 @@ pub fn config(cfg: &mut ServiceConfig) {
 }
 
 async fn delete_file(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
-    web::block(move || std::fs::remove_file(sound_file.get_id().to_string())).await??;
+    web::block(move || std::fs::remove_file(sound_file.get_id().0.to_string())).await??;
     return Ok(());
 }
 
 async fn validate_audio_mime(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
-    let mime = web::block(move || infer::get_from_path(sound_file.get_id().to_string())).await??;
+    let mime = web::block(move || infer::get_from_path(sound_file.get_id().0.to_string())).await??;
 
     let mime = match mime {
         Some(m) => m,
@@ -119,15 +119,15 @@ pub async fn upload_file(
         }
 
         let sound_file = Arc::new(SoundFile::new(
-            id,
+            SoundFileId(id as u64),
             parse_display_name(&field),
-            *user.get_discord_user().get_id(),
+            user.get_discord_user().get_id().clone(),
         ));
         files.push(Arc::clone(&sound_file));
 
         let moved_file = Arc::clone(&sound_file);
         let mut file_handle =
-            web::block(move || File::create(&*moved_file.get_id().to_string())).await??;
+            web::block(move || File::create(&*moved_file.get_id().0.to_string())).await??;
 
         while let Some(chunk) = field.try_next().await? {
             uploaded_files_size += chunk.len();

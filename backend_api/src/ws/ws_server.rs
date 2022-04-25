@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
 use actix::{
     fut, Actor, ActorContext, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner,
@@ -10,18 +10,24 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::{error::errors::KekServerError, models::ids::{GuildId, SoundFileId, ChannelId}};
+use crate::{
+    error::errors::KekServerError,
+    models::ids::{ChannelId, GuildId, SoundFileId},
+};
 
 use super::ws_session::ControlsSession;
 
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct ControlsServerMessage(pub String);
+pub struct Connect {
+    id: u128,
+    address: Addr<ControlsSession>,
+}
 
 #[derive(Message)]
 #[rtype(result = "()")]
-pub struct Connect {
-    address: Addr<ControlsSession>,
+pub struct Disconnect {
+    pub id: u128,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -33,7 +39,11 @@ pub struct PlayControl {
 }
 
 impl PlayControl {
-    pub fn new(guild_id: GuildId, file_id: SoundFileId, voice_channel_id: Option<ChannelId>) -> Self {
+    pub fn new(
+        guild_id: GuildId,
+        file_id: SoundFileId,
+        voice_channel_id: Option<ChannelId>,
+    ) -> Self {
         return Self {
             guild_id,
             file_id,
@@ -68,7 +78,7 @@ pub enum ClientError {
 
 #[derive(Clone, Debug, Message, Serialize, Deserialize)]
 #[rtype(result = "()")]
-pub struct ControlsServerMessage2 {
+pub struct ControlsServerMessage {
     op: OpCode,
     message_id: u128,
     #[serde(flatten)]
@@ -76,7 +86,7 @@ pub struct ControlsServerMessage2 {
     client_error: Option<ClientError>,
 }
 
-impl ControlsServerMessage2 {
+impl ControlsServerMessage {
     pub fn get_op_code(&self) -> &OpCode {
         return &self.op;
     }
@@ -120,8 +130,7 @@ impl ControlsServerMessage2 {
     }
 }
 
-#[derive(Debug, Message, Clone, Serialize, Deserialize)]
-#[rtype(result = "u64")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum Controls {
     Play(PlayControl),
@@ -130,20 +139,20 @@ pub enum Controls {
 }
 
 impl Connect {
-    pub fn new(address: Addr<ControlsSession>) -> Self {
-        return Self { address };
+    pub fn new(address: Addr<ControlsSession>, id: u128) -> Self {
+        return Self { id, address };
     }
 }
 
 pub struct ControlsServer {
-    sessions: Vec<Addr<ControlsSession>>,
+    clients: HashMap<u128, Addr<ControlsSession>>,
 }
 
 impl ControlsServer {
     pub fn new() -> Addr<Self> {
         debug!("New Controls server");
         let server = Self {
-            sessions: Vec::new(),
+            clients: HashMap::new(),
         };
 
         return server.start_supervisor();
@@ -153,22 +162,10 @@ impl ControlsServer {
         return Supervisor::start(|_| self);
     }
 
-    pub fn send_command(&self, command: Controls) -> u64 {
-        let mut commands_sent = 0;
-        for session in &self.sessions {
-            session.do_send(command.clone());
-            commands_sent += 1;
+    pub fn send_command(&self, command: ControlsServerMessage) {
+        for (_, addr) in self.clients.iter() {
+            addr.do_send(command.clone());
         }
-        return commands_sent;
-    }
-
-    pub fn send_command2(&self, command: ControlsServerMessage2) -> u64 {
-        let mut commands_sent = 0;
-        for session in &self.sessions {
-            session.do_send(command.clone());
-            commands_sent += 1;
-        }
-        return commands_sent;
     }
 }
 
@@ -186,27 +183,27 @@ impl Handler<Connect> for ControlsServer {
     type Result = ();
 
     fn handle(&mut self, msg: Connect, _ctx: &mut Self::Context) -> Self::Result {
-        self.sessions.push(msg.address);
-        let last_address = self.sessions.last();
+        self.clients.insert(msg.id, msg.address);
+        let last_address = self.clients.get(&msg.id);
         match last_address {
-            Some(addr) => addr.do_send(ControlsServerMessage2::new_connect()),
+            Some(addr) => addr.do_send(ControlsServerMessage::new_connect()),
             None => (),
         }
     }
 }
 
-impl Handler<Controls> for ControlsServer {
-    type Result = u64;
+impl Handler<Disconnect> for ControlsServer {
+    type Result = ();
 
-    fn handle(&mut self, msg: Controls, _ctx: &mut Self::Context) -> Self::Result {
-        return self.send_command(msg);
+    fn handle(&mut self, msg: Disconnect, _ctx: &mut Self::Context) -> Self::Result {
+        self.clients.remove(&msg.id);
     }
 }
 
-impl Handler<ControlsServerMessage2> for ControlsServer {
+impl Handler<ControlsServerMessage> for ControlsServer {
     type Result = ();
 
-    fn handle(&mut self, msg: ControlsServerMessage2, _ctx: &mut Self::Context) -> Self::Result {
-        self.send_command2(msg);
+    fn handle(&mut self, msg: ControlsServerMessage, _ctx: &mut Self::Context) -> Self::Result {
+        self.send_command(msg);
     }
 }

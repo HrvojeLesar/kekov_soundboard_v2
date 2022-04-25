@@ -12,11 +12,12 @@ use actix_web::web::Data;
 use actix_web_actors::ws::WebsocketContext;
 use log::{error, warn};
 use tokio::sync::{oneshot::Sender, RwLock};
+use uuid::Uuid;
 
 use crate::error::errors::KekServerError;
 
 use super::ws_server::{
-    Connect, Controls, ControlsServer, ControlsServerMessage, ControlsServerMessage2, OpCode, ClientError,
+    ClientError, Connect, ControlsServer, ControlsServerMessage, Disconnect, OpCode,
 };
 
 pub type WsSessionCommChannels = RwLock<HashMap<u128, Sender<Result<(), ClientError>>>>;
@@ -25,6 +26,7 @@ const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(10);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(20);
 
 pub struct ControlsSession {
+    id: u128,
     heartbeat: Instant,
     server_address: Addr<ControlsServer>,
     communication_channels: Data<WsSessionCommChannels>,
@@ -36,6 +38,7 @@ impl ControlsSession {
         communication_channels: Data<WsSessionCommChannels>,
     ) -> Self {
         return Self {
+            id: Uuid::new_v4().as_u128(),
             heartbeat: Instant::now(),
             server_address,
             communication_channels,
@@ -53,7 +56,7 @@ impl ControlsSession {
         });
     }
 
-    async fn handle_message(msg: ControlsServerMessage2, channels: Data<WsSessionCommChannels>) {
+    async fn handle_message(msg: ControlsServerMessage, channels: Data<WsSessionCommChannels>) {
         // TODO: make sender actually usefull info ?
         let sender;
         {
@@ -90,7 +93,7 @@ impl Actor for ControlsSession {
 
         let address = ctx.address();
         self.server_address
-            .send(Connect::new(address))
+            .send(Connect::new(address, self.id))
             .into_actor(self)
             .then(|resp, actor, ctx| {
                 return fut::ready(());
@@ -103,32 +106,6 @@ impl Handler<ControlsServerMessage> for ControlsSession {
     type Result = ();
 
     fn handle(&mut self, msg: ControlsServerMessage, ctx: &mut Self::Context) -> Self::Result {
-        ctx.text(msg.0);
-    }
-}
-
-impl Handler<Controls> for ControlsSession {
-    type Result = u64;
-
-    fn handle(&mut self, msg: Controls, ctx: &mut Self::Context) -> Self::Result {
-        match msg {
-            Controls::Play(p) => {
-                match serde_json::to_string(&p) {
-                    Ok(pl) => ctx.text(pl),
-                    Err(e) => error!("ControlsSession play control send error: {}", e),
-                };
-            }
-            Controls::Stop => ctx.text("Very pog"),
-            Controls::GetQueue => ctx.text("Poggers"),
-        }
-        0
-    }
-}
-
-impl Handler<ControlsServerMessage2> for ControlsSession {
-    type Result = ();
-
-    fn handle(&mut self, msg: ControlsServerMessage2, ctx: &mut Self::Context) -> Self::Result {
         // TODO: Optimize, make nicer
         match msg.get_op_code() {
             OpCode::Play => {
@@ -174,13 +151,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ControlsSession {
                 self.heartbeat = Instant::now();
             }
             ws::Message::Close(reason) => {
+                self.server_address.do_send(Disconnect { id: self.id });
                 ctx.close(reason);
                 ctx.stop();
             }
             ws::Message::Text(msg) => {
                 let channels = self.communication_channels.clone();
                 async move {
-                    let control_message: ControlsServerMessage2 = match serde_json::from_str(&msg) {
+                    let control_message: ControlsServerMessage = match serde_json::from_str(&msg) {
                         Ok(c) => c,
                         Err(e) => return error!("WsSession Error: {}", e),
                     };

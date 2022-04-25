@@ -22,7 +22,7 @@ use crate::{
         validation::{is_user_in_guild, validate_guild_and_file_ids},
     },
     ws::{
-        ws_server::{Controls, ControlsServer, ControlsServerMessage2, PlayControl},
+        ws_server::{ControlsServer, ControlsServerMessage, PlayControl},
         ws_session::WsSessionCommChannels,
     },
 };
@@ -73,7 +73,7 @@ pub async fn play_request(
 
                 let payload = req_payload.into_inner();
                 let control =
-                    ControlsServerMessage2::new_play(payload.guild_id, payload.file_id);
+                    ControlsServerMessage::new_play(payload.guild_id, payload.file_id);
                 let id = control.get_id();
 
                 let (sender, receiver) = channel();
@@ -105,7 +105,7 @@ pub async fn stop_request(
     transaction.commit().await?;
 
     if is_user_in_guild {
-        let control = ControlsServerMessage2::new_stop();
+        let control = ControlsServerMessage::new_stop();
         let id = control.get_id();
 
         let (sender, receiver) = channel();
@@ -129,7 +129,7 @@ pub async fn test_control(
     req_payload: Json<PlayPayload>,
 ) -> Result<HttpResponse, KekServerError> {
     let payload = req_payload.into_inner();
-    let control = ControlsServerMessage2::new_play(payload.guild_id, payload.file_id);
+    let control = ControlsServerMessage::new_play(payload.guild_id, payload.file_id);
     let id = control.get_id();
 
     let (sender, receiver) = channel();

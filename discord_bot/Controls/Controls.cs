@@ -74,7 +74,10 @@ namespace KekovBot
                             break;
                         }
                     }
-                    throw new ChannelsEmptyException();
+                    if (voiceChannel == null)
+                    {
+                        throw new ChannelsEmptyException();
+                    }
                 }
 
                 if (voiceChannel != null)

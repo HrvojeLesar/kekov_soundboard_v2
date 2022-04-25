@@ -35,9 +35,9 @@ namespace KekovBot
         private async Task HandleMessage(ResponseMessage msg)
         {
             Console.WriteLine($"Message: {msg}");
+            ControlMessage? control = JsonConvert.DeserializeObject<ControlMessage>(msg.Text);
             try
             {
-                ControlMessage? control = JsonConvert.DeserializeObject<ControlMessage>(msg.Text);
                 switch (control?.OpCode)
                 {
                     case OpCode.Play:
@@ -76,41 +76,16 @@ namespace KekovBot
             }
             catch (WebSocketException e)
             {
-                HandleExceptions(e);
+                if (control != null) {
+                    var respOpCode = ClientErrorConverter.ToClientError(e);
+                    var response = new ControlMessage(respOpCode, control);
+                    var json_response = JsonConvert.SerializeObject(response);
+                    _client.Send(json_response);
+                }
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
-            }
-        }
-
-        private void HandleExceptions(WebSocketException e)
-        {
-            switch (e.GetBaseException())
-            {
-                case InvalidGuildIdException:
-                    {
-                        break;
-                    }
-                case GuildNotFoundException:
-                    {
-                        break;
-                    }
-                case ChannelNotFoundException:
-                    {
-                        break;
-                    }
-                case ChannelsEmptyException:
-                    {
-                        break;
-                    }
-                default:
-                    {
-                        for (var i = 0; i < 10; i++)
-                            Console.WriteLine("IMPLEMENT MISSING EXCEPTIONS");
-                        System.Environment.Exit(1);
-                        break;
-                    }
             }
         }
     }

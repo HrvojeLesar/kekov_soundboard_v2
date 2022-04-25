@@ -13,11 +13,13 @@ use actix_web_actors::ws::WebsocketContext;
 use log::{error, warn};
 use tokio::sync::{oneshot::Sender, RwLock};
 
+use crate::error::errors::KekServerError;
+
 use super::ws_server::{
-    Connect, Controls, ControlsServer, ControlsServerMessage, ControlsServerMessage2, OpCode,
+    Connect, Controls, ControlsServer, ControlsServerMessage, ControlsServerMessage2, OpCode, ClientError,
 };
 
-pub type WsSessionCommChannels<T> = RwLock<HashMap<u128, Sender<T>>>;
+pub type WsSessionCommChannels = RwLock<HashMap<u128, Sender<Result<(), ClientError>>>>;
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(10);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(20);
@@ -25,13 +27,13 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(20);
 pub struct ControlsSession {
     heartbeat: Instant,
     server_address: Addr<ControlsServer>,
-    communication_channels: Data<WsSessionCommChannels<u8>>,
+    communication_channels: Data<WsSessionCommChannels>,
 }
 
 impl ControlsSession {
     pub fn new(
         server_address: Addr<ControlsServer>,
-        communication_channels: Data<WsSessionCommChannels<u8>>,
+        communication_channels: Data<WsSessionCommChannels>,
     ) -> Self {
         return Self {
             heartbeat: Instant::now(),
@@ -51,10 +53,7 @@ impl ControlsSession {
         });
     }
 
-    async fn handle_message(
-        msg: ControlsServerMessage2,
-        channels: Data<WsSessionCommChannels<u8>>,
-    ) {
+    async fn handle_message(msg: ControlsServerMessage2, channels: Data<WsSessionCommChannels>) {
         // TODO: make sender actually usefull info ?
         let sender;
         {
@@ -66,11 +65,15 @@ impl ControlsSession {
         }
 
         match msg.get_op_code() {
-            OpCode::PlayResponse => match sender.send(123) {
+            OpCode::PlayResponse => match sender.send(Ok(())) {
                 Ok(_) => (),
                 Err(_) => return error!("WsSession sender failed!\nPossible receiver dropped!"),
             },
-            OpCode::StopResponse => match sender.send(3) {
+            OpCode::StopResponse => match sender.send(Ok(())) {
+                Ok(_) => (),
+                Err(_) => return error!("WsSession sender failed!\nPossible receiver dropped!"),
+            },
+            OpCode::Error => match sender.send(Err(msg.get_error())) {
                 Ok(_) => (),
                 Err(_) => return error!("WsSession sender failed!\nPossible receiver dropped!"),
             },

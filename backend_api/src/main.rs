@@ -77,7 +77,7 @@ async fn main() -> std::io::Result<()> {
     let snowflake_thread_id = Arc::new(Mutex::new(0));
 
     let controls_server = Data::new(ControlsServer::new());
-    let ws_channels: Data<WsSessionCommChannels<u8>> = Data::new(RwLock::new(HashMap::new()));
+    let ws_channels: Data<WsSessionCommChannels> = Data::new(RwLock::new(HashMap::new()));
 
     return HttpServer::new(move || {
         // Per thread snowflake generator

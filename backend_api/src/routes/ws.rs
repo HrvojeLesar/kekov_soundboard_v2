@@ -23,7 +23,7 @@ pub async fn connect_to_websocket(
     request: HttpRequest,
     stream: Payload,
     server_address: Data<Addr<ControlsServer>>,
-    ws_channels: Data<WsSessionCommChannels<u8>>,
+    ws_channels: Data<WsSessionCommChannels>,
 ) -> Result<HttpResponse, KekServerError> {
     let address = server_address.get_ref().clone();
     return Ok(ws::start(ControlsSession::new(address, ws_channels), &request, stream)?);

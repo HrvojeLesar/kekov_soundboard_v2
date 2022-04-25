@@ -27,8 +27,8 @@ use crate::{
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/controls")
+            .wrap(AuthService)
             .service(test_control)
-            // .wrap(AuthService)
             .service(play_request)
             .service(stop_request),
     );
@@ -68,7 +68,7 @@ pub async fn play_request(
     authorized_user: AuthorizedUser,
     req_payload: Json<PlayPayload>,
     db_pool: Data<PgPool>,
-    ws_channels: Data<WsSessionCommChannels<u8>>,
+    ws_channels: Data<WsSessionCommChannels>,
 ) -> Result<HttpResponse, KekServerError> {
     let mut transaction = db_pool.begin().await?;
 
@@ -96,7 +96,7 @@ pub async fn play_request(
                     lock.insert(id, sender);
                 }
                 server_address.send(control).await?;
-                let resp = timeout(Duration::from_secs(10), receiver).await??;
+                let resp = timeout(Duration::from_secs(10), receiver).await???;
                 return Ok(HttpResponse::Ok().finish());
             }
             None => return Err(KekServerError::GuildFileDoesNotExistError),
@@ -112,7 +112,7 @@ pub async fn stop_request(
     authorized_user: AuthorizedUser,
     req_payload: Json<StopPayload>,
     db_pool: Data<PgPool>,
-    ws_channels: Data<WsSessionCommChannels<u8>>,
+    ws_channels: Data<WsSessionCommChannels>,
 ) -> Result<HttpResponse, KekServerError> {
     let transaction = db_pool.begin().await?;
     let is_user_in_guild = is_user_in_guild(&authorized_user, req_payload.get_guild_id()).await?;
@@ -129,7 +129,7 @@ pub async fn stop_request(
         }
 
         server_address.send(control).await?;
-        let resp = timeout(Duration::from_secs(10), receiver).await??;
+        let resp = timeout(Duration::from_secs(10), receiver).await???;
     }
 
     return Ok(HttpResponse::Ok().finish());
@@ -139,7 +139,7 @@ pub async fn stop_request(
 #[post("testcontrol")]
 pub async fn test_control(
     server_address: Data<Addr<ControlsServer>>,
-    ws_channels: Data<WsSessionCommChannels<u8>>,
+    ws_channels: Data<WsSessionCommChannels>,
     req_payload: Json<PlayPayload>,
 ) -> Result<HttpResponse, KekServerError> {
     let control =
@@ -153,6 +153,6 @@ pub async fn test_control(
     }
 
     server_address.send(control).await?;
-    let resp = timeout(Duration::from_secs(10), receiver).await??;
+    let resp = timeout(Duration::from_secs(10), receiver).await???;
     return Ok(HttpResponse::Ok().finish());
 }

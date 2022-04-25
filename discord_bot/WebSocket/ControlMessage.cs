@@ -20,7 +20,11 @@ namespace KekovBot
         public ulong? VoiceChannelId { get; set; }
 
         [JsonProperty("message_id")]
-        public BigInteger? MessageId { get; set; }
+        public BigInteger MessageId { get; set; }
+
+        [JsonProperty("client_error")]
+        [JsonConverter(typeof(StringEnumConverter))]
+        public ClientError? ClientError { get; set; }
 
         public ControlMessage() { }
 
@@ -33,9 +37,14 @@ namespace KekovBot
             MessageId = other.MessageId;
         }
 
+        public ControlMessage(ClientError error, ControlMessage other) : this(OpCode.Error, other)
+        {
+            ClientError = error;
+        }
+
         public override string ToString()
         {
-            return $"OpCode: {OpCode.ToString()}\nGuildId: {GuildId}\nFileId: {FileId}\nVoiceChannelId: {VoiceChannelId}";
+            return $"OpCode: {OpCode.ToString()}\nGuildId: {GuildId}\nFileId: {FileId}\nVoiceChannelId: {VoiceChannelId}\nMessageId: {MessageId}";
         }
     }
 }

@@ -7,7 +7,10 @@ use actix::{
 use actix_web_actors::ws::WebsocketContext;
 use log::{debug, warn};
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 use uuid::Uuid;
+
+use crate::error::errors::KekServerError;
 
 use super::ws_session::ControlsSession;
 
@@ -46,6 +49,21 @@ pub enum OpCode {
     Stop,
     PlayResponse,
     StopResponse,
+    Error,
+}
+
+#[derive(Clone, Debug, Error, Serialize, Deserialize)]
+pub enum ClientError {
+    #[error("Invalid guild id error")]
+    InvalidGuildId,
+    #[error("Guild not found error")]
+    GuildNotFound,
+    #[error("Channnel not found error")]
+    ChannelNotFound,
+    #[error("Channels empty error")]
+    ChannelsEmpty,
+    #[error("Unknown error")]
+    Unknown,
 }
 
 #[derive(Clone, Debug, Message, Serialize, Deserialize)]
@@ -55,6 +73,7 @@ pub struct ControlsServerMessage2 {
     message_id: u128,
     #[serde(flatten)]
     control: Option<Controls>,
+    client_error: Option<ClientError>,
 }
 
 impl ControlsServerMessage2 {
@@ -66,11 +85,19 @@ impl ControlsServerMessage2 {
         return self.message_id.clone();
     }
 
+    pub fn get_error(self) -> ClientError {
+        match self.client_error {
+            Some(e) => return e,
+            None => return ClientError::Unknown,
+        }
+    }
+
     pub fn new_connect() -> Self {
         return Self {
             op: OpCode::Connection,
             message_id: Uuid::new_v4().as_u128(),
             control: None,
+            client_error: None,
         };
     }
 
@@ -79,6 +106,7 @@ impl ControlsServerMessage2 {
             op: OpCode::Play,
             message_id: Uuid::new_v4().as_u128(),
             control: Some(Controls::Play(PlayControl::new(guild_id, file_id, None))),
+            client_error: None,
         };
     }
 
@@ -87,6 +115,7 @@ impl ControlsServerMessage2 {
             op: OpCode::Play,
             message_id: Uuid::new_v4().as_u128(),
             control: Some(Controls::Stop),
+            client_error: None,
         };
     }
 }

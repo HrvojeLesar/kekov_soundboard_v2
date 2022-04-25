@@ -55,6 +55,8 @@ pub enum KekServerError {
     TokioOneshotRecvError(#[from] tokio::sync::oneshot::error::RecvError),
     #[error(transparent)]
     ElapsedError(#[from] tokio::time::error::Elapsed),
+    #[error(transparent)]
+    WsBotClientError(#[from] crate::ws::ws_server::ClientError),
     #[error("Provided files faild to upload")]
     NoFilesUploadedError,
     #[error("Recieved request has no session cookie set")]

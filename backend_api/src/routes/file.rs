@@ -42,12 +42,14 @@ pub fn config(cfg: &mut ServiceConfig) {
 }
 
 async fn delete_file(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
-    return Ok(remove_file(sound_file.get_id().0.to_string()).await?);
+    let full_file_path = format!("{}{}", dotenv::var("SOUNDFILE_DIR")?, sound_file.get_id().0.to_string());
+    return Ok(remove_file(full_file_path).await?);
 }
 
 async fn validate_audio_mime(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
+    let full_file_path = format!("{}{}", dotenv::var("SOUNDFILE_DIR")?, sound_file.get_id().0.to_string());
     let mime =
-        web::block(move || infer::get_from_path(sound_file.get_id().0.to_string())).await??;
+        web::block(move || infer::get_from_path(full_file_path)).await??;
 
     let mime = match mime {
         Some(m) => m,
@@ -102,8 +104,7 @@ async fn insert_valid_files(
     return Ok(uploaded);
 }
 
-// TODO: Save file to some disk location
-// instead of directory of running process
+// TODO: full path code repeats, make nicer
 #[post("upload")]
 pub async fn upload_file(
     mut payload: Multipart,
@@ -133,10 +134,11 @@ pub async fn upload_file(
         ));
         files.push(Arc::clone(&sound_file));
 
-        let mut file_handle = File::create(sound_file.get_id().0.to_string()).await?;
+        let full_file_path = format!("{}{}", dotenv::var("SOUNDFILE_DIR")?, sound_file.get_id().0.to_string());
+
+        let mut file_handle = File::create(full_file_path).await?;
 
         while let Some(chunk) = field.try_next().await? {
-            warn!("Writing chunk!");
             uploaded_files_size += chunk.len();
             if uploaded_files_size > *MAX_FILE_SIZE {
                 max_file_size_exceeded = true;

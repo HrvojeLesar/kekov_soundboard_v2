@@ -6,6 +6,7 @@ use std::{
 
 use actix::Actor;
 use actix_web::{web::Data, App, HttpServer};
+use env::check_required_env_variables;
 use routes::{routes_config, not_found::not_found};
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
@@ -24,11 +25,13 @@ mod oauth_client;
 mod routes;
 mod utils;
 mod ws;
+mod env;
 
 // #[cfg(debug_assertions)]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
+    check_required_env_variables();
 
     let config = ServerConfig::builder()
         .with_safe_defaults()

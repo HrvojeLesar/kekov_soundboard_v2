@@ -1,5 +1,4 @@
 use std::{
-    fs::File,
     io::Write,
     sync::{Arc, Mutex},
 };
@@ -11,13 +10,22 @@ use actix_web::{
     HttpResponse,
 };
 use futures_util::TryStreamExt;
-use log::error;
+use log::{error, warn};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::PgPool;
+use tokio::{
+    fs::{remove_file, File},
+    io::AsyncWriteExt,
+};
 
 use crate::{
-    error::errors::KekServerError, middleware::auth_middleware::AuthService,
-    models::{sound_file::SoundFile, ids::SoundFileId}, utils::auth::AuthorizedUser,
+    error::errors::KekServerError,
+    middleware::auth_middleware::AuthService,
+    models::{
+        ids::SoundFileId,
+        sound_file::{self, SoundFile},
+    },
+    utils::auth::AuthorizedUser,
 };
 use lazy_static::lazy_static;
 
@@ -34,12 +42,12 @@ pub fn config(cfg: &mut ServiceConfig) {
 }
 
 async fn delete_file(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
-    web::block(move || std::fs::remove_file(sound_file.get_id().0.to_string())).await??;
-    return Ok(());
+    return Ok(remove_file(sound_file.get_id().0.to_string()).await?);
 }
 
 async fn validate_audio_mime(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
-    let mime = web::block(move || infer::get_from_path(sound_file.get_id().0.to_string())).await??;
+    let mime =
+        web::block(move || infer::get_from_path(sound_file.get_id().0.to_string())).await??;
 
     let mime = match mime {
         Some(m) => m,
@@ -125,18 +133,16 @@ pub async fn upload_file(
         ));
         files.push(Arc::clone(&sound_file));
 
-        let moved_file = Arc::clone(&sound_file);
-        let mut file_handle =
-            web::block(move || File::create(&*moved_file.get_id().0.to_string())).await??;
+        let mut file_handle = File::create(sound_file.get_id().0.to_string()).await?;
 
         while let Some(chunk) = field.try_next().await? {
+            warn!("Writing chunk!");
             uploaded_files_size += chunk.len();
             if uploaded_files_size > *MAX_FILE_SIZE {
                 max_file_size_exceeded = true;
                 break;
             }
-            file_handle =
-                web::block(move || file_handle.write_all(&chunk).map(|_| file_handle)).await??;
+            file_handle.write_all(&chunk).await?;
         }
     }
 

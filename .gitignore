@@ -12,3 +12,10 @@ todo.md
 
 bin
 obj
+
+logs
+application.yml
+.json
+*.bat
+Lavalink.jar
+sound_files

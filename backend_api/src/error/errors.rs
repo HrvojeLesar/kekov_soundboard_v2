@@ -57,6 +57,10 @@ pub enum KekServerError {
     ElapsedError(#[from] tokio::time::error::Elapsed),
     #[error(transparent)]
     WsBotClientError(#[from] crate::ws::ws_server::ClientError),
+    #[error(transparent)]
+    ToStrError(#[from] actix_http::header::ToStrError),
+    #[error(transparent)]
+    ParseFloatError(#[from] std::num::ParseFloatError),
     #[error("Provided files faild to upload")]
     NoFilesUploadedError,
     #[error("Recieved request has no session cookie set")]

@@ -105,7 +105,7 @@ async fn main() -> std::io::Result<()> {
     })
     // .bind_rustls(&bind_address, config)?
     .bind(bind_address)?
-    // .workers(1) 
+    // .workers(1)
     .run()
     .await;
 }

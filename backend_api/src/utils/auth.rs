@@ -63,6 +63,7 @@ async fn get_access_token(req: &ServiceRequest) -> Result<String, KekServerError
     return Ok(token.to_owned());
 }
 
+// TODO: Handle rate limiting
 pub async fn get_discord_user_from_token(access_token: &str) -> Result<User, KekServerError> {
     let mut resp = awc::Client::new()
         .get("https://discord.com/api/v9/users/@me")

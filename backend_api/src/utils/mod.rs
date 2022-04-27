@@ -1,8 +1,13 @@
-use std::str::FromStr;
+use std::{
+    str::FromStr,
+    time::{Duration, Instant},
+};
 
-use actix_http::{encoding::Decoder, Payload};
+use actix::clock::{sleep, sleep_until};
+use actix_http::{encoding::Decoder, Payload, StatusCode};
 use actix_web::http::header::AUTHORIZATION;
-use awc::ClientResponse;
+use awc::{error::SendRequestError, ClientResponse};
+use log::warn;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{error::errors::KekServerError, models::ids::Id};
@@ -33,6 +38,13 @@ impl Default for GenericSuccess {
             success: "success".to_owned(),
         };
     }
+}
+
+#[derive(Clone, Debug, Deserialize)]
+struct RateLimitResponse {
+    message: String,
+    retry_after: f64,
+    global: bool,
 }
 
 pub fn deserialize_string_to_number<'de, T, D>(deserializer: D) -> Result<T, D::Error>
@@ -68,20 +80,42 @@ where
     return serializer.serialize_str(&num.get_id().to_string());
 }
 
-pub async fn make_discord_get_request(
+async fn get_request(
     autorized_user: &AuthorizedUser,
     url: &str,
-) -> Result<ClientResponse<Decoder<Payload>>, KekServerError> {
-    let resp = awc::Client::new()
+) -> Result<ClientResponse<Decoder<Payload>>, SendRequestError> {
+    return awc::Client::new()
         .get(format!("https://discord.com/api/v9{}", url))
         .append_header((
             AUTHORIZATION,
             format!("Bearer {}", autorized_user.get_access_token()),
         ))
         .send()
-        .await?;
+        .await;
+}
+
+pub async fn make_discord_get_request(
+    autorized_user: &AuthorizedUser,
+    url: &str,
+) -> Result<ClientResponse<Decoder<Payload>>, KekServerError> {
+    let mut resp = get_request(autorized_user, url).await?;
+    while resp.status() == StatusCode::TOO_MANY_REQUESTS {
+        warn!("Rate limit exceeded");
+        if let Some(after) = resp.headers().get("retry-after") {
+            let after = after.to_str()?.parse()?;
+            let sleep_dur = Duration::from_secs_f64(after);
+            sleep(sleep_dur).await;
+        } else {
+            return Err(KekServerError::DiscordRequestError);
+        }
+        resp = get_request(autorized_user, url).await?;
+    }
+
     if resp.status().is_client_error() {
+        warn!("{:#?}", &resp.status());
+        warn!("{:#?}", &resp.headers());
         return Err(KekServerError::DiscordRequestError);
     }
+
     return Ok(resp);
 }

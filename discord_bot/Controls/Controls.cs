@@ -1,3 +1,4 @@
+using dotenv.net;
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
@@ -82,7 +83,8 @@ namespace KekovBot
 
                 if (voiceChannel != null)
                 {
-                    var file = new FileInfo(@"./cj.wav");
+                    var env = DotEnv.Read();
+                    var file = new FileInfo($"{env["SOUNDFILE_DIR"]}{msg.FileId}");
                     await PlayTrack(voiceChannel, file);
                 }
                 else

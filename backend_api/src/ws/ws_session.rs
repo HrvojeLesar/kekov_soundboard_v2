@@ -10,7 +10,7 @@ use actix::{
 use actix_http::ws;
 use actix_web::web::Data;
 use actix_web_actors::ws::WebsocketContext;
-use log::{error, warn};
+use log::{error, warn, debug};
 use tokio::sync::{oneshot::Sender, RwLock};
 use uuid::Uuid;
 
@@ -64,7 +64,7 @@ impl ControlsSession {
             sender = match lock.remove(&msg.get_id()) {
                 Some(s) => s,
                 None => return error!("WsSession lock error: Id not found!"),
-            }
+            };
         }
 
         match msg.get_op_code() {

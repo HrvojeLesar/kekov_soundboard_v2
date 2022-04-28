@@ -46,7 +46,7 @@ impl FromRequest for AuthorizedUser {
             if let Some(user) = req.extensions_mut().remove::<AuthorizedUser>() {
                 return Ok(user);
             }
-            debug!("AuthorizedUser is added to extensions with middlware.\nPossible reason for missing user.");
+            debug!("AuthorizedUser is added to extensions with middlware. Possible reason for missing user.");
             return Err(KekServerError::RequestExtensionsError);
         });
     }

@@ -11,7 +11,7 @@ use actix_web::{
 };
 
 use crate::{utils::{
-    auth::{get_access_token, get_discord_user_from_token, validate_request, AuthorizedUser},
+    auth::{get_access_token, get_discord_user_from_token, validate_request, AuthorizedUser, AuthorizedUserServiceType},
     cache::AuthorizedUsersCache,
 }, error::errors::KekServerError};
 
@@ -74,6 +74,7 @@ where
                 }
             }
 
+            let authorized_user: AuthorizedUserServiceType = Arc::clone(&authorized_user);
             req.extensions_mut().insert(Arc::clone(&authorized_user));
 
             let resp = service.call(req).await?;

@@ -10,6 +10,8 @@ use crate::{
 
 use super::{make_discord_get_request, USERGUILDS};
 
+pub type AuthorizedUserServiceType = Arc<AuthorizedUser>;
+
 pub struct AuthorizedUser {
     pub access_token: Arc<AccessToken>,
     pub discord_user: User,
@@ -82,6 +84,10 @@ pub async fn get_discord_user_from_token(access_token: &AccessToken) -> Result<U
         .append_header((AUTHORIZATION, format!("Bearer {}", access_token.0)))
         .send()
         .await?;
+
+    if resp.status() == StatusCode::TOO_MANY_REQUESTS {
+        // TODO: Rate limit user for the duration and notify them
+    }
 
     if resp.status().is_client_error() {
         return Err(KekServerError::InvalidCredentialsError);

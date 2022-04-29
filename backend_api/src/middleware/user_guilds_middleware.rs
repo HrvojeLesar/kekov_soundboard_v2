@@ -15,7 +15,7 @@ use log::{debug, warn};
 use crate::{
     error::errors::KekServerError,
     utils::{
-        auth::{validate_request, AuthorizedUser},
+        auth::{validate_request, AuthorizedUser, AuthorizedUserServiceType},
         cache::UserGuildsCache,
     },
 };
@@ -59,7 +59,7 @@ where
         return Box::pin(async move {
             {
                 let extensions = req.extensions();
-                let authorized_user = match extensions.get::<AuthorizedUser>() {
+                let authorized_user = match extensions.get::<AuthorizedUserServiceType>() {
                     Some(a) => a,
                     None => {
                         warn!("AuthorizedUser is added to extensions with middlware. Possible reason for missing user.");

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use actix_web::{
     get,
     http::header::LOCATION,
@@ -20,7 +22,7 @@ use crate::{
     oauth_client::{GuildTokenField, OAuthClient},
     utils::{
         auth::{self, get_discord_user_from_token},
-        GenericSuccess,
+        GenericSuccess, cache::AuthorizedUsersCache,
     },
 };
 
@@ -35,7 +37,7 @@ pub struct AuthCallbackParams {
     state: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum TokenType {
     AccessToken,
@@ -47,7 +49,7 @@ pub enum TokenType {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RevokeToken {
     token: String,
-    token_type: Option<TokenType>,
+    token_type: TokenType,
 }
 
 pub fn config(cfg: &mut ServiceConfig) {
@@ -264,34 +266,34 @@ pub async fn auth_callback(
 pub async fn auth_revoke(
     oauth_client: Data<OAuthClient>,
     Form(revoke_token): Form<RevokeToken>,
+    authorized_users_cache: Data<AuthorizedUsersCache>,
 ) -> Result<HttpResponse, KekServerError> {
     let client = oauth_client.get_client();
     let request;
-    if let Some(token_type) = revoke_token.token_type {
-        match token_type {
-            TokenType::AccessToken | TokenType::InvalidTokenType => {
-                request = client.revoke_token(StandardRevocableToken::AccessToken(
-                    AccessToken::new(revoke_token.token),
-                ))?;
-            }
-            TokenType::RefreshToken => {
-                request = client.revoke_token(StandardRevocableToken::RefreshToken(
-                    RefreshToken::new(revoke_token.token),
-                ))?;
-            }
+
+    match revoke_token.token_type {
+        TokenType::AccessToken | TokenType::InvalidTokenType => {
+            request = client.revoke_token(StandardRevocableToken::AccessToken(
+                    AccessToken::new(revoke_token.token.clone()),
+                    ))?;
         }
-    } else {
-        request = client.revoke_token(StandardRevocableToken::AccessToken(AccessToken::new(
-            revoke_token.token,
-        )))?;
+        TokenType::RefreshToken => {
+            request = client.revoke_token(StandardRevocableToken::RefreshToken(
+                    RefreshToken::new(revoke_token.token.clone()),
+                    ))?;
+        }
     }
 
     match request.request_async(send_oauth_request).await {
-        Ok(_) => (),
+        Ok(_) => {
+            if revoke_token.token_type == TokenType::AccessToken || revoke_token.token_type == TokenType::InvalidTokenType {
+                authorized_users_cache.invalidate(&Arc::new(auth::AccessToken(revoke_token.token))).await;
+            }
+        },
         Err(err) => return Err(KekServerError::RevocationRequestTokenError(Box::new(err))),
     }
 
-    return Ok(HttpResponse::Ok().json(GenericSuccess::default()));
+    return Ok(HttpResponse::Ok().finish());
 }
 
 #[cfg(test)]

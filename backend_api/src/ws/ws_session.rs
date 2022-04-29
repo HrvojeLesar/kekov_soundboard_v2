@@ -98,7 +98,7 @@ impl Actor for ControlsSession {
             .then(|resp, actor, ctx| {
                 return fut::ready(());
             })
-            .wait(ctx); // WARN: might block
+            .wait(ctx);
     }
 }
 

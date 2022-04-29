@@ -77,7 +77,6 @@ pub async fn get_access_token(req: &ServiceRequest) -> Result<AccessToken, KekSe
 }
 
 // TODO: Handle rate limiting
-// TODO: Cache token ???
 pub async fn get_discord_user_from_token(access_token: &AccessToken) -> Result<User, KekServerError> {
     let mut resp = awc::Client::new()
         .get("https://discord.com/api/v9/users/@me")
@@ -104,31 +103,4 @@ pub async fn validate_request(req: &ServiceRequest) -> Result<AuthorizedUser, Ke
         access_token: Arc::new(token),
         discord_user,
     });
-}
-
-#[cfg(test)]
-mod tests {
-    use actix_web::{http::header::AUTHORIZATION, test::TestRequest};
-
-    use super::{get_access_token, get_discord_user_from_token};
-
-    #[actix_web::test]
-    async fn test_validate_discord_token() {
-        let res = match get_discord_user_from_token("invalid token").await {
-            Ok(d) => Some(d),
-            Err(_) => None,
-        };
-
-        assert!(res.is_none());
-    }
-
-    #[actix_web::test]
-    async fn test_get_auth_token() {
-        let req = TestRequest::default();
-        let req = req
-            .append_header((AUTHORIZATION, "auth_token"))
-            .to_srv_request();
-        let token = get_access_token(&req).await.unwrap();
-        assert_eq!(token, "auth_token");
-    }
 }

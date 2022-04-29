@@ -100,6 +100,11 @@ impl Actor for ControlsSession {
             })
             .wait(ctx);
     }
+
+    fn stopping(&mut self, _: &mut Self::Context) -> actix::Running {
+        info!("Stopping sessions websocket");
+        return actix::Running::Stop;
+    }
 }
 
 impl Handler<ControlsServerMessage> for ControlsSession {

@@ -14,6 +14,11 @@ namespace KekovBot
 
         public SyncMessage() { }
 
+        public SyncMessage(ulong userId) {
+            OpCode = OpCode.UpdateUserCache;
+            UserId = userId;
+        }
+
         public SyncMessage(OpCode code, SyncMessage other)
         {
             OpCode = code;

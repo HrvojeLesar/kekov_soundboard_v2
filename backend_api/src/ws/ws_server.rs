@@ -178,6 +178,11 @@ impl Supervised for ControlsServer {
 
 impl Actor for ControlsServer {
     type Context = Context<Self>;
+
+    fn stopping(&mut self, _: &mut Self::Context) -> actix::Running {
+        info!("Stopping sessions server websocket");
+        return actix::Running::Stop;
+    }
 }
 
 impl Handler<Connect> for ControlsServer {

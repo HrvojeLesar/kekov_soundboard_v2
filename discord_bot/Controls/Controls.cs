@@ -7,7 +7,7 @@ namespace KekovBot
 {
     public static class Controls
     {
-        private static DiscordBot _client = DiscordBot.GetInstance();
+        private static DiscordBot _client = DiscordBot.Instance;
 
         private static async Task PlayTrack(DiscordChannel channel, FileInfo file)
         {

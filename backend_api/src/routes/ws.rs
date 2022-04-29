@@ -7,6 +7,7 @@ use actix_web::{
     HttpRequest, HttpResponse,
 };
 use actix_web_actors::ws;
+use log::info;
 use sqlx::PgPool;
 
 use crate::{error::errors::KekServerError, ws::{ws_session::{ControlsSession, WsSessionCommChannels}, ws_server::ControlsServer, ws_sync::SyncSession}, utils::cache::UserGuildsCache};
@@ -27,6 +28,7 @@ pub async fn controls_ws(
     server_address: Data<Addr<ControlsServer>>,
     ws_channels: Data<WsSessionCommChannels>,
 ) -> Result<HttpResponse, KekServerError> {
+    info!("New controls websocket connection");
     let address = server_address.get_ref().clone();
     return Ok(ws::start(ControlsSession::new(address, ws_channels), &request, stream)?);
 }
@@ -38,5 +40,6 @@ pub async fn sync_ws(
     user_guilds_cache: Data<UserGuildsCache>,
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
+    info!("New sync websocket connection");
     return Ok(ws::start(SyncSession::new(user_guilds_cache, db_pool), &request, stream)?);
 }

@@ -57,7 +57,7 @@ impl Actor for SyncSession {
     }
 
     fn stopping(&mut self, _: &mut Self::Context) -> actix::Running {
-        println!("Stopping");
+        info!("Stopping sync websocket");
         self.user_guilds_cache.invalidate_all();
         return actix::Running::Stop;
     }

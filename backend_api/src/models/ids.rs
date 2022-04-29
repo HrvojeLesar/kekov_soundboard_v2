@@ -6,7 +6,7 @@ pub trait Id {
     fn get_id(&self) -> u64;
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct GuildId(pub u64);
 
 impl Id for GuildId {
@@ -23,7 +23,7 @@ impl FromStr for GuildId {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct UserId(pub u64);
 
 impl Id for UserId {
@@ -40,7 +40,7 @@ impl FromStr for UserId {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct SoundFileId(pub u64);
 
 impl Id for SoundFileId {
@@ -57,7 +57,7 @@ impl FromStr for SoundFileId {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct ChannelId(pub u64);
 
 impl Id for ChannelId {

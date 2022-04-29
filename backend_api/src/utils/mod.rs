@@ -7,7 +7,7 @@ use actix::clock::{sleep, sleep_until};
 use actix_http::{encoding::Decoder, Payload, StatusCode};
 use actix_web::http::header::AUTHORIZATION;
 use awc::{error::SendRequestError, ClientResponse};
-use log::warn;
+use log::{debug, warn};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::{error::errors::KekServerError, models::ids::Id};
@@ -15,6 +15,7 @@ use crate::{error::errors::KekServerError, models::ids::Id};
 use self::auth::AuthorizedUser;
 
 pub mod auth;
+pub mod cache;
 pub mod validation;
 
 pub const USERGUILDS: &str = "/users/@me/guilds";
@@ -112,8 +113,8 @@ pub async fn make_discord_get_request(
     }
 
     if resp.status().is_client_error() {
-        warn!("{:#?}", &resp.status());
-        warn!("{:#?}", &resp.headers());
+        debug!("{:#?}", &resp.status());
+        debug!("{:#?}", &resp.headers());
         return Err(KekServerError::DiscordRequestError);
     }
 

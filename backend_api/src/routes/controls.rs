@@ -2,23 +2,26 @@ use std::time::{Duration, Instant};
 
 use actix::{clock::timeout, Addr};
 use actix_web::{
+    dev::Service,
     get, post,
     web::{scope, Data, Json, ServiceConfig},
     HttpResponse,
 };
+use log::warn;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tokio::sync::oneshot::channel;
 
 use crate::{
     error::errors::KekServerError,
-    middleware::auth_middleware::AuthService,
+    middleware::{auth_middleware::AuthService, user_guilds_middleware::UserGuildsService},
     models::{
         guild_file::GuildFile,
-        ids::{ChannelId, GuildId, SoundFileId},
+        ids::{ChannelId, GuildId, Id, SoundFileId},
     },
     utils::{
         auth::AuthorizedUser,
+        cache::UserGuildsCache,
         validation::{is_user_in_guild, validate_guild_and_file_ids},
     },
     ws::{
@@ -30,8 +33,8 @@ use crate::{
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/controls")
+            .wrap(UserGuildsService)
             .wrap(AuthService)
-            .service(test_control)
             .service(play_request)
             .service(stop_request),
     );
@@ -56,39 +59,43 @@ pub async fn play_request(
     req_payload: Json<PlayPayload>,
     db_pool: Data<PgPool>,
     ws_channels: Data<WsSessionCommChannels>,
+    user_guilds_cache: Data<UserGuildsCache>,
 ) -> Result<HttpResponse, KekServerError> {
     let mut transaction = db_pool.begin().await?;
 
-    // TODO: Very slow (calls on discord api)
-    if is_user_in_guild(&authorized_user, &req_payload.guild_id).await? {
-        match GuildFile::get_guild_file(
-            &req_payload.guild_id,
-            &req_payload.file_id,
-            &mut transaction,
-        )
-        .await?
-        {
-            Some(_) => {
-                transaction.commit().await?;
+    let user_guilds = match user_guilds_cache.get(authorized_user.get_discord_user().get_id()) {
+        Some(ug) => ug,
+        None => return Err(KekServerError::UserNotInCacheError),
+    };
 
-                let payload = req_payload.into_inner();
-                let control =
-                    ControlsServerMessage::new_play(payload.guild_id, payload.file_id);
-                let id = control.get_id();
-
-                let (sender, receiver) = channel();
-                {
-                    let mut lock = ws_channels.write().await;
-                    lock.insert(id, sender);
-                }
-                server_address.send(control).await?;
-                let resp = timeout(Duration::from_secs(10), receiver).await???;
-                return Ok(HttpResponse::Ok().finish());
-            }
-            None => return Err(KekServerError::GuildFileDoesNotExistError),
-        }
-    } else {
+    if !user_guilds.contains(&req_payload.guild_id) {
         return Err(KekServerError::NotInGuildError);
+    }
+
+    match GuildFile::get_guild_file(
+        &req_payload.guild_id,
+        &req_payload.file_id,
+        &mut transaction,
+    )
+    .await?
+    {
+        Some(_) => {
+            transaction.commit().await?;
+
+            let payload = req_payload.into_inner();
+            let control = ControlsServerMessage::new_play(payload.guild_id, payload.file_id);
+            let id = control.get_id();
+
+            let (sender, receiver) = channel();
+            {
+                let mut lock = ws_channels.write().await;
+                lock.insert(id, sender);
+            }
+            server_address.send(control).await?;
+            let resp = timeout(Duration::from_secs(10), receiver).await???;
+            return Ok(HttpResponse::Ok().finish());
+        }
+        None => return Err(KekServerError::GuildFileDoesNotExistError),
     }
 }
 
@@ -99,46 +106,28 @@ pub async fn stop_request(
     req_payload: Json<StopPayload>,
     db_pool: Data<PgPool>,
     ws_channels: Data<WsSessionCommChannels>,
+    user_guilds_cache: Data<UserGuildsCache>,
 ) -> Result<HttpResponse, KekServerError> {
-    let transaction = db_pool.begin().await?;
-    let is_user_in_guild = is_user_in_guild(&authorized_user, &req_payload.guild_id).await?;
-    transaction.commit().await?;
+    let user_guilds = match user_guilds_cache.get(authorized_user.get_discord_user().get_id()) {
+        Some(ug) => ug,
+        None => return Err(KekServerError::UserNotInCacheError),
+    };
 
-    if is_user_in_guild {
-        let control = ControlsServerMessage::new_stop();
-        let id = control.get_id();
-
-        let (sender, receiver) = channel();
-        {
-            let mut lock = ws_channels.write().await;
-            lock.insert(id, sender);
-        }
-
-        server_address.send(control).await?;
-        let resp = timeout(Duration::from_secs(10), receiver).await???;
+    if !user_guilds.contains(&req_payload.guild_id) {
+        return Err(KekServerError::NotInGuildError);
     }
 
-    return Ok(HttpResponse::Ok().finish());
-}
-
-// Possile implementation over channels instead of actors
-#[post("testcontrol")]
-pub async fn test_control(
-    server_address: Data<Addr<ControlsServer>>,
-    ws_channels: Data<WsSessionCommChannels>,
-    req_payload: Json<PlayPayload>,
-) -> Result<HttpResponse, KekServerError> {
-    let payload = req_payload.into_inner();
-    let control = ControlsServerMessage::new_play(payload.guild_id, payload.file_id);
+    let control = ControlsServerMessage::new_stop();
     let id = control.get_id();
 
     let (sender, receiver) = channel();
     {
-        let mut t = ws_channels.write().await;
-        t.insert(id, sender);
+        let mut lock = ws_channels.write().await;
+        lock.insert(id, sender);
     }
 
     server_address.send(control).await?;
     let resp = timeout(Duration::from_secs(10), receiver).await???;
+
     return Ok(HttpResponse::Ok().finish());
 }

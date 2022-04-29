@@ -14,10 +14,10 @@ use super::ids::GuildId;
 pub struct Guild {
     #[serde(deserialize_with = "deserialize_string_to_number")]
     #[serde(serialize_with = "serialize_id_to_string")]
-    id: GuildId,
-    name: String,
-    icon: Option<String>,
-    icon_hash: Option<String>,
+    pub id: GuildId,
+    pub name: String,
+    pub icon: Option<String>,
+    pub icon_hash: Option<String>,
 }
 
 impl Guild {

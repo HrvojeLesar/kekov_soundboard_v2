@@ -1,5 +1,6 @@
+use actix_http::StatusCode;
 use actix_web::{dev::ServiceRequest, http::header::AUTHORIZATION, FromRequest, HttpMessage};
-use log::debug;
+use log::{debug, warn};
 use std::{future::Future, pin::Pin};
 
 use crate::{
@@ -57,13 +58,13 @@ async fn get_access_token(req: &ServiceRequest) -> Result<String, KekServerError
         .headers()
         .get("Authorization")
         .ok_or(KekServerError::InvalidCredentialsError)?
-        .to_str()
-        .map_err(|_| KekServerError::InvalidCredentialsError)?;
+        .to_str()?;
 
     return Ok(token.to_owned());
 }
 
 // TODO: Handle rate limiting
+// TODO: Cache token ???
 pub async fn get_discord_user_from_token(access_token: &str) -> Result<User, KekServerError> {
     let mut resp = awc::Client::new()
         .get("https://discord.com/api/v9/users/@me")

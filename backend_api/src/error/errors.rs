@@ -1,4 +1,5 @@
 use actix_web::{http::StatusCode, HttpResponse, ResponseError};
+use log::error;
 use oauth2::{basic::BasicErrorResponseType, RevocationErrorResponseType, StandardErrorResponse};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
@@ -85,6 +86,10 @@ pub enum KekServerError {
     JsonParseError(#[from] awc::error::JsonPayloadError),
     #[error("Request extensions error")]
     RequestExtensionsError,
+    #[error("Authorized user not found error")]
+    AuthorizedUserNotFoundError,
+    #[error("User not in cache error")]
+    UserNotInCacheError,
     #[error("Canceled authorization error")]
     CanceledAuthError,
     #[error("Time to authorize expired")]

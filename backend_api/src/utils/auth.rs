@@ -1,7 +1,7 @@
 use actix_http::StatusCode;
 use actix_web::{dev::ServiceRequest, http::header::AUTHORIZATION, FromRequest, HttpMessage};
 use log::{debug, warn};
-use std::{future::Future, pin::Pin};
+use std::{future::Future, pin::Pin, sync::Arc};
 
 use crate::{
     error::errors::KekServerError,
@@ -11,12 +11,21 @@ use crate::{
 use super::{make_discord_get_request, USERGUILDS};
 
 pub struct AuthorizedUser {
-    access_token: String,
-    discord_user: User,
+    pub access_token: Arc<AccessToken>,
+    pub discord_user: User,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct AccessToken(pub String);
+
+impl From<String> for AccessToken {
+    fn from(string: String) -> Self {
+        return Self(string);
+    }
 }
 
 impl AuthorizedUser {
-    pub fn get_access_token(&self) -> &String {
+    pub fn get_access_token(&self) -> &AccessToken {
         return &self.access_token;
     }
 
@@ -32,7 +41,9 @@ impl AuthorizedUser {
     }
 }
 
-impl FromRequest for AuthorizedUser {
+pub struct AuthorizedUserExt(pub Arc<AuthorizedUser>);
+
+impl FromRequest for AuthorizedUserExt {
     type Error = KekServerError;
 
     type Future = Pin<Box<dyn Future<Output = Result<Self, Self::Error>>>>;
@@ -44,8 +55,8 @@ impl FromRequest for AuthorizedUser {
         let req = req.clone();
 
         return Box::pin(async move {
-            if let Some(user) = req.extensions_mut().remove::<AuthorizedUser>() {
-                return Ok(user);
+            if let Some(user) = req.extensions_mut().remove::<Arc<AuthorizedUser>>() {
+                return Ok(AuthorizedUserExt(user));
             }
             debug!("AuthorizedUser is added to extensions with middlware. Possible reason for missing user.");
             return Err(KekServerError::RequestExtensionsError);
@@ -53,22 +64,22 @@ impl FromRequest for AuthorizedUser {
     }
 }
 
-async fn get_access_token(req: &ServiceRequest) -> Result<String, KekServerError> {
+pub async fn get_access_token(req: &ServiceRequest) -> Result<AccessToken, KekServerError> {
     let token = req
         .headers()
         .get("Authorization")
         .ok_or(KekServerError::InvalidCredentialsError)?
         .to_str()?;
 
-    return Ok(token.to_owned());
+    return Ok(AccessToken(token.to_owned()));
 }
 
 // TODO: Handle rate limiting
 // TODO: Cache token ???
-pub async fn get_discord_user_from_token(access_token: &str) -> Result<User, KekServerError> {
+pub async fn get_discord_user_from_token(access_token: &AccessToken) -> Result<User, KekServerError> {
     let mut resp = awc::Client::new()
         .get("https://discord.com/api/v9/users/@me")
-        .append_header((AUTHORIZATION, format!("Bearer {}", access_token)))
+        .append_header((AUTHORIZATION, format!("Bearer {}", access_token.0)))
         .send()
         .await?;
 
@@ -84,7 +95,7 @@ pub async fn validate_request(req: &ServiceRequest) -> Result<AuthorizedUser, Ke
     let discord_user = get_discord_user_from_token(&token).await?;
 
     return Ok(AuthorizedUser {
-        access_token: token,
+        access_token: Arc::new(token),
         discord_user,
     });
 }

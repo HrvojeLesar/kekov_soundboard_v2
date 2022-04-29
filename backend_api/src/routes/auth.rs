@@ -1,8 +1,9 @@
 use actix_web::{
     get,
     http::header::LOCATION,
+    post,
     web::{scope, Data, Form, Query, ServiceConfig},
-    HttpResponse, post,
+    HttpResponse,
 };
 use awc::Client;
 use chrono::Utc;
@@ -17,7 +18,10 @@ use crate::{
     error::errors::KekServerError,
     models::{guild::Guild, state::State, user::User},
     oauth_client::{GuildTokenField, OAuthClient},
-    utils::{auth::get_discord_user_from_token, GenericSuccess},
+    utils::{
+        auth::{self, get_discord_user_from_token},
+        GenericSuccess,
+    },
 };
 
 #[derive(Serialize, Deserialize)]
@@ -212,7 +216,10 @@ pub async fn auth_callback(
 
             State::delete_state(state.get_csrf_token(), &mut transaction).await?;
 
-            let user = get_discord_user_from_token(access_token.access_token().secret()).await?;
+            let user = get_discord_user_from_token(&auth::AccessToken(
+                access_token.access_token().secret().to_string(),
+            ))
+            .await?;
             if let None = User::get_with_id(user.get_id(), &mut transaction).await? {
                 User::insert_user(
                     user.get_id(),

@@ -25,7 +25,7 @@ use crate::{
         ids::SoundFileId,
         sound_file::{self, SoundFile},
     },
-    utils::auth::AuthorizedUser,
+    utils::auth::{AuthorizedUser, AuthorizedUserExt},
 };
 use lazy_static::lazy_static;
 
@@ -109,7 +109,7 @@ async fn insert_valid_files(
 pub async fn upload_file(
     mut payload: Multipart,
     snowflake: Data<Mutex<SnowflakeIdGenerator>>,
-    user: AuthorizedUser,
+    AuthorizedUserExt(authorized_user): AuthorizedUserExt,
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
     let mut uploaded_files_size = 0;
@@ -130,7 +130,7 @@ pub async fn upload_file(
         let sound_file = Arc::new(SoundFile::new(
             SoundFileId(id as u64),
             parse_display_name(&field),
-            user.get_discord_user().get_id().clone(),
+            authorized_user.get_discord_user().get_id().clone(),
         ));
         files.push(Arc::clone(&sound_file));
 

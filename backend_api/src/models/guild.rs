@@ -70,10 +70,13 @@ impl Guild {
     }
 
     pub async fn get_existing_guilds(
-        guilds: &Vec<Self>,
+        guild_ids: &Vec<GuildId>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Self>, KekServerError> {
-        let ids = guilds.iter().map(|guild| guild.id.0 as i64).collect::<Vec<i64>>();
+        let ids = guild_ids
+            .iter()
+            .map(|guild_id| guild_id.0 as i64)
+            .collect::<Vec<i64>>();
         let records = sqlx::query!(
             "
             SELECT * FROM guild
@@ -83,13 +86,15 @@ impl Guild {
         )
         .fetch_all(transaction)
         .await?;
-        let guilds = records.into_iter().map(|r| Guild {
-            id: GuildId(r.id as u64),
-            name: r.name,
-            icon: r.icon,
-            icon_hash: r.icon_hash,
-        })
-        .collect::<Vec<Self>>();
+        let guilds = records
+            .into_iter()
+            .map(|r| Guild {
+                id: GuildId(r.id as u64),
+                name: r.name,
+                icon: r.icon,
+                icon_hash: r.icon_hash,
+            })
+            .collect::<Vec<Self>>();
         return Ok(guilds);
     }
 

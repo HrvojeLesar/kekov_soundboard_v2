@@ -13,7 +13,7 @@ use rustls_pemfile::{certs, pkcs8_private_keys};
 use dotenv::dotenv;
 use snowflake::SnowflakeIdGenerator;
 use tokio::sync::RwLock;
-use utils::cache::create_cache;
+use utils::cache::{create_user_guilds_cache, create_authorized_user_cache};
 use ws::{ws_server::ControlsServer, ws_session::WsSessionCommChannels};
 
 mod database;
@@ -81,7 +81,8 @@ async fn main() -> std::io::Result<()> {
 
     let controls_server = Data::new(ControlsServer::new());
     let ws_channels: Data<WsSessionCommChannels> = Data::new(RwLock::new(HashMap::new()));
-    let users_guild_cache = Data::new(create_cache());
+    let users_guild_cache = Data::new(create_user_guilds_cache());
+    let authorized_users_cache = Data::new(create_authorized_user_cache());
 
     return HttpServer::new(move || {
         // Per thread snowflake generator
@@ -101,6 +102,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(controls_server.clone())
             .app_data(ws_channels.clone())
             .app_data(users_guild_cache.clone())
+            .app_data(authorized_users_cache .clone())
             .app_data(snowflakes)
             .configure(routes_config)
             .default_service(actix_web::web::to(not_found))

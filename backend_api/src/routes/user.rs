@@ -8,9 +8,9 @@ use sqlx::PgPool;
 
 use crate::{
     error::errors::KekServerError,
-    middleware::auth_middleware::AuthService,
-    models::{guild::Guild, sound_file::SoundFile, user::User, ids::SoundFileId},
-    utils::{auth::AuthorizedUser, make_discord_get_request, USERGUILDS},
+    middleware::{auth_middleware::AuthService, user_guilds_middleware::UserGuildsService},
+    models::{guild::Guild, ids::SoundFileId, sound_file::SoundFile, user::User},
+    utils::{auth::{AuthorizedUser, AuthorizedUserExt}, cache::UserGuildsCache, make_discord_get_request, USERGUILDS},
 };
 
 pub fn config(cfg: &mut ServiceConfig) {
@@ -26,18 +26,19 @@ pub fn config(cfg: &mut ServiceConfig) {
 
 #[get("/files")]
 pub async fn get_user_files(
-    user: AuthorizedUser,
+    AuthorizedUserExt(user): AuthorizedUserExt,
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
     let mut transaction = db_pool.begin().await?;
-    let files = SoundFile::get_user_files(user.get_discord_user().get_id(), &mut transaction).await?;
+    let files =
+        SoundFile::get_user_files(user.get_discord_user().get_id(), &mut transaction).await?;
     transaction.commit().await?;
     return Ok(HttpResponse::Ok().json(files));
 }
 
 #[delete("/files/{file_id}")]
 pub async fn delete_user_file(
-    user: AuthorizedUser,
+    AuthorizedUserExt(user): AuthorizedUserExt,
     db_pool: Data<PgPool>,
     file_id: Path<SoundFileId>,
 ) -> Result<HttpResponse, KekServerError> {
@@ -61,7 +62,7 @@ pub struct FilesToDelete {
 
 #[delete("/files")]
 pub async fn delete_multiple_user_files(
-    user: AuthorizedUser,
+    AuthorizedUserExt(user): AuthorizedUserExt,
     db_pool: Data<PgPool>,
     file_ids: Json<FilesToDelete>,
 ) -> Result<HttpResponse, KekServerError> {
@@ -79,18 +80,20 @@ pub async fn delete_multiple_user_files(
         .json(serde_json::json!({ "count": deleted_files.len(), "files": deleted_files })));
 }
 
-#[get("/guilds")]
+#[get("/guilds", wrap = "UserGuildsService")]
 pub async fn get_user_guilds(
-    authorited_user: AuthorizedUser,
+    AuthorizedUserExt(authorized_user): AuthorizedUserExt,
     db_pool: Data<PgPool>,
+    user_guilds_cache: Data<UserGuildsCache>,
 ) -> Result<HttpResponse, KekServerError> {
-    // get users guilds
-    // return matching active guilds from db
+    let user_guilds = match user_guilds_cache.get(authorized_user.get_discord_user().get_id()) {
+        Some(ug) => ug,
+        None => return Err(KekServerError::UserNotInCacheError),
+    };
+
     let mut transaction = db_pool.begin().await?;
-
-    let user_guilds = authorited_user.get_guilds().await?;
-    let guilds = Guild::get_existing_guilds(&user_guilds, &mut transaction).await?;
-
+    let guilds = Guild::get_existing_guilds(&*user_guilds, &mut transaction).await?;
     transaction.commit().await?;
+
     return Ok(HttpResponse::Ok().json(guilds));
 }

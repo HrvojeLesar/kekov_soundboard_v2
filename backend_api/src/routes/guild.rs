@@ -9,7 +9,7 @@ use crate::{
     error::errors::KekServerError,
     middleware::auth_middleware::AuthService,
     models::{guild::Guild, guild_file::GuildFile, sound_file::SoundFile, ids::{GuildId, SoundFileId}},
-    utils::{auth::AuthorizedUser, validation::{validate_guild_and_file_ids, is_user_in_guild}},
+    utils::{auth::{AuthorizedUser, AuthorizedUserExt}, validation::{validate_guild_and_file_ids, is_user_in_guild}},
 };
 
 type GuildFileIds = Path<(GuildId, SoundFileId)>;
@@ -28,7 +28,7 @@ pub fn config(cfg: &mut ServiceConfig) {
 pub async fn add_sound_to_guild(
     db_pool: Data<PgPool>,
     path: GuildFileIds,
-    authorized_user: AuthorizedUser,
+    AuthorizedUserExt(authorized_user): AuthorizedUserExt,
 ) -> Result<HttpResponse, KekServerError> {
     let (guild_id, file_id) = path.into_inner();
     let mut transaction = db_pool.begin().await?;
@@ -47,7 +47,7 @@ pub async fn add_sound_to_guild(
 pub async fn delete_sound_from_guild(
     db_pool: Data<PgPool>,
     path: GuildFileIds,
-    authorized_user: AuthorizedUser,
+    AuthorizedUserExt(authorized_user): AuthorizedUserExt,
 ) -> Result<HttpResponse, KekServerError> {
     let (guild_id, file_id) = path.into_inner();
     let mut transaction = db_pool.begin().await?;
@@ -65,7 +65,7 @@ pub async fn delete_sound_from_guild(
 #[get("/{guild_id}")]
 pub async fn get_guild_files(
     db_pool: Data<PgPool>,
-    authorized_user: AuthorizedUser,
+    AuthorizedUserExt(authorized_user): AuthorizedUserExt,
     guild_id: Path<GuildId>,
 ) -> Result<HttpResponse, KekServerError> {
     let guild_id = guild_id.into_inner();

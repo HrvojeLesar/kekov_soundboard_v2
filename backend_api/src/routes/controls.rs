@@ -20,7 +20,7 @@ use crate::{
         ids::{ChannelId, GuildId, Id, SoundFileId},
     },
     utils::{
-        auth::AuthorizedUser,
+        auth::{AuthorizedUser, AuthorizedUserExt},
         cache::UserGuildsCache,
         validation::{is_user_in_guild, validate_guild_and_file_ids},
     },
@@ -55,7 +55,7 @@ pub struct StopPayload {
 #[post("play")]
 pub async fn play_request(
     server_address: Data<Addr<ControlsServer>>,
-    authorized_user: AuthorizedUser,
+    AuthorizedUserExt(authorized_user): AuthorizedUserExt,
     req_payload: Json<PlayPayload>,
     db_pool: Data<PgPool>,
     ws_channels: Data<WsSessionCommChannels>,
@@ -102,7 +102,7 @@ pub async fn play_request(
 #[post("stop")]
 pub async fn stop_request(
     server_address: Data<Addr<ControlsServer>>,
-    authorized_user: AuthorizedUser,
+    AuthorizedUserExt(authorized_user): AuthorizedUserExt,
     req_payload: Json<StopPayload>,
     db_pool: Data<PgPool>,
     ws_channels: Data<WsSessionCommChannels>,

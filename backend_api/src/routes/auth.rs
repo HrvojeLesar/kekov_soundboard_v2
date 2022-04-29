@@ -112,6 +112,8 @@ async fn check_collision(
 ) -> Result<(), KekServerError> {
     loop {
         if let Some(_) = sqlx::query!(
+            // TODO: Expire or cleanup old states
+            // Replace or update old state if key matches (csrf_token)
             "
             SELECT * FROM state
             WHERE csrf_token = $1

@@ -4,18 +4,12 @@ using Websocket.Client;
 
 namespace KekovBot
 {
-    public class WebSocket
+    public class ControlsWebsocket : WebsocketController
     {
-        private WebsocketClient _client;
-
-        public WebSocket(String uri)
+        public ControlsWebsocket(String uri) : base(uri)
         {
-            _client = new WebsocketClient(new Uri(uri));
-            _client.ReconnectTimeout = null;
-            _client.ErrorReconnectTimeout = TimeSpan.FromSeconds(5);
             SetupClientEvents();
-
-            _client.Start();
+            StartClient();
         }
 
         // TODO: Needs resubscribing when after crash
@@ -76,7 +70,8 @@ namespace KekovBot
             }
             catch (WebSocketException e)
             {
-                if (control != null) {
+                if (control != null)
+                {
                     var respOpCode = ClientErrorConverter.ToClientError(e);
                     var response = new ControlMessage(respOpCode, control);
                     var json_response = JsonConvert.SerializeObject(response);

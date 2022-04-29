@@ -60,6 +60,7 @@ pub enum OpCode {
     PlayResponse,
     StopResponse,
     Error,
+    UpdateUserCache,
 }
 
 #[derive(Clone, Debug, Error, Serialize, Deserialize)]

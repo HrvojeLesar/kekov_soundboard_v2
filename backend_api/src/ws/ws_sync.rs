@@ -1,0 +1,113 @@
+use std::{time::{Duration, Instant}, sync::Arc};
+
+use actix::{Actor, ActorContext, AsyncContext, ContextFutureSpawner, StreamHandler, WrapFuture};
+use actix_http::ws;
+use actix_web::web::Data;
+use actix_web_actors::ws::WebsocketContext;
+use log::{error, warn, info};
+use serde::{Serialize, Deserialize};
+use sqlx::PgPool;
+
+use crate::{models::{user::User, ids::UserId}, utils::cache::UserGuildsCache};
+
+use super::ws_server::OpCode;
+
+const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
+const CLIENT_TIMEOUT: Duration = Duration::from_secs(HEARTBEAT_INTERVAL.as_secs() * 2);
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SyncMessage {
+    op: OpCode,
+    user_id: UserId,
+}
+
+pub struct SyncSession {
+    heartbeat: Instant,
+    user_guilds_cache: Data<UserGuildsCache>,
+    db_pool: Data<PgPool>,
+}
+
+impl SyncSession {
+    pub fn new(user_guilds_cache: Data<UserGuildsCache>, db_pool: Data<PgPool>) -> Self {
+        return Self {
+            heartbeat: Instant::now(),
+            user_guilds_cache,
+            db_pool,
+        };
+    }
+
+    fn heartbeat(&self, ctx: &mut <Self as Actor>::Context) {
+        ctx.run_interval(HEARTBEAT_INTERVAL, |actor, context| {
+            if Instant::now().duration_since(actor.heartbeat) > CLIENT_TIMEOUT {
+                warn!("SyncSession heartbeat failed, disconnecting client!");
+                context.stop();
+            } else {
+                context.ping(b"");
+            }
+        });
+    }
+}
+
+impl Actor for SyncSession {
+    type Context = WebsocketContext<Self>;
+
+    fn started(&mut self, ctx: &mut Self::Context) {
+        self.user_guilds_cache.invalidate_all();
+        self.heartbeat(ctx);
+    }
+
+    fn stopping(&mut self, _: &mut Self::Context) -> actix::Running {
+        println!("Stopping");
+        self.user_guilds_cache.invalidate_all();
+        return actix::Running::Stop;
+    }
+}
+
+impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for SyncSession {
+    fn handle(&mut self, item: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
+        let msg = match item {
+            Ok(msg) => msg,
+            Err(err) => {
+                error!("SyncSession actor error: {}", err);
+                ctx.stop();
+                return;
+            }
+        };
+
+        match msg {
+            ws::Message::Ping(msg) => {
+                self.heartbeat = Instant::now();
+                ctx.pong(&msg);
+            }
+            ws::Message::Pong(_) => {
+                self.heartbeat = Instant::now();
+            }
+            ws::Message::Close(reason) => {
+                ctx.close(reason);
+                ctx.stop();
+            }
+            ws::Message::Text(msg) => {
+                let user_guilds_cache = Arc::clone(&self.user_guilds_cache);
+                async move {
+                    // TODO: remove user from cache on guild join/leave/kick/ban
+                    // TODO: do something similar when bot gets joined/kicked/banned
+                    let message: SyncMessage = match serde_json::from_str(&msg) {
+                        Ok(m) => m,
+                        Err(e) => return error!("WsSync message error: {}", e),
+                    };
+
+                    match &message.op {
+                        OpCode::UpdateUserCache => {
+                            info!("Trying to invalidate user with id: {}", &message.user_id.0);
+                            user_guilds_cache.invalidate(&message.user_id).await;
+                        }
+                        _ => return error!("WsSync wrong opcode received!"),
+                    }
+                }
+                .into_actor(self)
+                .wait(ctx);
+            }
+            _ => (),
+        }
+    }
+}

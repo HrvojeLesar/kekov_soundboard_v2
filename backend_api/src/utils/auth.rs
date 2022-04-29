@@ -85,6 +85,7 @@ pub async fn get_discord_user_from_token(access_token: &AccessToken) -> Result<U
         .await?;
 
     if resp.status() == StatusCode::TOO_MANY_REQUESTS {
+        log::error!("EXCEEDING RATE LIMIT!!!");
         // TODO: Rate limit user for the duration and notify them
     }
 

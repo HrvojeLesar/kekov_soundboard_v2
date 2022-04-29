@@ -8,6 +8,7 @@ namespace KekovBot
         PlayResponse,
         StopResponse,
         Error,
+        UpdateUserCache,
     }
 
     public enum ClientError

@@ -5,7 +5,7 @@ use actix::{
     Handler, Message, Recipient, Supervised, Supervisor, WrapFuture,
 };
 use actix_web_actors::ws::WebsocketContext;
-use log::{debug, warn};
+use log::{debug, warn, info};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;

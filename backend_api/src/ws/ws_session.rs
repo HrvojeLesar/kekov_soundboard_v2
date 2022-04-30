@@ -10,7 +10,7 @@ use actix::{
 use actix_http::ws;
 use actix_web::web::Data;
 use actix_web_actors::ws::WebsocketContext;
-use log::{error, warn, debug};
+use log::{error, warn, debug, info};
 use tokio::sync::{oneshot::Sender, RwLock};
 use uuid::Uuid;
 

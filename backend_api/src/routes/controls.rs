@@ -10,7 +10,7 @@ use actix_web::{
 use log::warn;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
-use tokio::sync::oneshot::channel;
+use tokio::sync::oneshot::{channel, Receiver};
 
 use crate::{
     error::errors::KekServerError,
@@ -25,7 +25,7 @@ use crate::{
         validation::{is_user_in_guild, validate_guild_and_file_ids},
     },
     ws::{
-        ws_server::{ControlsServer, ControlsServerMessage, PlayControl},
+        ws_server::{ClientError, ControlsServer, ControlsServerMessage, PlayControl},
         ws_session::WsSessionCommChannels,
     },
 };
@@ -52,6 +52,35 @@ pub struct StopPayload {
     pub guild_id: GuildId,
 }
 
+async fn create_channels(
+    id: u128,
+    ws_channels: &Data<WsSessionCommChannels>,
+) -> Receiver<Result<(), ClientError>> {
+    let (sender, receiver) = channel();
+    {
+        let mut lock = ws_channels.write().await;
+        lock.insert(id, sender);
+    }
+    return receiver;
+}
+
+async fn wait_for_ws_response(
+    id: &u128,
+    receiver: Receiver<Result<(), ClientError>>,
+    ws_channels: Data<WsSessionCommChannels>,
+) -> Result<(), KekServerError> {
+    return match timeout(Duration::from_secs(10), receiver).await?? {
+        Ok(o) => Ok(o),
+        Err(e) => {
+            {
+                let mut lock = ws_channels.write().await;
+                lock.remove(id);
+            }
+            return Err(e.into());
+        }
+    };
+}
+
 #[post("play")]
 pub async fn play_request(
     server_address: Data<Addr<ControlsServer>>,
@@ -61,8 +90,6 @@ pub async fn play_request(
     ws_channels: Data<WsSessionCommChannels>,
     user_guilds_cache: Data<UserGuildsCache>,
 ) -> Result<HttpResponse, KekServerError> {
-    let mut transaction = db_pool.begin().await?;
-
     let user_guilds = match user_guilds_cache.get(authorized_user.get_discord_user().get_id()) {
         Some(ug) => ug,
         None => return Err(KekServerError::UserNotInCacheError),
@@ -71,6 +98,8 @@ pub async fn play_request(
     if !user_guilds.contains(&req_payload.guild_id) {
         return Err(KekServerError::NotInGuildError);
     }
+
+    let mut transaction = db_pool.begin().await?;
 
     match GuildFile::get_guild_file(
         &req_payload.guild_id,
@@ -86,13 +115,10 @@ pub async fn play_request(
             let control = ControlsServerMessage::new_play(payload.guild_id, payload.file_id);
             let id = control.get_id();
 
-            let (sender, receiver) = channel();
-            {
-                let mut lock = ws_channels.write().await;
-                lock.insert(id, sender);
-            }
+            let receiver = create_channels(id, &ws_channels).await;
             server_address.send(control).await?;
-            let resp = timeout(Duration::from_secs(10), receiver).await???;
+            let resp = wait_for_ws_response(&id, receiver, ws_channels).await?;
+
             return Ok(HttpResponse::Ok().finish());
         }
         None => return Err(KekServerError::GuildFileDoesNotExistError),
@@ -120,14 +146,9 @@ pub async fn stop_request(
     let control = ControlsServerMessage::new_stop();
     let id = control.get_id();
 
-    let (sender, receiver) = channel();
-    {
-        let mut lock = ws_channels.write().await;
-        lock.insert(id, sender);
-    }
-
+    let receiver = create_channels(id, &ws_channels).await;
     server_address.send(control).await?;
-    let resp = timeout(Duration::from_secs(10), receiver).await???;
+    let resp = wait_for_ws_response(&id, receiver, ws_channels).await?;
 
     return Ok(HttpResponse::Ok().finish());
 }

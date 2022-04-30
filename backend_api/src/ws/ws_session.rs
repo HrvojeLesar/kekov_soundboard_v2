@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    sync::Arc,
     time::{Duration, Instant},
 };
 
@@ -10,7 +11,7 @@ use actix::{
 use actix_http::ws;
 use actix_web::web::Data;
 use actix_web_actors::ws::WebsocketContext;
-use log::{error, warn, debug, info};
+use log::{debug, error, info, warn};
 use tokio::sync::{oneshot::Sender, RwLock};
 use uuid::Uuid;
 
@@ -58,6 +59,7 @@ impl ControlsSession {
 
     async fn handle_message(msg: ControlsServerMessage, channels: Data<WsSessionCommChannels>) {
         // TODO: make sender actually usefull info ?
+        // TODO: handle proper cleanup of stale channels
         let sender;
         {
             let mut lock = channels.write().await;
@@ -95,10 +97,19 @@ impl Actor for ControlsSession {
         self.server_address
             .send(Connect::new(address, self.id))
             .into_actor(self)
-            .then(|resp, actor, ctx| {
+            .then(|_, _, _| {
                 return fut::ready(());
             })
             .wait(ctx);
+
+        let channels = Arc::clone(&self.communication_channels);
+        async move {
+            {
+                channels.write().await.clear();
+            }
+        }
+        .into_actor(self)
+        .wait(ctx);
     }
 
     fn stopping(&mut self, _: &mut Self::Context) -> actix::Running {

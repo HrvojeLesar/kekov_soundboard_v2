@@ -34,6 +34,7 @@ namespace KekovBot
                 TokenType = TokenType.Bot,
                 Intents = DiscordIntents.GuildMembers
                 | DiscordIntents.GuildVoiceStates
+                | DiscordIntents.Guilds
             });
             RegisterEventHandlers();
             DiscordClient.ConnectAsync().Wait();

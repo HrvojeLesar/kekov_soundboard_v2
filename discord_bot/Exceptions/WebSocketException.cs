@@ -25,4 +25,19 @@ namespace KekovBot
     {
         public ChannelsEmptyException() : base("All channels are empty") { }
     }
+
+    public class LavalinkConnectionNotEstablishedException : WebSocketException
+    {
+        public LavalinkConnectionNotEstablishedException() : base("Lavalink connection is not established") { }
+    }
+
+    public class InvalidVoiceChannelException : WebSocketException
+    {
+        public InvalidVoiceChannelException() : base("Not a valid voice channel") { }
+    }
+
+    public class FileLoadingFailedException : WebSocketException
+    {
+        public FileLoadingFailedException() : base("Failed to load file") { }
+    }
 }

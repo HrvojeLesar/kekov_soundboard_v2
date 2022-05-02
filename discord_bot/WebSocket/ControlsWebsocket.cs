@@ -70,6 +70,7 @@ namespace KekovBot
             }
             catch (WebSocketException e)
             {
+                Console.WriteLine(e);
                 if (control != null)
                 {
                     var respOpCode = ClientErrorConverter.ToClientError(e);

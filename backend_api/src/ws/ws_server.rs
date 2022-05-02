@@ -73,6 +73,12 @@ pub enum ClientError {
     ChannelNotFound,
     #[error("Channels empty error")]
     ChannelsEmpty,
+    #[error("Connection not established error")]
+    LavalinkConnectionNotEstablished,
+    #[error("Invalid voice channel error")]
+    InvalidVoiceChannel,
+    #[error("Failed to load file error")]
+    FileLoadingFailed,
     #[error("Unknown error")]
     Unknown,
 }

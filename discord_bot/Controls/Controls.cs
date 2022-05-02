@@ -14,27 +14,27 @@ namespace KekovBot
             var lava = _client.DiscordClient.GetLavalink();
             if (!lava.ConnectedNodes.Any())
             {
-                throw new Exception("Lavalink connection is not established");
+                throw new LavalinkConnectionNotEstablishedException();
             }
 
             var node = lava.GetIdealNodeConnection();
 
             if (channel.Type != ChannelType.Voice)
             {
-                throw new Exception("Not a valid voice channel");
+                throw new InvalidVoiceChannelException();
             }
 
             LavalinkGuildConnection conn = await node.ConnectAsync(channel);
-            LavalinkTrack track = await node.GetTrack(file);
+            LavalinkTrack track = await conn.GetTrack(file);
             await conn.PlayAsync(track);
         }
 
-        private static async Task<LavalinkTrack> GetTrack(this LavalinkNodeConnection node, FileInfo file)
+        private static async Task<LavalinkTrack> GetTrack(this LavalinkGuildConnection conn, FileInfo file)
         {
-            var loadResult = await node.Rest.GetTracksAsync(file);
+            var loadResult = await conn.GetTracksAsync(file);
             if (loadResult.LoadResultType == LavalinkLoadResultType.LoadFailed || loadResult.LoadResultType == LavalinkLoadResultType.NoMatches)
             {
-                throw new Exception("Failed to load file");
+                throw new FileLoadingFailedException();
             }
             return loadResult.Tracks.First();
         }

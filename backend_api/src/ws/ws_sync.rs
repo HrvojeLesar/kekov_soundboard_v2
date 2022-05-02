@@ -8,7 +8,7 @@ use log::{error, warn, info};
 use serde::{Serialize, Deserialize};
 use sqlx::PgPool;
 
-use crate::{models::{user::User, ids::UserId}, utils::cache::UserGuildsCache};
+use crate::{models::{user::User, ids::{UserId, GuildId}}, utils::cache::UserGuildsCache};
 
 use super::ws_server::OpCode;
 
@@ -16,9 +16,16 @@ const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(HEARTBEAT_INTERVAL.as_secs() * 2);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct SyncMessage {
-    op: OpCode,
-    user_id: UserId,
+enum SyncOpCode {
+    UpdateUserCache,
+    InvalidateGuildsCache,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+struct SyncMessage {
+    op: SyncOpCode,
+    user_id: Option<UserId>,
+    guild_id: Option<GuildId>,
 }
 
 pub struct SyncSession {
@@ -97,11 +104,19 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for SyncSession {
                     };
 
                     match &message.op {
-                        OpCode::UpdateUserCache => {
-                            info!("Trying to invalidate user with id: {}", &message.user_id.0);
-                            user_guilds_cache.invalidate(&message.user_id).await;
+                        SyncOpCode::UpdateUserCache => {
+                            if let Some(id) = &message.user_id {
+                                info!("Trying to invalidate user with id: {}", &id.0);
+                                user_guilds_cache.invalidate(id).await;
+                            }
+                        },
+                        SyncOpCode::InvalidateGuildsCache => {
+                            if let Some(id) = &message.guild_id {
+                                info!("Invalidating guilds cache");
+                                info!("Bot joined/left guild with id: {:?}", &id.0);
+                                user_guilds_cache.invalidate_all();
+                            }
                         }
-                        _ => return error!("WsSync wrong opcode received!"),
                     }
                 }
                 .into_actor(self)

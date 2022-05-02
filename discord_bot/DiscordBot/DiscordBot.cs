@@ -2,8 +2,6 @@ using dotenv.net;
 using DSharpPlus;
 using DSharpPlus.Net;
 using DSharpPlus.Lavalink;
-using DSharpPlus.EventArgs;
-using Newtonsoft.Json;
 
 namespace KekovBot
 {
@@ -40,11 +38,13 @@ namespace KekovBot
             DiscordClient.ConnectAsync().Wait();
             InitLavalink(); // Should always be initialized after client connection
         }
-
+        
         private void RegisterEventHandlers()
         {
             DiscordClient.GuildMemberAdded += GuildMemberAddedEvent;
             DiscordClient.GuildMemberRemoved += GuildMemberRemovedEvent;
+            DiscordClient.GuildCreated += BotJoinedGuildEvent;
+            DiscordClient.GuildDeleted += BotLeftGuildEvent;
         }
 
         private void InitLavalink()
@@ -65,22 +65,6 @@ namespace KekovBot
 
             var lavalink = DiscordClient.UseLavalink();
             lavalink.ConnectAsync(lavalinkConfig).Wait();
-        }
-
-        private Task GuildMemberAddedEvent(DiscordClient c, GuildMemberAddEventArgs args)
-        {
-            var response = new SyncMessage(args.Member.Id);
-            var response_json = JsonConvert.SerializeObject(response);
-            SyncWebsocket.Client.Send(response_json);
-            return Task.CompletedTask;
-        }
-
-        private Task GuildMemberRemovedEvent(DiscordClient c, GuildMemberRemoveEventArgs args)
-        {
-            var response = new SyncMessage(args.Member.Id);
-            var response_json = JsonConvert.SerializeObject(response);
-            SyncWebsocket.Client.Send(response_json);
-            return Task.CompletedTask;
         }
     }
 }

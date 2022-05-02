@@ -7,19 +7,24 @@ namespace KekovBot
     {
         [JsonProperty("op")]
         [JsonConverter(typeof(StringEnumConverter))]
-        public OpCode OpCode { get; set; }
+        public SyncOpCode OpCode { get; set; }
 
         [JsonProperty("user_id")]
         public ulong? UserId { get; set; }
 
+        [JsonProperty("guild_id")]
+        public ulong? GuildId { get; set; }
+
         public SyncMessage() { }
 
-        public SyncMessage(ulong userId) {
-            OpCode = OpCode.UpdateUserCache;
+        public SyncMessage(SyncOpCode opCode, Nullable<ulong> userId, Nullable<ulong> guildId)
+        {
+            OpCode = opCode;
             UserId = userId;
+            GuildId = guildId;
         }
 
-        public SyncMessage(OpCode code, SyncMessage other)
+        public SyncMessage(SyncOpCode code, SyncMessage other)
         {
             OpCode = code;
             UserId = other.UserId;

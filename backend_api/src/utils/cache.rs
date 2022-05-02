@@ -21,6 +21,6 @@ pub fn create_authorized_user_cache() -> AuthorizedUsersCache {
     return Cache::builder()
         .max_capacity(1000)
         .initial_capacity(200)
-        .time_to_live(Duration::from_secs(60))
+        .time_to_live(Duration::from_secs(60 * 5))
         .build()
 }

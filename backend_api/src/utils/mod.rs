@@ -19,6 +19,7 @@ pub mod cache;
 pub mod validation;
 
 pub const USERGUILDS: &str = "/users/@me/guilds";
+pub const MAX_RETRIES: u8 = 3;
 
 #[derive(Serialize, Deserialize)]
 pub struct GenericSuccess {
@@ -100,6 +101,7 @@ pub async fn make_discord_get_request(
     url: &str,
 ) -> Result<ClientResponse<Decoder<Payload>>, KekServerError> {
     let mut resp = get_request(autorized_user, url).await?;
+    let mut retries = 0;
     while resp.status() == StatusCode::TOO_MANY_REQUESTS {
         warn!("Rate limit exceeded");
         if let Some(after) = resp.headers().get("retry-after") {
@@ -110,6 +112,12 @@ pub async fn make_discord_get_request(
             return Err(KekServerError::DiscordRequestError);
         }
         resp = get_request(autorized_user, url).await?;
+
+        retries += 1;
+        if retries > MAX_RETRIES {
+            warn!("Maximum retries exceeded!");
+            break;
+        }
     }
 
     if resp.status().is_client_error() {

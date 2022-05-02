@@ -26,6 +26,11 @@ namespace KekovBot
         public ChannelsEmptyException() : base("All channels are empty") { }
     }
 
+    public class InvalidFileIdException : WebSocketException
+    {
+        public InvalidFileIdException() : base("Invalid file id") { }
+    }
+
     public class LavalinkConnectionNotEstablishedException : WebSocketException
     {
         public LavalinkConnectionNotEstablishedException() : base("Lavalink connection is not established") { }

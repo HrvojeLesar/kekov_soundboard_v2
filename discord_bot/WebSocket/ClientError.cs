@@ -9,6 +9,7 @@ namespace KekovBot
         LavalinkConnectionNotEstablished,
         InvalidVoiceChannel,
         FileLoadingFailed,
+        InvalidFileId,
         Unknown,
     }
 
@@ -23,6 +24,7 @@ namespace KekovBot
             LavalinkConnectionNotEstablishedException => ClientError.LavalinkConnectionNotEstablished,
             InvalidVoiceChannelException => ClientError.InvalidVoiceChannel,
             FileLoadingFailedException => ClientError.FileLoadingFailed,
+            InvalidFileIdException => ClientError.InvalidFileId,
             _ => ClientError.Unknown,
         };
     }

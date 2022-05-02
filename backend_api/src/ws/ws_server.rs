@@ -79,6 +79,8 @@ pub enum ClientError {
     InvalidVoiceChannel,
     #[error("Failed to load file error")]
     FileLoadingFailed,
+    #[error("Invalid file id error")]
+    InvalidFileId,
     #[error("Unknown error")]
     Unknown,
 }

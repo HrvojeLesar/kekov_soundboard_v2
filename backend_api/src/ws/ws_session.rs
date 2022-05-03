@@ -70,11 +70,7 @@ impl ControlsSession {
         }
 
         match msg.get_op_code() {
-            OpCode::PlayResponse => match sender.send(Ok(())) {
-                Ok(_) => (),
-                Err(_) => return error!("WsSession sender failed!\nPossible receiver dropped!"),
-            },
-            OpCode::StopResponse => match sender.send(Ok(())) {
+            OpCode::PlayResponse | OpCode::StopResponse | OpCode::SkipResponse => match sender.send(Ok(())) {
                 Ok(_) => (),
                 Err(_) => return error!("WsSession sender failed!\nPossible receiver dropped!"),
             },
@@ -122,24 +118,11 @@ impl Handler<ControlsServerMessage> for ControlsSession {
     type Result = ();
 
     fn handle(&mut self, msg: ControlsServerMessage, ctx: &mut Self::Context) -> Self::Result {
-        // TODO: Optimize, make nicer
         match msg.get_op_code() {
-            OpCode::Play => {
+            OpCode::Play | OpCode::Stop | OpCode::Connection | OpCode::Skip => {
                 match serde_json::to_string(&msg) {
-                    Ok(pl) => ctx.text(pl),
-                    Err(e) => error!("ControlsSession [Play] control send error: {}", e),
-                };
-            }
-            OpCode::Stop => {
-                match serde_json::to_string(&msg) {
-                    Ok(stop) => ctx.text(stop),
-                    Err(e) => error!("ControlsSession [Stop] control send error: {}", e),
-                };
-            }
-            OpCode::Connection => {
-                match serde_json::to_string(&msg) {
-                    Ok(m) => ctx.text(m),
-                    Err(e) => error!("ControlsSession [Connection] send error: {}", e),
+                    Ok(msg) => ctx.text(msg),
+                    Err(e) => error!("ControlsSession [{}] control send error: {}", msg.get_op_code(), e),
                 };
             }
             _ => ctx.text("Poggers"),

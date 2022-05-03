@@ -48,6 +48,6 @@ namespace KekovBot
 
     public class NotPlayingExpcetion : WebSocketException
     {
-        public NotPlayingExpcetion() : base("There is nothing to stop") { }
+        public NotPlayingExpcetion() : base("Nothing is playing") { }
     }
 }

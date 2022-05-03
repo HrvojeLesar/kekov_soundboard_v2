@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 use actix::{
     fut, Actor, ActorContext, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner,
@@ -64,14 +64,41 @@ impl StopControl {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SkipControl {
+    guild_id: GuildId,
+}
+
+impl SkipControl {
+    pub fn new(guild_id: GuildId) -> Self {
+        return Self { guild_id };
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum OpCode {
     Connection,
     Play,
     Stop,
+    Skip,
     PlayResponse,
     StopResponse,
+    SkipResponse,
     Error,
-    UpdateUserCache,
+}
+
+impl Display for OpCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            OpCode::Connection => write!(f, "Connection"),
+            OpCode::Play => write!(f, "Play"),
+            OpCode::Stop => write!(f, "Stop"),
+            OpCode::Skip => write!(f, "Skip"),
+            OpCode::PlayResponse => write!(f, "PlayResponse"),
+            OpCode::StopResponse => write!(f, "StopResponse"),
+            OpCode::SkipResponse => write!(f, "SkipResponse"),
+            OpCode::Error => write!(f, "Error"),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Error, Serialize, Deserialize)]
@@ -92,7 +119,7 @@ pub enum ClientError {
     FileLoadingFailed,
     #[error("Invalid file id error")]
     InvalidFileId,
-    #[error("There is nothing to stop")]
+    #[error("Nothing playing")]
     NotPlaying,
     #[serde(other)]
     #[error("Unknown error")]
@@ -104,6 +131,7 @@ pub enum ClientError {
 pub enum Controls {
     Play(PlayControl),
     Stop(StopControl),
+    Skip(SkipControl),
     GetQueue,
 }
 
@@ -114,6 +142,7 @@ pub struct ControlsServerMessage {
     message_id: u128,
     #[serde(flatten)]
     control: Option<Controls>,
+    #[serde(skip_serializing)]
     client_error: Option<ClientError>,
 }
 
@@ -156,6 +185,15 @@ impl ControlsServerMessage {
             op: OpCode::Stop,
             message_id: Uuid::new_v4().as_u128(),
             control: Some(Controls::Stop(StopControl::new(guild_id))),
+            client_error: None,
+        };
+    }
+
+    pub fn new_skip(guild_id: GuildId) -> Self {
+        return Self {
+            op: OpCode::Skip,
+            message_id: Uuid::new_v4().as_u128(),
+            control: Some(Controls::Skip(SkipControl::new(guild_id))),
             client_error: None,
         };
     }

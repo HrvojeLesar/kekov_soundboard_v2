@@ -36,7 +36,8 @@ pub fn config(cfg: &mut ServiceConfig) {
             .wrap(UserGuildsService)
             .wrap(AuthService)
             .service(play_request)
-            .service(stop_request),
+            .service(stop_request)
+            .service(skip_request),
     );
 }
 
@@ -49,6 +50,11 @@ pub struct PlayPayload {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct StopPayload {
+    pub guild_id: GuildId,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SkipPayload {
     pub guild_id: GuildId,
 }
 
@@ -138,6 +144,31 @@ pub async fn stop_request(
     }
 
     let control = ControlsServerMessage::new_stop(stop_payload.guild_id);
+    let id = control.get_id();
+
+    let receiver = create_channels(id, &ws_channels).await;
+    server_address.send(control).await?;
+    let resp = wait_for_ws_response(&id, receiver, ws_channels).await?;
+
+    return Ok(HttpResponse::Ok().finish());
+}
+
+#[post("skip")]
+pub async fn skip_request(
+    server_address: Data<Addr<ControlsServer>>,
+    AuthorizedUserExt(authorized_user): AuthorizedUserExt,
+    Json(skip_payload): Json<SkipPayload>,
+    db_pool: Data<PgPool>,
+    ws_channels: Data<WsSessionCommChannels>,
+    user_guilds_cache: Data<UserGuildsCache>,
+) -> Result<HttpResponse, KekServerError> {
+    let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
+
+    if !user_guilds.contains(&skip_payload.guild_id) {
+        return Err(KekServerError::NotInGuildError);
+    }
+
+    let control = ControlsServerMessage::new_skip(skip_payload.guild_id);
     let id = control.get_id();
 
     let receiver = create_channels(id, &ws_channels).await;

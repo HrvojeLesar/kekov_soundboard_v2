@@ -44,6 +44,11 @@ namespace KekovBot
                             await Controls.Stop(control);
                             break;
                         }
+                    case OpCode.Skip:
+                        {
+                            await Controls.Skip(control);
+                            break;
+                        }
                     case OpCode.Connection:
                         {
                             break;

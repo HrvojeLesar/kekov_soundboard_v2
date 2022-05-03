@@ -135,5 +135,20 @@ namespace KekovBot
                 throw new NotPlayingExpcetion();
             }
         }
+
+        public static async Task Skip(ControlMessage msg)
+        {
+            DiscordGuild guild = GetGuild(msg);
+            PlayQueue? playQueue;
+            PlayQueueDict.TryGetValue(guild, out playQueue);
+            if (playQueue != null)
+            {
+                await playQueue.GuildConnection.StopAsync();
+            }
+            else
+            {
+                throw new NotPlayingExpcetion();
+            }
+        }
     }
 }

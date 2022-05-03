@@ -6,9 +6,11 @@ namespace KekovBot
         Play,
         Stop,
         Skip,
+        GetQueue,
         PlayResponse,
         StopResponse,
         SkipResponse,
+        GetQueueResponse,
         Error,
         UpdateUserCache,
     }
@@ -20,6 +22,7 @@ namespace KekovBot
             OpCode.Play => OpCode.PlayResponse,
             OpCode.Stop => OpCode.StopResponse,
             OpCode.Skip => OpCode.SkipResponse,
+            OpCode.GetQueue => OpCode.GetQueueResponse,
             _ => null,
         };
 

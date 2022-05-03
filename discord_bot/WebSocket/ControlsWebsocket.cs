@@ -49,6 +49,10 @@ namespace KekovBot
                             await Controls.Skip(control);
                             break;
                         }
+                    case OpCode.GetQueue:
+                        {
+                            break;
+                        }
                     case OpCode.Connection:
                         {
                             break;

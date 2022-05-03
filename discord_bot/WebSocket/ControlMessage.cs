@@ -4,6 +4,7 @@ using Newtonsoft.Json.Converters;
 
 namespace KekovBot
 {
+    [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
     public class ControlMessage
     {
         [JsonProperty("op")]
@@ -25,6 +26,9 @@ namespace KekovBot
         [JsonProperty("client_error")]
         [JsonConverter(typeof(StringEnumConverter))]
         public ClientError? ClientError { get; set; }
+
+        [JsonProperty("queue")]
+        public List<Sound>? Queue { get; set; }
 
         public ControlMessage() { }
 

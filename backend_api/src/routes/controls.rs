@@ -17,7 +17,7 @@ use crate::{
     middleware::{auth_middleware::AuthService, user_guilds_middleware::UserGuildsService},
     models::{
         guild_file::GuildFile,
-        ids::{ChannelId, GuildId, Id, SoundFileId},
+        ids::{ChannelId, GuildId, Id, SoundFileId}, sound_file::SoundFile,
     },
     utils::{
         auth::{AuthorizedUser, AuthorizedUserExt},
@@ -37,7 +37,8 @@ pub fn config(cfg: &mut ServiceConfig) {
             .wrap(AuthService)
             .service(play_request)
             .service(stop_request)
-            .service(skip_request),
+            .service(skip_request)
+            .service(queue_request),
     );
 }
 
@@ -58,10 +59,15 @@ pub struct SkipPayload {
     pub guild_id: GuildId,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct QueuePayload {
+    pub guild_id: GuildId,
+}
+
 async fn create_channels(
     id: u128,
     ws_channels: &Data<WsSessionCommChannels>,
-) -> Receiver<Result<(), ClientError>> {
+) -> Receiver<Result<ControlsServerMessage, ClientError>> {
     let (sender, receiver) = channel();
     {
         let mut lock = ws_channels.write().await;
@@ -72,9 +78,9 @@ async fn create_channels(
 
 async fn wait_for_ws_response(
     id: &u128,
-    receiver: Receiver<Result<(), ClientError>>,
+    receiver: Receiver<Result<ControlsServerMessage, ClientError>>,
     ws_channels: Data<WsSessionCommChannels>,
-) -> Result<(), KekServerError> {
+) -> Result<ControlsServerMessage, KekServerError> {
     return match timeout(Duration::from_secs(10), receiver).await?? {
         Ok(o) => Ok(o),
         Err(e) => {
@@ -176,4 +182,31 @@ pub async fn skip_request(
     let resp = wait_for_ws_response(&id, receiver, ws_channels).await?;
 
     return Ok(HttpResponse::Ok().finish());
+}
+
+#[post("queue")]
+pub async fn queue_request(
+    server_address: Data<Addr<ControlsServer>>,
+    AuthorizedUserExt(authorized_user): AuthorizedUserExt,
+    Json(queue_payload): Json<QueuePayload>,
+    db_pool: Data<PgPool>,
+    ws_channels: Data<WsSessionCommChannels>,
+    user_guilds_cache: Data<UserGuildsCache>,
+) -> Result<HttpResponse, KekServerError> {
+    let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
+
+    if !user_guilds.contains(&queue_payload.guild_id) {
+        return Err(KekServerError::NotInGuildError);
+    }
+
+    let control = ControlsServerMessage::new_queue(queue_payload.guild_id);
+    let id = control.get_id();
+
+    let receiver = create_channels(id, &ws_channels).await;
+    server_address.send(control).await?;
+    let resp = wait_for_ws_response(&id, receiver, ws_channels).await?;
+    match resp.queue {
+        Some(q) => return Ok(HttpResponse::Ok().json(q)),
+        None => return Ok(HttpResponse::Ok().json(Vec::<SoundFile>::new())),
+    }
 }

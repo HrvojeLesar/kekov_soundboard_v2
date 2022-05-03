@@ -21,7 +21,8 @@ use super::ws_server::{
     ClientError, Connect, ControlsServer, ControlsServerMessage, Disconnect, OpCode,
 };
 
-pub type WsSessionCommChannels = RwLock<HashMap<u128, Sender<Result<(), ClientError>>>>;
+pub type WsSessionCommChannels =
+    RwLock<HashMap<u128, Sender<Result<ControlsServerMessage, ClientError>>>>;
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(10);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(20);
@@ -70,7 +71,10 @@ impl ControlsSession {
         }
 
         match msg.get_op_code() {
-            OpCode::PlayResponse | OpCode::StopResponse | OpCode::SkipResponse => match sender.send(Ok(())) {
+            OpCode::PlayResponse
+            | OpCode::StopResponse
+            | OpCode::SkipResponse
+            | OpCode::GetQueueResponse => match sender.send(Ok(msg)) {
                 Ok(_) => (),
                 Err(_) => return error!("WsSession sender failed!\nPossible receiver dropped!"),
             },
@@ -119,10 +123,14 @@ impl Handler<ControlsServerMessage> for ControlsSession {
 
     fn handle(&mut self, msg: ControlsServerMessage, ctx: &mut Self::Context) -> Self::Result {
         match msg.get_op_code() {
-            OpCode::Play | OpCode::Stop | OpCode::Connection | OpCode::Skip => {
+            OpCode::Play | OpCode::Stop | OpCode::Connection | OpCode::Skip | OpCode::GetQueue => {
                 match serde_json::to_string(&msg) {
                     Ok(msg) => ctx.text(msg),
-                    Err(e) => error!("ControlsSession [{}] control send error: {}", msg.get_op_code(), e),
+                    Err(e) => error!(
+                        "ControlsSession [{}] control send error: {}",
+                        msg.get_op_code(),
+                        e
+                    ),
                 };
             }
             _ => ctx.text("Poggers"),

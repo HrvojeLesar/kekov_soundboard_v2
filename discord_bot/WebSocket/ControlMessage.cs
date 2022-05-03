@@ -32,23 +32,19 @@ namespace KekovBot
 
         public ControlMessage() { }
 
-        public ControlMessage(OpCode code, ControlMessage other)
+        public ControlMessage(OpCode code, List<Sound>? queue, ControlMessage other)
         {
             OpCode = code;
             GuildId = other.GuildId;
             FileId = other.FileId;
             VoiceChannelId = other.VoiceChannelId;
             MessageId = other.MessageId;
+            Queue = queue;
         }
 
-        public ControlMessage(ClientError error, ControlMessage other) : this(OpCode.Error, other)
+        public ControlMessage(ClientError error, ControlMessage other) : this(OpCode.Error, null, other)
         {
             ClientError = error;
-        }
-
-        public override string ToString()
-        {
-            return $"OpCode: {OpCode.ToString()}\nGuildId: {GuildId}\nFileId: {FileId}\nVoiceChannelId: {VoiceChannelId}\nMessageId: {MessageId}";
         }
     }
 }

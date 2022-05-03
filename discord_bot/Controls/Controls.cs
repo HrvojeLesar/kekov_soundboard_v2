@@ -150,5 +150,18 @@ namespace KekovBot
                 throw new NotPlayingExpcetion();
             }
         }
+
+        public static async Task<List<Sound>> GetQueue(ControlMessage msg)
+        {
+            DiscordGuild guild = GetGuild(msg);
+            PlayQueue? playQueue;
+            PlayQueueDict.TryGetValue(guild, out playQueue);
+            List<Sound> queue = new List<Sound>();
+            if (playQueue != null)
+            {
+                queue = await playQueue.GetQueueList();
+            }
+            return queue;
+        }
     }
 }

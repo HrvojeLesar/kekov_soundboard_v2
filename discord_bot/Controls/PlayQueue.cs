@@ -35,5 +35,19 @@ namespace KekovBot
             }
             return false;
         }
+
+        public Task<List<Sound>> GetQueueList()
+        {
+            return Task.Run(() =>
+            {
+                List<Sound> queue = new List<Sound>();
+                if (CurrentlyPlaying != null)
+                {
+                    queue.Add(CurrentlyPlaying);
+                    queue.Concat(Queue.ToList());
+                }
+                return queue;
+            });
+        }
     }
 }

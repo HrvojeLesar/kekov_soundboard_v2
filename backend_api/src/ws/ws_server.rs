@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use crate::{
     error::errors::KekServerError,
-    models::ids::{ChannelId, GuildId, SoundFileId},
+    models::{ids::{ChannelId, GuildId, SoundFileId}, sound_file::SoundFile},
 };
 
 use super::ws_session::ControlsSession;
@@ -75,14 +75,27 @@ impl SkipControl {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct QueueControl {
+    guild_id: GuildId,
+}
+
+impl QueueControl {
+    pub fn new(guild_id: GuildId) -> Self {
+        return Self { guild_id };
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum OpCode {
     Connection,
     Play,
     Stop,
     Skip,
+    GetQueue,
     PlayResponse,
     StopResponse,
     SkipResponse,
+    GetQueueResponse,
     Error,
 }
 
@@ -93,9 +106,11 @@ impl Display for OpCode {
             OpCode::Play => write!(f, "Play"),
             OpCode::Stop => write!(f, "Stop"),
             OpCode::Skip => write!(f, "Skip"),
+            OpCode::GetQueue => write!(f, "GetQueue"),
             OpCode::PlayResponse => write!(f, "PlayResponse"),
             OpCode::StopResponse => write!(f, "StopResponse"),
             OpCode::SkipResponse => write!(f, "SkipResponse"),
+            OpCode::GetQueueResponse => write!(f, "GetQueueResponse"),
             OpCode::Error => write!(f, "Error"),
         }
     }
@@ -132,7 +147,7 @@ pub enum Controls {
     Play(PlayControl),
     Stop(StopControl),
     Skip(SkipControl),
-    GetQueue,
+    GetQueue(QueueControl),
 }
 
 #[derive(Clone, Debug, Message, Serialize, Deserialize)]
@@ -144,6 +159,8 @@ pub struct ControlsServerMessage {
     control: Option<Controls>,
     #[serde(skip_serializing)]
     client_error: Option<ClientError>,
+    #[serde(skip_serializing)]
+    pub queue: Option<Vec<SoundFile>>,
 }
 
 impl ControlsServerMessage {
@@ -168,6 +185,7 @@ impl ControlsServerMessage {
             message_id: Uuid::new_v4().as_u128(),
             control: None,
             client_error: None,
+            queue: None,
         };
     }
 
@@ -177,6 +195,7 @@ impl ControlsServerMessage {
             message_id: Uuid::new_v4().as_u128(),
             control: Some(Controls::Play(PlayControl::new(guild_id, file_id, None))),
             client_error: None,
+            queue: None,
         };
     }
 
@@ -186,6 +205,7 @@ impl ControlsServerMessage {
             message_id: Uuid::new_v4().as_u128(),
             control: Some(Controls::Stop(StopControl::new(guild_id))),
             client_error: None,
+            queue: None,
         };
     }
 
@@ -195,6 +215,17 @@ impl ControlsServerMessage {
             message_id: Uuid::new_v4().as_u128(),
             control: Some(Controls::Skip(SkipControl::new(guild_id))),
             client_error: None,
+            queue: None,
+        };
+    }
+
+    pub fn new_queue(guild_id: GuildId) -> Self {
+        return Self {
+            op: OpCode::GetQueue,
+            message_id: Uuid::new_v4().as_u128(),
+            control: Some(Controls::GetQueue(QueueControl::new(guild_id))),
+            client_error: None,
+            queue: None,
         };
     }
 }

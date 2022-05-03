@@ -30,6 +30,7 @@ namespace KekovBot
         {
             Console.WriteLine($"Message: {msg}");
             ControlMessage? control = JsonConvert.DeserializeObject<ControlMessage>(msg.Text);
+            List<Sound>? queue = null;
             try
             {
                 switch (control?.OpCode)
@@ -51,6 +52,7 @@ namespace KekovBot
                         }
                     case OpCode.GetQueue:
                         {
+                            queue = await Controls.GetQueue(control);
                             break;
                         }
                     case OpCode.Connection:
@@ -73,7 +75,7 @@ namespace KekovBot
                 var respOpCode = OpCodeConverter.ToResponse(control.OpCode);
                 if (respOpCode != null)
                 {
-                    var response = new ControlMessage((OpCode)respOpCode, control);
+                    var response = new ControlMessage((OpCode)respOpCode, queue, control);
                     var json_response = JsonConvert.SerializeObject(response);
                     _client.Send(json_response);
                 }

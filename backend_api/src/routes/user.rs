@@ -10,7 +10,7 @@ use crate::{
     error::errors::KekServerError,
     middleware::{auth_middleware::AuthService, user_guilds_middleware::UserGuildsService},
     models::{guild::Guild, ids::SoundFileId, sound_file::SoundFile, user::User},
-    utils::{auth::{AuthorizedUser, AuthorizedUserExt}, cache::UserGuildsCache, make_discord_get_request, USERGUILDS},
+    utils::{auth::{AuthorizedUser, AuthorizedUserExt}, cache::{UserGuildsCache, UserGuildsCacheUtil}, make_discord_get_request, USERGUILDS},
 };
 
 pub fn config(cfg: &mut ServiceConfig) {
@@ -86,10 +86,7 @@ pub async fn get_user_guilds(
     db_pool: Data<PgPool>,
     user_guilds_cache: Data<UserGuildsCache>,
 ) -> Result<HttpResponse, KekServerError> {
-    let user_guilds = match user_guilds_cache.get(authorized_user.get_discord_user().get_id()) {
-        Some(ug) => ug,
-        None => return Err(KekServerError::UserNotInCacheError),
-    };
+    let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
     let mut transaction = db_pool.begin().await?;
     let guilds = Guild::get_existing_guilds(&*user_guilds, &mut transaction).await?;

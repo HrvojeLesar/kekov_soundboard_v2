@@ -1,8 +1,9 @@
 use std::{time::Duration, sync::Arc};
 
+use actix_web::web::Data;
 use moka::future::Cache;
 
-use crate::models::ids::{GuildId, UserId};
+use crate::{models::ids::{GuildId, UserId}, error::errors::KekServerError};
 
 use super::auth::{AuthorizedUser, AccessToken};
 
@@ -23,4 +24,15 @@ pub fn create_authorized_user_cache() -> AuthorizedUsersCache {
         .initial_capacity(200)
         .time_to_live(Duration::from_secs(60 * 5))
         .build()
+}
+
+pub struct UserGuildsCacheUtil;
+
+impl UserGuildsCacheUtil {
+    pub fn get_user_guilds(authorized_user: &AuthorizedUser, user_guilds_cache: &Data<UserGuildsCache>) -> Result<Arc<Vec<GuildId>>, KekServerError> {
+        match user_guilds_cache.get(authorized_user.get_discord_user().get_id()) {
+            Some(ug) => return Ok(ug),
+            None => return Err(KekServerError::UserNotInCacheError),
+        };
+    }
 }

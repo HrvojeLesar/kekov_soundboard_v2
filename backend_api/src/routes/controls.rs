@@ -21,7 +21,7 @@ use crate::{
     },
     utils::{
         auth::{AuthorizedUser, AuthorizedUserExt},
-        cache::UserGuildsCache,
+        cache::{UserGuildsCache, UserGuildsCacheUtil},
         validation::{is_user_in_guild, validate_guild_and_file_ids},
     },
     ws::{
@@ -90,10 +90,7 @@ pub async fn play_request(
     ws_channels: Data<WsSessionCommChannels>,
     user_guilds_cache: Data<UserGuildsCache>,
 ) -> Result<HttpResponse, KekServerError> {
-    let user_guilds = match user_guilds_cache.get(authorized_user.get_discord_user().get_id()) {
-        Some(ug) => ug,
-        None => return Err(KekServerError::UserNotInCacheError),
-    };
+    let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
     if !user_guilds.contains(&req_payload.guild_id) {
         return Err(KekServerError::NotInGuildError);
@@ -134,10 +131,7 @@ pub async fn stop_request(
     ws_channels: Data<WsSessionCommChannels>,
     user_guilds_cache: Data<UserGuildsCache>,
 ) -> Result<HttpResponse, KekServerError> {
-    let user_guilds = match user_guilds_cache.get(authorized_user.get_discord_user().get_id()) {
-        Some(ug) => ug,
-        None => return Err(KekServerError::UserNotInCacheError),
-    };
+    let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
     if !user_guilds.contains(&stop_payload.guild_id) {
         return Err(KekServerError::NotInGuildError);

@@ -129,7 +129,7 @@ pub async fn play_request(
 pub async fn stop_request(
     server_address: Data<Addr<ControlsServer>>,
     AuthorizedUserExt(authorized_user): AuthorizedUserExt,
-    req_payload: Json<StopPayload>,
+    Json(stop_payload): Json<StopPayload>,
     db_pool: Data<PgPool>,
     ws_channels: Data<WsSessionCommChannels>,
     user_guilds_cache: Data<UserGuildsCache>,
@@ -139,11 +139,11 @@ pub async fn stop_request(
         None => return Err(KekServerError::UserNotInCacheError),
     };
 
-    if !user_guilds.contains(&req_payload.guild_id) {
+    if !user_guilds.contains(&stop_payload.guild_id) {
         return Err(KekServerError::NotInGuildError);
     }
 
-    let control = ControlsServerMessage::new_stop();
+    let control = ControlsServerMessage::new_stop(stop_payload.guild_id);
     let id = control.get_id();
 
     let receiver = create_channels(id, &ws_channels).await;

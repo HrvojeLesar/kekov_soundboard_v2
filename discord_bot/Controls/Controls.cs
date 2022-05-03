@@ -4,11 +4,29 @@ using DSharpPlus.Lavalink;
 
 namespace KekovBot
 {
-    public static class PlayControl
+    public static class Controls
     {
         private static DiscordBot _client = DiscordBot.Instance;
         private static LavalinkExtension _lavalink = _client.DiscordClient.GetLavalink();
         public static Dictionary<DiscordGuild, PlayQueue> PlayQueueDict = new Dictionary<DiscordGuild, PlayQueue>();
+
+        private static DiscordGuild GetGuild(ControlMessage msg)
+        {
+            if (msg.GuildId == null)
+            {
+                throw new InvalidGuildIdException();
+            }
+
+            DiscordGuild? guild;
+            _client.DiscordClient.Guilds.TryGetValue((ulong)msg.GuildId, out guild);
+
+            if (guild == null)
+            {
+                throw new GuildNotFoundException();
+            }
+
+            return guild;
+        }
 
         private static async Task PlaySound(DiscordChannel channel, Sound sound)
         {
@@ -32,42 +50,34 @@ namespace KekovBot
             if (connection == null)
             {
                 connection = await node.ConnectAsync(channel);
-                PlayQueueDict.Add(guild, new PlayQueue(connection));
-                connection.RegisterConnectionHandlers();
-                // LavalinkTrack track = await connection.GetTrack(file);
-                // await connection.PlayAsync(track);
+                var playQueue = new PlayQueue(connection);
+                PlayQueueDict.Add(guild, playQueue);
+                connection.RegisterConnectionHandlers(playQueue);
             }
 
-            // TODO: CAN THROW
-            var playQueue = PlayQueueDict[guild];
-            // check if something is playing
-            // if not directly play otherwise add to queue
-            if (playQueue.CurrentlyPlaying == null)
+            try
             {
-                playQueue.UnconditionalStart(sound);
-                // not playing
-                // start
+                var playQueue = PlayQueueDict[guild];
+
+                if (playQueue.CurrentlyPlaying == null)
+                {
+                    playQueue.UnconditionalStart(sound);
+                }
+                else
+                {
+                    playQueue.Queue.Enqueue(sound);
+                }
             }
-            else
+            catch (Exception e)
             {
-                playQueue.Queue.Enqueue(sound);
+                Console.WriteLine(e);
+                await connection.Disconnect(guild);
             }
         }
 
         public static async Task Play(ControlMessage msg)
         {
-            DiscordGuild? guild;
-            if (msg.GuildId == null)
-            {
-                throw new InvalidGuildIdException();
-            }
-
-            _client.DiscordClient.Guilds.TryGetValue((ulong)msg.GuildId, out guild);
-
-            if (guild == null)
-            {
-                throw new GuildNotFoundException();
-            }
+            DiscordGuild guild = GetGuild(msg);
 
             DiscordChannel? voiceChannel = null;
             if (msg.VoiceChannelId != null)
@@ -109,6 +119,21 @@ namespace KekovBot
 
             var sound = new Sound((ulong)msg.FileId);
             await PlaySound(voiceChannel, sound);
+        }
+
+        public static async Task Stop(ControlMessage msg)
+        {
+            DiscordGuild guild = GetGuild(msg);
+            PlayQueue? playQueue;
+            PlayQueueDict.TryGetValue(guild, out playQueue);
+            if (playQueue != null)
+            {
+                await playQueue.GuildConnection.Disconnect(guild);
+            }
+            else
+            {
+                throw new NotPlayingExpcetion();
+            }
         }
     }
 }

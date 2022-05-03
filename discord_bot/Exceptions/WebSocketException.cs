@@ -45,4 +45,9 @@ namespace KekovBot
     {
         public FileLoadingFailedException() : base("Failed to load file") { }
     }
+
+    public class NotPlayingExpcetion : WebSocketException
+    {
+        public NotPlayingExpcetion() : base("There is nothing to stop") { }
+    }
 }

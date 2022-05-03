@@ -10,6 +10,7 @@ namespace KekovBot
         InvalidVoiceChannel,
         FileLoadingFailed,
         InvalidFileId,
+        NotPlaying,
         Unknown,
     }
 
@@ -25,6 +26,7 @@ namespace KekovBot
             InvalidVoiceChannelException => ClientError.InvalidVoiceChannel,
             FileLoadingFailedException => ClientError.FileLoadingFailed,
             InvalidFileIdException => ClientError.InvalidFileId,
+            NotPlayingExpcetion => ClientError.NotPlaying,
             _ => ClientError.Unknown,
         };
     }

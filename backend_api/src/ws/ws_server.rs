@@ -5,7 +5,7 @@ use actix::{
     Handler, Message, Recipient, Supervised, Supervisor, WrapFuture,
 };
 use actix_web_actors::ws::WebsocketContext;
-use log::{debug, warn, info};
+use log::{debug, info, warn};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
@@ -53,6 +53,17 @@ impl PlayControl {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct StopControl {
+    guild_id: GuildId,
+}
+
+impl StopControl {
+    pub fn new(guild_id: GuildId) -> Self {
+        return Self { guild_id };
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum OpCode {
     Connection,
     Play,
@@ -81,8 +92,19 @@ pub enum ClientError {
     FileLoadingFailed,
     #[error("Invalid file id error")]
     InvalidFileId,
+    #[error("There is nothing to stop")]
+    NotPlaying,
+    #[serde(other)]
     #[error("Unknown error")]
     Unknown,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum Controls {
+    Play(PlayControl),
+    Stop(StopControl),
+    GetQueue,
 }
 
 #[derive(Clone, Debug, Message, Serialize, Deserialize)]
@@ -129,22 +151,14 @@ impl ControlsServerMessage {
         };
     }
 
-    pub fn new_stop() -> Self {
+    pub fn new_stop(guild_id: GuildId) -> Self {
         return Self {
-            op: OpCode::Play,
+            op: OpCode::Stop,
             message_id: Uuid::new_v4().as_u128(),
-            control: Some(Controls::Stop),
+            control: Some(Controls::Stop(StopControl::new(guild_id))),
             client_error: None,
         };
     }
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum Controls {
-    Play(PlayControl),
-    Stop,
-    GetQueue,
 }
 
 impl Connect {

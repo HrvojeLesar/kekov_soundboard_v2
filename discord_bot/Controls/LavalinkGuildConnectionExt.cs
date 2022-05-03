@@ -5,7 +5,7 @@ namespace KekovBot
 {
     public static class LavalinkGuildConnectionExt
     {
-        private static Dictionary<DiscordGuild, PlayQueue> PlayQueueDict = PlayControl.PlayQueueDict;
+        private static Dictionary<DiscordGuild, PlayQueue> PlayQueueDict = Controls.PlayQueueDict;
 
         public static async Task<LavalinkTrack> GetTrack(this LavalinkGuildConnection conn, FileInfo file)
         {
@@ -17,13 +17,12 @@ namespace KekovBot
             return loadResult.Tracks.First();
         }
 
-        public static void RegisterConnectionHandlers(this LavalinkGuildConnection conn)
+        public static void RegisterConnectionHandlers(this LavalinkGuildConnection conn, PlayQueue playQueue)
         {
             var guild = conn.Guild;
 
             conn.DiscordWebSocketClosed += (gc, args) =>
             {
-                // Clear queueu
                 PlayQueueDict.Remove(guild);
                 Console.WriteLine("Websocket closed");
                 return Task.CompletedTask;
@@ -31,54 +30,36 @@ namespace KekovBot
 
             conn.PlaybackFinished += async (gc, args) =>
             {
-                // If queueueueueu empty disconnect after x seconds
-                // TODO: CAN THROW
-                var playQueue = PlayQueueDict[guild];
                 if (!await playQueue.PlayNext())
                 {
-                    // Do disconnect
-                    PlayQueueDict.Remove(guild);
-                    await conn.DisconnectAsync();
+                    await conn.Disconnect(guild);
                 }
-
-                Console.WriteLine("Playback Finished");
-                // return Task.CompletedTask;
-            };
-
-            conn.PlaybackStarted += (gc, args) =>
-            {
-                // for debug
-                Console.WriteLine("Playback Started");
-                return Task.CompletedTask;
             };
 
             conn.TrackException += async (gc, args) =>
             {
-                // skip track
-                // TODO: CAN THROW
-                var playQueue = PlayQueueDict[guild];
                 if (!await playQueue.PlayNext())
                 {
-                    // Do disconnect
-                    PlayQueueDict.Remove(guild);
-                    await conn.DisconnectAsync();
+                    await conn.Disconnect(guild);
                 }
                 Console.WriteLine("Track exception");
             };
 
             conn.TrackStuck += async (gc, args) =>
             {
-                // skip track
-                // TODO: CAN THROW
-                var playQueue = PlayQueueDict[guild];
                 if (!await playQueue.PlayNext())
                 {
-                    // Do disconnect
-                    PlayQueueDict.Remove(guild);
-                    await conn.DisconnectAsync();
+                    await conn.Disconnect(guild);
                 }
                 Console.WriteLine("Track stuck");
             };
+        }
+
+        public static async Task Disconnect(this LavalinkGuildConnection conn, DiscordGuild guild)
+        {
+            Console.WriteLine("Disconnect");
+            PlayQueueDict.Remove(guild);
+            await conn.DisconnectAsync();
         }
     }
 }

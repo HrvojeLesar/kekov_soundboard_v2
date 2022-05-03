@@ -36,11 +36,12 @@ namespace KekovBot
                 {
                     case OpCode.Play:
                         {
-                            await PlayControl.Play(control);
+                            await Controls.Play(control);
                             break;
                         }
                     case OpCode.Stop:
                         {
+                            await Controls.Stop(control);
                             break;
                         }
                     case OpCode.Connection:

@@ -300,6 +300,7 @@ impl Handler<Disconnect> for ControlsServer {
 impl Handler<ControlsServerMessage> for ControlsServer {
     type Result = ();
 
+    // TODO: If there are no active ws connections return error
     fn handle(&mut self, msg: ControlsServerMessage, _ctx: &mut Self::Context) -> Self::Result {
         self.send_command(msg);
     }

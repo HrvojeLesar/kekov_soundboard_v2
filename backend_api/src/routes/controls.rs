@@ -17,7 +17,8 @@ use crate::{
     middleware::{auth_middleware::AuthService, user_guilds_middleware::UserGuildsService},
     models::{
         guild_file::GuildFile,
-        ids::{ChannelId, GuildId, Id, SoundFileId}, sound_file::SoundFile,
+        ids::{ChannelId, GuildId, Id, SoundFileId},
+        sound_file::SoundFile,
     },
     utils::{
         auth::{AuthorizedUser, AuthorizedUserExt},
@@ -64,6 +65,12 @@ pub struct QueuePayload {
     pub guild_id: GuildId,
 }
 
+async fn cleanup(id: &u128, ws_channels: &Data<WsSessionCommChannels>) {
+    {
+        let mut lock = ws_channels.write().await;
+        lock.remove(&id);
+    }
+}
 async fn create_channels(
     id: u128,
     ws_channels: &Data<WsSessionCommChannels>,
@@ -84,13 +91,28 @@ async fn wait_for_ws_response(
     return match timeout(Duration::from_secs(10), receiver).await?? {
         Ok(o) => Ok(o),
         Err(e) => {
-            {
-                let mut lock = ws_channels.write().await;
-                lock.remove(id);
-            }
+            cleanup(id, &ws_channels).await;
             return Err(e.into());
         }
     };
+}
+
+async fn send_command(
+    control: ControlsServerMessage,
+    server_address: Data<Addr<ControlsServer>>,
+    ws_channels: Data<WsSessionCommChannels>,
+) -> Result<ControlsServerMessage, KekServerError> {
+    let id = control.get_id();
+
+    let receiver = create_channels(id, &ws_channels).await;
+    match server_address.send(control).await {
+        Ok(_) => (),
+        Err(e) => {
+            cleanup(&id, &ws_channels).await;
+            return Err(e.into());
+        }
+    }
+    return wait_for_ws_response(&id, receiver, ws_channels).await;
 }
 
 #[post("play")]
@@ -122,11 +144,7 @@ pub async fn play_request(
 
             let payload = req_payload.into_inner();
             let control = ControlsServerMessage::new_play(payload.guild_id, payload.file_id);
-            let id = control.get_id();
-
-            let receiver = create_channels(id, &ws_channels).await;
-            server_address.send(control).await?;
-            let resp = wait_for_ws_response(&id, receiver, ws_channels).await?;
+            let resp = send_command(control, server_address, ws_channels).await?;
 
             return Ok(HttpResponse::Ok().finish());
         }
@@ -150,11 +168,7 @@ pub async fn stop_request(
     }
 
     let control = ControlsServerMessage::new_stop(stop_payload.guild_id);
-    let id = control.get_id();
-
-    let receiver = create_channels(id, &ws_channels).await;
-    server_address.send(control).await?;
-    let resp = wait_for_ws_response(&id, receiver, ws_channels).await?;
+    let resp = send_command(control, server_address, ws_channels).await?;
 
     return Ok(HttpResponse::Ok().finish());
 }
@@ -175,11 +189,7 @@ pub async fn skip_request(
     }
 
     let control = ControlsServerMessage::new_skip(skip_payload.guild_id);
-    let id = control.get_id();
-
-    let receiver = create_channels(id, &ws_channels).await;
-    server_address.send(control).await?;
-    let resp = wait_for_ws_response(&id, receiver, ws_channels).await?;
+    let resp = send_command(control, server_address, ws_channels).await?;
 
     return Ok(HttpResponse::Ok().finish());
 }
@@ -200,11 +210,7 @@ pub async fn queue_request(
     }
 
     let control = ControlsServerMessage::new_queue(queue_payload.guild_id);
-    let id = control.get_id();
-
-    let receiver = create_channels(id, &ws_channels).await;
-    server_address.send(control).await?;
-    let resp = wait_for_ws_response(&id, receiver, ws_channels).await?;
+    let resp = send_command(control, server_address, ws_channels).await?;
     match resp.queue {
         Some(q) => return Ok(HttpResponse::Ok().json(q)),
         None => return Ok(HttpResponse::Ok().json(Vec::<SoundFile>::new())),

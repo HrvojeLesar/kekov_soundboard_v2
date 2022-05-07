@@ -70,3 +70,11 @@ Takes in a json payload with `file_id` and `guild_id`.
 ### Stop
 **POST** `/stop`
 Takes in a json payload with `guild_id`.
+
+### Skip
+**POST** `/skip`
+Takes in a json payload with `guild_id`.
+
+### GetQueue
+**POST** `/queue`
+Takes in a json payload with `guild_id`.

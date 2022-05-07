@@ -44,7 +44,7 @@ namespace KekovBot
                 if (CurrentlyPlaying != null)
                 {
                     queue.Add(CurrentlyPlaying);
-                    queue.Concat(Queue.ToList());
+                    queue.AddRange(Queue.ToList());
                 }
                 return queue;
             });

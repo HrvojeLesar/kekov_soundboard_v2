@@ -1,23 +1,27 @@
 use std::{
+    collections::HashMap,
     fs::File,
     io::BufReader,
-    sync::{Arc, Mutex}, time::UNIX_EPOCH, collections::HashMap,
+    sync::{Arc, Mutex},
+    time::UNIX_EPOCH,
 };
 
+use actix_cors::Cors;
 use actix_web::{web::Data, App, HttpServer};
 use env::check_required_env_variables;
-use routes::{routes_config, not_found::not_found};
+use routes::{not_found::not_found, routes_config};
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{certs, pkcs8_private_keys};
 
 use dotenv::dotenv;
 use snowflake::SnowflakeIdGenerator;
 use tokio::sync::RwLock;
-use utils::cache::{create_user_guilds_cache, create_authorized_user_cache};
+use utils::cache::{create_authorized_user_cache, create_user_guilds_cache};
 use ws::{ws_server::ControlsServer, ws_session::WsSessionCommChannels};
 
 mod database;
 mod discord_client_config;
+mod env;
 mod error;
 mod middleware;
 mod models;
@@ -25,7 +29,6 @@ mod oauth_client;
 mod routes;
 mod utils;
 mod ws;
-mod env;
 
 // #[cfg(debug_assertions)]
 #[actix_web::main]
@@ -91,18 +94,28 @@ async fn main() -> std::io::Result<()> {
             let id_arc = snowflake_thread_id.clone();
             let mut lock = id_arc.lock().unwrap();
             let epoch = UNIX_EPOCH + std::time::Duration::from_millis(1640991600000); // epoch start time 01.01.2022. 00:00
-            snowflakes = Data::new(Mutex::new(SnowflakeIdGenerator::with_epoch(*lock, 1, epoch)));
+            snowflakes = Data::new(Mutex::new(SnowflakeIdGenerator::with_epoch(
+                *lock, 1, epoch,
+            )));
             *lock += 1;
         }
 
         App::new()
+            .wrap(
+                Cors::default()
+                    .allow_any_origin()
+                    .allow_any_header()
+                    .allow_any_method()
+                    .max_age(3600)
+                    .send_wildcard(),
+            )
             .wrap(actix_web::middleware::Logger::default())
             .app_data(oauth.clone()) // oauth2::basic::BasicClient
             .app_data(pool.clone())
             .app_data(controls_server.clone())
             .app_data(ws_channels.clone())
             .app_data(users_guild_cache.clone())
-            .app_data(authorized_users_cache .clone())
+            .app_data(authorized_users_cache.clone())
             .app_data(snowflakes)
             .configure(routes_config)
             .default_service(actix_web::web::to(not_found))

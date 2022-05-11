@@ -55,6 +55,10 @@ Json must contain files field that is an array of file ids.
 **DELETE** `/user/files/{file_id}`
 - Returns deleted file.
 
+### Get guilds
+**GET** `/user/guilds`
+- Returns a json of guilds user and bot are both in.
+
 ## Websocket
 
 ### Connecting to Websocket

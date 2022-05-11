@@ -12,8 +12,6 @@ use super::ids::GuildId;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Guild {
-    #[serde(deserialize_with = "deserialize_string_to_number")]
-    #[serde(serialize_with = "serialize_id_to_string")]
     pub id: GuildId,
     pub name: String,
     pub icon: Option<String>,

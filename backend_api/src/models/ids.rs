@@ -1,12 +1,13 @@
-use std::{str::FromStr, num::ParseIntError};
+use std::{convert::TryFrom, num::ParseIntError, str::FromStr};
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 pub trait Id {
     fn get_id(&self) -> u64;
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
+#[serde(try_from = "String")]
 pub struct GuildId(pub u64);
 
 impl Id for GuildId {
@@ -23,7 +24,25 @@ impl FromStr for GuildId {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
+impl TryFrom<String> for GuildId {
+    type Error = ParseIntError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        return Self::from_str(&value);
+    }
+}
+
+impl Serialize for GuildId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        return serializer.serialize_str(&self.0.to_string());
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
+#[serde(try_from = "String")]
 pub struct UserId(pub u64);
 
 impl Id for UserId {
@@ -40,7 +59,25 @@ impl FromStr for UserId {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
+impl TryFrom<String> for UserId {
+    type Error = ParseIntError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        return Self::from_str(&value);
+    }
+}
+
+impl Serialize for UserId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            return serializer.serialize_str(&self.0.to_string());
+        }
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
+#[serde(try_from = "String")]
 pub struct SoundFileId(pub u64);
 
 impl Id for SoundFileId {
@@ -57,7 +94,25 @@ impl FromStr for SoundFileId {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
+impl TryFrom<String> for SoundFileId {
+    type Error = ParseIntError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        return Self::from_str(&value);
+    }
+}
+
+impl Serialize for SoundFileId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            return serializer.serialize_str(&self.0.to_string());
+        }
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
+#[serde(try_from = "String")]
 pub struct ChannelId(pub u64);
 
 impl Id for ChannelId {
@@ -72,4 +127,21 @@ impl FromStr for ChannelId {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         return Ok(Self(s.parse()?));
     }
+}
+
+impl TryFrom<String> for ChannelId {
+    type Error = ParseIntError;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        return Self::from_str(&value);
+    }
+}
+
+impl Serialize for ChannelId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            return serializer.serialize_str(&self.0.to_string());
+        }
 }

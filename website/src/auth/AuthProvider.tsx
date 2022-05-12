@@ -2,6 +2,13 @@ import axios from "axios";
 import { createContext, useEffect, useMemo, useState } from "react";
 import { ReactNode } from "react";
 import { useCookies } from "react-cookie";
+import qs from 'qs';
+import { API_URL, AuthRoute, DiscordRoutes } from "../api/ApiRoutes";
+
+enum TokenType {
+    AccessToken = "access_token",
+    RefreshToken = "refresh_token",
+}
 
 type User = {
     id: string,
@@ -23,6 +30,11 @@ type Tokens = {
     expires: number,
 }
 
+type RevokeAccessToken = {
+    token: string,
+    token_type: TokenType,
+}
+
 type AuthContextType = {
     user?: User;
     tokens?: Tokens;
@@ -36,11 +48,11 @@ export let AuthContext = createContext<AuthContextType>(null!);
 function AuthProvider({ children }: { children: ReactNode }) {
     let [user, setUser] = useState<User | undefined>();
     let [tokens, setTokens] = useState<Tokens | undefined>();
-    let [cookies] = useCookies(['access_token', 'refresh_token', 'expires']);
+    let [cookies, _setCookie, removeCookie] = useCookies(['access_token', 'refresh_token', 'expires']);
 
     const fetchUserInfo = async (tokens: Tokens) => {
         try {
-            const { data } = await axios.get<User>('https://discord.com/api/v9/users/@me', {
+            const { data } = await axios.get<User>(DiscordRoutes.Me, {
                 headers: {
                     Authorization: `Bearer ${tokens.access_token}`,
                 }
@@ -48,16 +60,37 @@ function AuthProvider({ children }: { children: ReactNode }) {
             console.log(data);
             setUser(data);
         } catch (e) {
+            // TODO: Handle
             console.log(e);
         }
     }
 
+    const revokeAccess = () => {
+        removeCookie('access_token');
+        removeCookie('refresh_token');
+        removeCookie('expires');
+        setUser(undefined);
+        setTokens(undefined);
+    }
+
     const login = async (tokens: Tokens) => {
-        console.log(tokens);
         await fetchUserInfo(tokens);
     }
 
     const logout = async () => {
+        if (tokens?.access_token) {
+            try {
+                let token: RevokeAccessToken = { token: tokens.access_token, token_type: TokenType.AccessToken };
+                await axios.post<RevokeAccessToken>(
+                    `${API_URL}${AuthRoute.postRevoke}`,
+                    qs.stringify(token),
+                    { headers: { ContentType: 'application/x-www-form-urlencoded' } });
+                revokeAccess();
+            } catch (e) {
+                // TODO: Handle
+                console.log(e);
+            }
+        }
     }
 
     const refresh = async () => {

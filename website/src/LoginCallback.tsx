@@ -35,9 +35,8 @@ function LoginCallback() {
         if (!error && code && state) {
             (async () => {
                 try {
+                    // TODO: change url
                     const { data } = await axios.get<LoginResponse>(`http://localhost:8080/v1/auth/callback?code=${code}&state=${state}`);
-
-                    console.log(data);
 
                     authContext.login({
                         access_token: data.access_token, refresh_token: data.refresh_token, expires: Date.now() + data.expires_in,

@@ -1,7 +1,7 @@
 use actix_web::{
-    delete, get,
+    delete, get, post,
     web::{delete, scope, Data, Json, Path, ServiceConfig},
-    HttpResponse, post,
+    HttpResponse,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -9,7 +9,13 @@ use sqlx::PgPool;
 use crate::{
     error::errors::KekServerError,
     middleware::{auth_middleware::AuthService, user_guilds_middleware::UserGuildsService},
-    models::{guild::Guild, ids::SoundFileId, sound_file::SoundFile, user::User, guild_file::GuildFile},
+    models::{
+        guild::Guild,
+        guild_file::GuildFile,
+        ids::{GuildId, SoundFileId},
+        sound_file::SoundFile,
+        user::User,
+    },
     utils::{
         auth::{AuthorizedUser, AuthorizedUserExt},
         cache::{UserGuildsCache, UserGuildsCacheUtil},
@@ -25,7 +31,8 @@ pub fn config(cfg: &mut ServiceConfig) {
             .service(delete_user_file)
             .service(delete_multiple_user_files)
             .service(get_user_guilds)
-            .service(get_guilds_with_file),
+            .service(get_guilds_with_file)
+            .service(get_enabled_user_files),
     );
 }
 
@@ -113,22 +120,63 @@ pub async fn get_guilds_with_file(
     user_guilds_cache: Data<UserGuildsCache>,
     file_id: Path<SoundFileId>,
 ) -> Result<HttpResponse, KekServerError> {
-
     let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
     let mut transaction = db_pool.begin().await?;
     let guilds = Guild::get_existing_guilds(&*user_guilds, &mut transaction).await?;
-    let guilds_with_file = GuildFile::get_matching_guilds_for_file(&guilds, &file_id, &mut transaction).await?;
+    let guilds_with_file =
+        GuildFile::get_matching_guilds_for_file(&guilds, &file_id, &mut transaction).await?;
     transaction.commit().await?;
 
-    let guild_has_file_vec = guilds.into_iter().map(|guild| {
-        let has_file = guilds_with_file.get(&guild).is_some();
-        GuildHasFile {
-            guild,
-            has_file,
-        }
-    })
-    .collect::<Vec<GuildHasFile>>();
+    let guild_has_file_vec = guilds
+        .into_iter()
+        .map(|guild| {
+            let has_file = guilds_with_file.get(&guild).is_some();
+            GuildHasFile { guild, has_file }
+        })
+        .collect::<Vec<GuildHasFile>>();
 
     return Ok(HttpResponse::Ok().json(guild_has_file_vec));
+}
+
+#[derive(Clone, Debug, Serialize)]
+struct EnabledFile {
+    sound_file: SoundFile,
+    enabled: bool,
+}
+
+#[get("/{guild_id}", wrap = "UserGuildsService")]
+pub async fn get_enabled_user_files(
+    AuthorizedUserExt(authorized_user): AuthorizedUserExt,
+    db_pool: Data<PgPool>,
+    user_guilds_cache: Data<UserGuildsCache>,
+    guild_id: Path<GuildId>,
+) -> Result<HttpResponse, KekServerError> {
+    let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
+
+    if !user_guilds.contains(&guild_id) {
+        // TODO: Deni errora
+        return Err(KekServerError::Other("Deni errora".into()));
+    }
+
+    let mut transaction = db_pool.begin().await?;
+    let files = SoundFile::get_user_files(
+        authorized_user.get_discord_user().get_id(),
+        &mut transaction,
+    )
+    .await?;
+    let enabled_files = GuildFile::get_users_enabled_files_for_guild(
+        authorized_user.get_discord_user().get_id(),
+        &guild_id,
+        &mut transaction,
+    )
+    .await?;
+    transaction.commit().await?;
+
+    let enabled_files = files.into_iter().map(|f| {
+        let enabled = enabled_files.get(&f).is_some();
+        EnabledFile { sound_file: f, enabled}
+    }).collect::<Vec<EnabledFile>>();
+
+    return Ok(HttpResponse::Ok().json(enabled_files));
 }

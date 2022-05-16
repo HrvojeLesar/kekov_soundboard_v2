@@ -5,7 +5,7 @@ use crate::error::errors::KekServerError;
 
 use super::ids::{SoundFileId, UserId};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub struct SoundFile {
     /// unique file_name generated as snowflake
     // #[serde(skip)]

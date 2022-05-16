@@ -6,8 +6,9 @@ use sqlx::{Postgres, Transaction};
 use crate::error::errors::KekServerError;
 
 use super::{
+    guild::Guild,
     ids::{GuildId, SoundFileId, UserId},
-    sound_file::SoundFile, guild::Guild,
+    sound_file::SoundFile,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -117,14 +118,18 @@ impl GuildFile {
         file_id: &SoundFileId,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<HashSet<Guild>, KekServerError> {
-        let guild_ids = guilds.iter().map(|guild| guild.id.0 as i64).collect::<Vec<i64>>();
+        let guild_ids = guilds
+            .iter()
+            .map(|guild| guild.id.0 as i64)
+            .collect::<Vec<i64>>();
         let records = sqlx::query!(
             "
             SELECT * FROM guild_file
             INNER JOIN guild ON id = ANY($1) AND guild_id = ANY($1) AND file_id = $2
             ",
             &guild_ids,
-            file_id.0 as i64)
+            file_id.0 as i64
+        )
         .fetch_all(&mut *transaction)
         .await?;
 
@@ -138,5 +143,41 @@ impl GuildFile {
             })
             .collect();
         return Ok(guilds);
+    }
+
+    pub async fn get_users_enabled_files_for_guild(
+        user: &UserId,
+        guild: &GuildId,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<HashSet<SoundFile>, KekServerError> {
+        let records = sqlx::query!(
+            "
+            SELECT id, display_name, owner FROM guild_file
+            INNER JOIN files ON files.id = guild_file.file_id 
+            AND owner = $1 
+            AND guild_id = $2;
+            ",
+            user.0 as i64,
+            guild.0 as i64
+        )
+        .fetch_all(&mut *transaction)
+        .await?;
+
+        let enabled_sounds = records
+            .into_iter()
+            .map(|r| {
+                let owner = match r.owner {
+                    Some(o) => Some(UserId(o as u64)),
+                    None => None,
+                };
+
+                SoundFile {
+                id: SoundFileId(r.id as u64),
+                display_name: r.display_name,
+                owner,
+            }})
+            .collect();
+
+        return Ok(enabled_sounds);
     }
 }

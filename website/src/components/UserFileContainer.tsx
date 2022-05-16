@@ -12,7 +12,7 @@ import {
 import { useHover } from "@mantine/hooks";
 import { useEffect } from "react";
 import { CirclePlus, Pencil, Trash } from "tabler-icons-react";
-import { UserFile, UserFilesModalType } from "./UserFiles";
+import { UserFile, UserFilesModalType } from "../views/UserFiles";
 
 type UserFileContainerProps = {
     index?: number;

@@ -8,11 +8,11 @@ import LoginCallback from "./LoginCallback";
 import AuthProvider from "./auth/AuthProvider";
 import ProtectedRoutes from "./auth/ProtectedRoutes";
 import { Login } from "./Login";
-import { Guild } from "./components/Guild";
+import { Guild } from "./views/Guild";
 import { AppShell, Footer, MantineProvider } from "@mantine/core";
 import Sidebar from "./components/Sidebar";
-import Upload from "./components/Upload";
-import UserFiles from "./components/UserFiles";
+import Upload from "./views/Upload";
+import UserFiles from "./views/UserFiles";
 import { ModalsProvider } from "@mantine/modals";
 
 const root = ReactDOM.createRoot(

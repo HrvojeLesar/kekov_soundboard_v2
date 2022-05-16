@@ -16,11 +16,11 @@ import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import { API_URL, UserRoute } from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
-import AddModalBody from "./AddModalBody";
-import DeleteModalBody from "./DeleteModalBody";
-import EditModalBody from "./EditModalBody";
-import { GuildToggle } from "./GuildToggle";
-import UserFileContainer from "./UserFileContainer";
+import AddModalBody from "../components/AddModalBody";
+import DeleteModalBody from "../components/DeleteModalBody";
+import EditModalBody from "../components/EditModalBody";
+import { GuildToggle } from "../components/GuildToggle";
+import UserFileContainer from "../components/UserFileContainer";
 
 export type UserFile = {
     id: string;

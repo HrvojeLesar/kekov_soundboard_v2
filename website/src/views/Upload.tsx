@@ -13,7 +13,7 @@ import {
     Text,
 } from "@mantine/core";
 import { Dropzone, FullScreenDropzone } from "@mantine/dropzone";
-import { FileUploadContainer, FileContainerRef } from "./FileContainer";
+import { FileUploadContainer, FileContainerRef } from "../components/FileContainer";
 import { AuthContext } from "../auth/AuthProvider";
 import axios from "axios";
 import { API_URL, FilesRoute } from "../api/ApiRoutes";

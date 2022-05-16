@@ -1,5 +1,5 @@
 import { Button } from "@mantine/core";
-import { GuildFile } from "./Guild";
+import { GuildFile } from "../views/Guild";
 
 export function PlayControl({ file, playFunc }: { file: GuildFile, playFunc: any }) {
     return (

@@ -5,7 +5,7 @@ import { API_URL, UserRoute } from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
 import { Guild } from "../LoginCallback";
 import { GuildToggle } from "./GuildToggle";
-import { UserFile } from "./UserFiles";
+import { UserFile } from "../views/UserFiles";
 
 type AddModalBodyProps = {
     file: UserFile;

@@ -3,7 +3,7 @@ import { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { API_URL, ControlsRoute, GuildRoute } from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
-import { PlayControl } from "./PlayControl";
+import { PlayControl } from "../components/PlayControl";
 
 export type GuildFile = {
     id: string;

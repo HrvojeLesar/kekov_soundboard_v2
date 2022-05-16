@@ -3,7 +3,7 @@ import axios from "axios";
 import { useContext, useState } from "react";
 import { API_URL, GuildRoute } from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
-import { UserFile } from "./UserFiles";
+import { UserFile } from "../views/UserFiles";
 
 type GuildToggleProps = {
     guildId: string;

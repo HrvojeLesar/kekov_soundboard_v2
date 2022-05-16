@@ -1,12 +1,9 @@
 import { useContext } from 'react';
 import logo from './logo.svg';
 import './App.css';
-import { Outlet, Route, Routes, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { AuthContext } from './auth/AuthProvider';
-import { AppShell } from '@mantine/core';
-import Sidebar from './components/Sidebar';
-import { Guild } from './components/Guild';
 
 function App() {
     let [searchParams, setSearchParams] = useSearchParams();

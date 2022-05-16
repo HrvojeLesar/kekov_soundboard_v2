@@ -14,8 +14,9 @@ export enum AuthRoute {
 export enum UserRoute {
     getFiles = '/user/files',
     getGuilds = '/user/guilds',
-    deleteFile = '/user/files',
-    deleteFiles = '/user/files/',
+    getGuildsWithFile = '/user/guilds/',
+    deleteFile = '/user/files/',
+    deleteFiles = '/user/files',
 }
 
 export enum GuildRoute {

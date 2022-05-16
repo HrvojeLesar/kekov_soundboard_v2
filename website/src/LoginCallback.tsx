@@ -5,7 +5,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { CookieSetOptions } from "universal-cookie";
 import { AuthContext } from "./auth/AuthProvider";
 
-type Guild = {
+export type Guild = {
     id: string,
     name: string,
     icon?: string,

@@ -30,20 +30,18 @@ const MAXLEN = 255;
 type FileContainerProps = {
     file: File;
     deleteCallback: (file: File) => void;
+    disabled: boolean;
 };
 
 export type FileContainerRef = {
-    startUpload: () => void;
+    fileName: string,
 };
 
 export const FileUploadContainer = forwardRef<
     FileContainerRef,
     FileContainerProps
 >((props, ref) => {
-    let { tokens } = useContext(AuthContext);
-    const { file, deleteCallback } = props;
-    const [progressValue, setProgressValue] = useState(0);
-    const [isUploading, setIsUploading] = useState(false);
+    const { file, deleteCallback, disabled } = props;
 
     const removeExtension = (initialValue: string) => {
         let index = initialValue.length - 1;
@@ -102,38 +100,8 @@ export const FileUploadContainer = forwardRef<
         updateCharCount();
     }, [value]);
 
-    const upload = async () => {
-        if (tokens?.access_token) {
-            try {
-                const fileName = value.trim() == "" ? file.name : value;
-                const formData = new FormData();
-                setIsUploading(true);
-                formData.append(fileName, file, file.name);
-                axios
-                    .post(`${API_URL}${FilesRoute.postUpload}`, formData, {
-                        headers: {
-                            Authorization: `${tokens?.access_token}`,
-                            "Content-Type": "multipart/form-data",
-                        },
-                        onUploadProgress: (progress) => {
-                            const uploadPercent = Math.round(
-                                (progress.loaded / progress.total) * 100
-                            );
-                            setProgressValue(uploadPercent);
-                        },
-                    })
-                    .then(() => {
-                        console.log("Gotovo");
-                    });
-            } catch (e) {
-                // TODO: Handle
-                console.log(e);
-            }
-        }
-    };
-
     useImperativeHandle(ref, () => ({
-        startUpload: upload,
+        fileName: value,
     }));
 
     return (
@@ -142,7 +110,7 @@ export const FileUploadContainer = forwardRef<
                 <Grid.Col span={11}>
                     <Stack>
                         <TextInput
-                            disabled={isUploading}
+                            disabled={disabled}
                             value={value}
                             onChange={(e) => {
                                 setValue(e.target.value);
@@ -160,18 +128,13 @@ export const FileUploadContainer = forwardRef<
                                 </>
                             }
                         />
-                        {isUploading ? (
-                            <Progress animate value={progressValue} />
-                        ) : (
-                            <></>
-                        )}
                     </Stack>
                 </Grid.Col>
                 <Grid.Col span={1}>
                     {/*TODO: CENTER*/}
                     <Center>
                         <ActionIcon
-                            disabled={isUploading}
+                            disabled={disabled}
                             color="red"
                             variant="outline"
                             onClick={() => deleteCallback(file)}

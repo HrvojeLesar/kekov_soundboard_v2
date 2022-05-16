@@ -1,0 +1,150 @@
+import {
+    Box,
+    Button,
+    Grid,
+    Group,
+    Modal,
+    Pagination,
+    Skeleton,
+    Stack,
+    Table,
+    Text,
+} from "@mantine/core";
+import { useHover, usePagination } from "@mantine/hooks";
+import { useModals } from "@mantine/modals";
+import axios from "axios";
+import { useContext, useEffect, useState } from "react";
+import { API_URL, UserRoute } from "../api/ApiRoutes";
+import { AuthContext } from "../auth/AuthProvider";
+import AddModalBody from "./AddModalBody";
+import DeleteModalBody from "./DeleteModalBody";
+import EditModalBody from "./EditModalBody";
+import { GuildToggle } from "./GuildToggle";
+import UserFileContainer from "./UserFileContainer";
+
+export type UserFile = {
+    id: string;
+    display_name: string;
+};
+
+export enum UserFilesModalType {
+    Add,
+    Edit,
+    Delete,
+}
+
+export default function UserFiles() {
+    const { tokens } = useContext(AuthContext);
+    const [files, setFiles] = useState<UserFile[]>([]);
+    const [isFetching, setIsFetching] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalType, setModalType] = useState<UserFilesModalType>();
+    const [currentFile, setCurrentFile] = useState<UserFile>();
+
+    const fetchFiles = async () => {
+        if (tokens?.access_token) {
+            try {
+                const { data } = await axios.get<UserFile[]>(
+                    `${API_URL}${UserRoute.getFiles}`,
+                    {
+                        headers: { authorization: `${tokens.access_token}` },
+                    }
+                );
+                setIsFetching(false);
+                setFiles(data);
+            } catch (e) {
+                // TODO: Handle
+                console.log(e);
+            }
+        }
+    };
+
+    useEffect(() => {
+        fetchFiles();
+    }, []);
+
+    const renderModal = () => {
+        switch (modalType) {
+            case UserFilesModalType.Add: {
+                if (currentFile) {
+                    return <AddModalBody file={currentFile} />;
+                }
+                // WARN: This should be unreachable
+                console.log("Unreachable!");
+                return <></>;
+            }
+            case UserFilesModalType.Edit: {
+                return (
+                    <EditModalBody
+                        file={currentFile}
+                        closeModalCallback={() => setIsModalOpen(false)}
+                        editSuccessCallback={() => { }}
+                    />
+                );
+            }
+            case UserFilesModalType.Delete: {
+                return (
+                    <DeleteModalBody
+                        file={currentFile}
+                        closeModalCallback={() => setIsModalOpen(false)}
+                        deletionSuccessCallback={() => {
+                            setIsModalOpen(false);
+                            setFiles(files.filter((f) => f != currentFile));
+                        }}
+                    />
+                );
+            }
+        }
+    };
+
+    const openModal = (type: UserFilesModalType, file: UserFile) => {
+        setModalType(type);
+        setCurrentFile(file);
+        setIsModalOpen(true);
+    };
+
+    const modalTitle = () => {
+        switch (modalType) {
+            case UserFilesModalType.Add: {
+                return "Add to server";
+            }
+            case UserFilesModalType.Edit: {
+                return "Edit";
+            }
+            case UserFilesModalType.Delete: {
+                return "Delete confirmation!";
+            }
+        }
+    };
+
+    // WARN: Make performant
+    // TODO: Make performant
+    return (
+        <>
+            <Modal
+                overflow="inside"
+                title={modalTitle()}
+                opened={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+            >
+                {renderModal()}
+            </Modal>
+            {isFetching && <Skeleton>placeholder</Skeleton>}
+            {!isFetching && files.length > 0 && (
+                <Table striped highlightOnHover verticalSpacing="md">
+                    <tbody>
+                        {files.map((file) => {
+                            return (
+                                <UserFileContainer
+                                    key={file.id}
+                                    file={file}
+                                    openModal={openModal}
+                                />
+                            );
+                        })}
+                    </tbody>
+                </Table>
+            )}
+        </>
+    );
+}

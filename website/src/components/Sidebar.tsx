@@ -67,11 +67,16 @@ export default function Sidebar() {
     }, [])
 
     return (
-        <Navbar height={750} width={{ base: 80 }} p="md">
+        <Navbar height="100vh" width={{ base: 80 }} p="md">
             <Center>
-                <Button component={Link} to={`/upload`} >
-                    Upload
-                </Button>
+                <Group direction="column">
+                    <Button component={Link} to={`/upload`} >
+                        Upload
+                    </Button>
+                    <Button component={Link} to={`/user`} >
+                        User files
+                    </Button>
+                </Group>
             </Center>
             <Navbar.Section grow mt={50}>
                 <Group direction="column" align="center" spacing={2}>

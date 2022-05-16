@@ -43,7 +43,7 @@ type AuthContextType = {
     refresh: () => void;
 }
 
-export let AuthContext = createContext<AuthContextType>(null!);
+export const AuthContext = createContext<AuthContextType>(null!);
 
 function AuthProvider({ children }: { children: ReactNode }) {
     let [user, setUser] = useState<User | undefined>();

@@ -10,7 +10,7 @@ use crate::{
 
 use super::ids::GuildId;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub struct Guild {
     pub id: GuildId,
     pub name: String,

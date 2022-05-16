@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use serde::{Deserialize, Serialize};
 use sqlx::{Postgres, Transaction};
 
@@ -5,7 +7,7 @@ use crate::error::errors::KekServerError;
 
 use super::{
     ids::{GuildId, SoundFileId, UserId},
-    sound_file::SoundFile,
+    sound_file::SoundFile, guild::Guild,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -108,5 +110,33 @@ impl GuildFile {
             }
             None => return Ok(None),
         }
+    }
+
+    pub async fn get_matching_guilds_for_file(
+        guilds: &Vec<Guild>,
+        file_id: &SoundFileId,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<HashSet<Guild>, KekServerError> {
+        let guild_ids = guilds.iter().map(|guild| guild.id.0 as i64).collect::<Vec<i64>>();
+        let records = sqlx::query!(
+            "
+            SELECT * FROM guild_file
+            INNER JOIN guild ON id = ANY($1) AND guild_id = ANY($1) AND file_id = $2
+            ",
+            &guild_ids,
+            file_id.0 as i64)
+        .fetch_all(&mut *transaction)
+        .await?;
+
+        let guilds = records
+            .into_iter()
+            .map(|r| Guild {
+                id: GuildId(r.guild_id as u64),
+                name: r.name,
+                icon: r.icon,
+                icon_hash: r.icon_hash,
+            })
+            .collect();
+        return Ok(guilds);
     }
 }

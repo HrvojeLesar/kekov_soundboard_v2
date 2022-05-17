@@ -33,6 +33,7 @@ export function PlayControl({
         justifyContent: "center",
         alignItems: "center",
         backgroundColor: theme.colors.blue[6],
+        color: theme.colors.gray[0],
 
         "&:hover": {
             backgroundColor: theme.colors.blue[7],

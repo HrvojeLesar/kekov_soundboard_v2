@@ -13,7 +13,10 @@ import {
     Text,
 } from "@mantine/core";
 import { Dropzone, FullScreenDropzone } from "@mantine/dropzone";
-import { FileUploadContainer, FileContainerRef } from "../components/FileContainer";
+import {
+    FileUploadContainer,
+    FileContainerRef,
+} from "../components/FileContainer";
 import { AuthContext } from "../auth/AuthProvider";
 import axios from "axios";
 import { API_URL, FilesRoute } from "../api/ApiRoutes";
@@ -22,7 +25,7 @@ const MAX_TOTAL_SIZE = 10_000_000;
 
 export default function Upload() {
     const { tokens } = useContext(AuthContext);
-    const openRef = useRef<() => void>(() => { });
+    const openRef = useRef<() => void>(() => {});
     const containerRefs = useRef<FileContainerRef[]>([]);
     const [files, setFiles] = useState<File[]>([]);
     const [totalSize, setTotalSize] = useState<number>(0);
@@ -131,7 +134,7 @@ export default function Upload() {
                     {files.map((file: File, index) => {
                         return (
                             // TODO: width
-                            <Grid.Col xs={12} sm={6} md={4}>
+                            <Grid.Col xs={12} sm={6} md={4} key={index}>
                                 <FileUploadContainer
                                     ref={(ref) => {
                                         if (ref) {
@@ -140,7 +143,6 @@ export default function Upload() {
                                     }}
                                     disabled={isUploading}
                                     file={file}
-                                    key={index}
                                     deleteCallback={(file: File) =>
                                         removeFile(file)
                                     }

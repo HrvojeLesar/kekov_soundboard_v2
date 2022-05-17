@@ -14,7 +14,7 @@ import {
 } from "@mantine/core";
 import { useViewportSize } from "@mantine/hooks";
 import axios from "axios";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { FixedSizeList } from "react-window";
 import { API_URL, ControlsRoute, GuildRoute } from "../api/ApiRoutes";
@@ -141,9 +141,8 @@ export function Guild() {
                     >
                         {guildFiles.map((file) => {
                             return (
-                                <Grid m="sm">
+                                <Grid m="sm" key={file.id}>
                                     <PlayControl
-                                        key={file.id}
                                         file={file}
                                         playFunc={playFunc}
                                     />

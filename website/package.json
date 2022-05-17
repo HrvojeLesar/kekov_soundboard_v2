@@ -53,6 +53,8 @@
     ]
   },
   "devDependencies": {
+    "@iconify/icons-simple-icons": "^1.2.12",
+    "@iconify/react": "^3.2.1",
     "prettier": "2.6.2"
   }
 }

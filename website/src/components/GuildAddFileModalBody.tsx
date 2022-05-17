@@ -71,6 +71,7 @@ export default function GuildAddFileModalBody({
             {files.map((file) => {
                 return (
                     <FileToggle
+                        key={file.sound_file.id}
                         file={file.sound_file}
                         isActive={file.enabled}
                         addCallback={(file) => addToGuild(file)}

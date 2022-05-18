@@ -3,10 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@mantine/core": "^4.2.4",
-    "@mantine/dropzone": "^4.2.4",
-    "@mantine/hooks": "^4.2.4",
-    "@mantine/modals": "^4.2.4",
+    "@mantine/core": "^4.2.5",
+    "@mantine/dropzone": "^4.2.5",
+    "@mantine/hooks": "^4.2.5",
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.2.0",
     "@testing-library/user-event": "^13.5.0",

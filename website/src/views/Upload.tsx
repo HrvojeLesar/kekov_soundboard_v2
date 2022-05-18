@@ -1,4 +1,4 @@
-import { ChangeEvent, ReactNode, useContext, useRef, useState } from "react";
+import { ChangeEvent, ComponentProps, ReactNode, useContext, useRef, useState } from "react";
 import {
     Box,
     Button,
@@ -6,13 +6,20 @@ import {
     Container,
     Grid,
     Group,
+    MantineTheme,
     Progress,
     RingProgress,
     ScrollArea,
     Stack,
     Text,
+    useMantineTheme,
 } from "@mantine/core";
-import { Dropzone, FullScreenDropzone } from "@mantine/dropzone";
+import {
+    Dropzone,
+    DropzoneStatus,
+    FullScreenDropzone,
+    IMAGE_MIME_TYPE,
+} from "@mantine/dropzone";
 import {
     FileUploadContainer,
     FileContainerRef,
@@ -20,17 +27,37 @@ import {
 import { AuthContext } from "../auth/AuthProvider";
 import axios from "axios";
 import { API_URL, FilesRoute } from "../api/ApiRoutes";
+import { Files, FileUpload, Icon, X } from "tabler-icons-react";
 
 const MAX_TOTAL_SIZE = 10_000_000;
 
+const getIconColor = (status: DropzoneStatus, theme: MantineTheme) => {
+    return status.accepted
+        ? theme.colors[theme.primaryColor][theme.colorScheme === "dark" ? 4 : 6]
+        : status.rejected
+            ? theme.colors.red[theme.colorScheme === "dark" ? 4 : 6]
+            : theme.colorScheme === "dark"
+                ? theme.colors.dark[0]
+                : theme.colors.gray[7];
+};
+
+const UploadIcon = ({ status, ...props }: ComponentProps<Icon> & { status: DropzoneStatus }) => {
+    if (status.rejected) {
+        return <X {...props} />;
+    }
+
+    return <FileUpload {...props} />;
+}
+
 export default function Upload() {
     const { tokens } = useContext(AuthContext);
-    const openRef = useRef<() => void>(() => {});
+    const openRef = useRef<() => void>(() => { });
     const containerRefs = useRef<FileContainerRef[]>([]);
     const [files, setFiles] = useState<File[]>([]);
     const [totalSize, setTotalSize] = useState<number>(0);
     const [progressValue, setProgressValue] = useState(0);
     const [isUploading, setIsUploading] = useState(false);
+    const theme = useMantineTheme();
 
     // TODO: cull duplicates
     const addFiles = (selectedFiles: File[]) => {
@@ -93,7 +120,7 @@ export default function Upload() {
     // <Input type="file" multiple accept={IMAGE_MIME_TYPE.join()} onClick={() => openRef.current()} />
     return (
         <>
-            <Group>
+            <Group mx="auto">
                 {/* TODO: Animate ring ?? */}
                 <RingProgress
                     sections={[
@@ -106,30 +133,72 @@ export default function Upload() {
                     ]}
                     label={<Text align="center">Limit</Text>}
                 />
-                <Stack>
-                    <Group>
-                        <Button onClick={() => openRef.current()}>
-                            Select files
-                        </Button>
-                        <Button onClick={() => upload()}>Upload</Button>
+                <Box style={{ width: "300px" }}>
+                    <Group direction="column">
+                        <Group position="apart" style={{ width: "100%" }}>
+                            <Button onClick={() => openRef.current()}>
+                                Select files
+                            </Button>
+                            <Button onClick={() => upload()}>Upload</Button>
+                        </Group>
+                        <Progress
+                            style={{ width: "100%" }}
+                            animate
+                            value={progressValue}
+                        />
                     </Group>
-                    <Progress animate value={progressValue} />
-                </Stack>
+                </Box>
+                <Box style={{ flexGrow: 1 }}>
+                    <Dropzone
+                        onDrop={addFiles}
+                        openRef={openRef}
+                        accept={IMAGE_MIME_TYPE}
+                    >
+                        {(status) => {
+                            return (
+                                <Group
+                                    direction="column"
+                                    position="center"
+                                    spacing="sm"
+                                    style={{ pointerEvents: "none" }}
+                                >
+                                    <UploadIcon
+                                        status={status}
+                                        size={32}
+                                        style={{
+                                            color: getIconColor(
+                                                status,
+                                                theme
+                                            ),
+                                        }}
+                                    />
+                                    <div>
+                                        <Text
+                                            align="center"
+                                            weight="bold"
+                                            size="lg"
+                                        >
+                                            Sound file upload
+                                        </Text>
+                                        <Text
+                                            align="center"
+                                            size="sm"
+                                            color="dimmed"
+                                        >
+                                            Drag sound files here or click
+                                            to select files
+                                        </Text>
+                                    </div>
+                                </Group>
+                            );
+                        }}
+                    </Dropzone>
+                </Box>
             </Group>
 
             {/*WARN: fix height*/}
             {/* <Box p="xs" m="xs" style={{ height: '80vh', overflow: 'auto' }}> */}
             <Box p="xs" m="xs">
-                <Dropzone
-                    style={{ display: "none" }}
-                    onDrop={addFiles}
-                    openRef={openRef}
-                >
-                    {(_status) => {
-                        console.log(_status);
-                        return <>Brofist</>;
-                    }}
-                </Dropzone>
                 <Grid>
                     {files.map((file: File, index) => {
                         return (

@@ -11,7 +11,6 @@ import {
     Text,
 } from "@mantine/core";
 import { useHover, usePagination } from "@mantine/hooks";
-import { useModals } from "@mantine/modals";
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import { API_URL, UserRoute } from "../api/ApiRoutes";

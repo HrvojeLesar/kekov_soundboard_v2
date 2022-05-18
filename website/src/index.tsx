@@ -13,7 +13,6 @@ import { AppShell, Footer, MantineProvider } from "@mantine/core";
 import Sidebar from "./components/Sidebar";
 import Upload from "./views/Upload";
 import UserFiles from "./views/UserFiles";
-import { ModalsProvider } from "@mantine/modals";
 
 const root = ReactDOM.createRoot(
     document.getElementById("root") as HTMLElement
@@ -29,13 +28,11 @@ root.render(
                         <Route
                             element={
                                 <MantineProvider>
-                                    <ModalsProvider>
                                         <AppShell
                                             fixed
                                             children={<Outlet />}
                                             navbar={<Sidebar />}
                                         />
-                                    </ModalsProvider>
                                 </MantineProvider>
                             }
                         >

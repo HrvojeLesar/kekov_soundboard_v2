@@ -89,7 +89,7 @@ export default function UserFiles() {
                         closeModalCallback={() => setIsModalOpen(false)}
                         deletionSuccessCallback={() => {
                             setIsModalOpen(false);
-                            setFiles(files.filter((f) => f != currentFile));
+                            setFiles(files.filter((f) => f !== currentFile));
                         }}
                     />
                 );

@@ -15,7 +15,7 @@ import { Icon } from "@iconify/react"
 import discordIcon from "@iconify/icons-simple-icons/discord";
 import { API_URL, DISCORD_CND_USER_AVATAR, UserRoute } from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
-import BaseSidebarButton from "./BaseSidebarButton";
+import BaseSidebarButton, { baseSidebarButtonStyle, baseSidebarButtonStyles } from "./BaseSidebarButton";
 import GuildLinkButton from "./GuildLinkButton";
 
 const useStyles = createStyles((theme) => ({
@@ -36,16 +36,8 @@ const useStyles = createStyles((theme) => ({
     },
 
     botInviteButton: {
-        height: "48px",
-        width: "48px",
-        color: theme.colors.gray[0],
+        ...baseSidebarButtonStyle(theme),
         backgroundColor: "#5865f2",
-        borderRadius: "50%",
-        overflow: "hidden",
-        display: "flex",
-        textAlign: "center",
-        alignItems: "center",
-        justifyContent: "center",
 
         "&:hover": {
             backgroundColor: "#5865f2",
@@ -75,7 +67,7 @@ export default function Sidebar() {
     const spawnSkeletons = () => {
         let skeletons = [];
         for (let i = 0; i < 5; i++) {
-            skeletons.push(<Skeleton key={i} height={50} circle mb="xl" />);
+            skeletons.push(<Skeleton key={i} height={45} circle mb="xs" />);
         }
         return skeletons;
     };
@@ -111,7 +103,7 @@ export default function Sidebar() {
     }, []);
 
     return (
-        <Navbar height="100vh" width={{ base: 80 }} p="md">
+        <Navbar height="100vh" width={{ base: 80 }} p="sm">
             <Navbar.Section className={classes.navbarHeader}>
                 <Center>
                     <Group direction="column">
@@ -133,13 +125,13 @@ export default function Sidebar() {
             </Navbar.Section>
             <Navbar.Section
                 grow
-                mt={50}
+                my="xs"
                 component={ScrollArea}
                 offsetScrollbars
                 scrollbarSize={0}
                 mx="-xs"
             >
-                <Group direction="column" align="center" spacing={2}>
+                <Group direction="column" align="center" spacing="xs">
                     {guilds.length > 0 ? renderGuilds() : spawnSkeletons()}
                 </Group>
             </Navbar.Section>

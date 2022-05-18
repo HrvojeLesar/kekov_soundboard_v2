@@ -9,6 +9,7 @@ import {
     Modal,
     Paper,
     ScrollArea,
+    SimpleGrid,
     Skeleton,
     Text,
 } from "@mantine/core";
@@ -132,24 +133,28 @@ export function Guild() {
             <Button onClick={() => setIsModalOpen(true)}>Open modal</Button>
             <Grid>
                 <Grid.Col span={8}>
-                    <Card
+                    <Paper
+                        p="sm"
                         component={ScrollArea}
                         withBorder
                         // TODO: Flexaj boxe
-                        style={{ height: "calc(100vh - 32px)" }}
+                        style={{
+                            height: "calc(100vh - 32px)",
+                        }}
                         offsetScrollbars
                     >
-                        {guildFiles.map((file) => {
-                            return (
-                                <Grid m="sm" key={file.id}>
+                        <Group position="center" >
+                            {guildFiles.map((file) => {
+                                return (
                                     <PlayControl
+                                        key={file.id}
                                         file={file}
                                         playFunc={playFunc}
                                     />
-                                </Grid>
-                            );
-                        })}
-                    </Card>
+                                );
+                            })}
+                        </Group>
+                    </Paper>
                 </Grid.Col>
                 <Grid.Col span={4}>
                     <Group direction="column">

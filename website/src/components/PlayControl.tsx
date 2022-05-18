@@ -1,4 +1,6 @@
 import {
+    Text,
+    Avatar,
     Box,
     Button,
     Center,
@@ -9,9 +11,45 @@ import {
     Paper,
     Title,
     UnstyledButton,
+    Tooltip,
 } from "@mantine/core";
 import { PlayerPlay, Plus } from "tabler-icons-react";
 import { GuildFile } from "../views/Guild";
+
+const playButtonStyle = (theme: MantineTheme): CSSObject => ({
+    width: "50px",
+    height: "50px",
+    borderRadius: "50%",
+    display: "flex",
+    textAlign: "center",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: theme.colors.blue[6],
+    color: theme.colors.gray[0],
+
+    "&:hover": {
+        backgroundColor: theme.colors.blue[7],
+    },
+
+    ":active": {
+        transform: "translateY(1px)",
+    },
+});
+
+const useStyles = createStyles((theme) => ({
+    playButtonStyle: {
+        ...playButtonStyle(theme),
+    },
+
+    container: {
+        width: "200px",
+
+        "&:hover": {
+            backgroundColor: theme.colors.gray[0],
+            transition: ".2s",
+        },
+    },
+}));
 
 export function PlayControl({
     file,
@@ -20,25 +58,7 @@ export function PlayControl({
     file: GuildFile;
     playFunc: any;
 }) {
-    // <Button key={file.id} onClick={() => playFunc(file.id)}>
-    //     {file.display_name ?? "Golden Legendary"}
-    // </Button>
-    const playButtonStyle = (theme: MantineTheme): CSSObject => ({
-        // border: "1px solid",
-        textAlign: "center",
-        width: "50px",
-        height: "50px",
-        borderRadius: "50%",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: theme.colors.blue[6],
-        color: theme.colors.gray[0],
-
-        "&:hover": {
-            backgroundColor: theme.colors.blue[7],
-        },
-    });
+    const { classes } = useStyles();
 
     return (
         <Paper
@@ -46,19 +66,38 @@ export function PlayControl({
             withBorder
             shadow="sm"
             p="sm"
-            style={{ width: "100%" }}
+            className={classes.container}
+            style={{ overflow: "hidden" }}
         >
-            <Group position="apart">
-                <Title>{file.display_name}</Title>
-                <UnstyledButton
-                    sx={playButtonStyle}
-                    onClick={() => {
-                        playFunc(file.id);
-                    }}
+            <Tooltip
+                wrapLines
+                withArrow
+                position="top"
+                label={file.display_name}
+                styles={{
+                    body: { maxWidth: "300px" }
+                }}
+                style={{ display: "block" }}
+            >
+                <Text
+                    lineClamp={1}
+                    weight="bold"
+                    align="center"
+                    mb="sm"
+                    mx="xl"
                 >
-                    <PlayerPlay />
-                </UnstyledButton>
-            </Group>
+                    {file.display_name}
+                </Text>
+            </Tooltip>
+            <UnstyledButton
+                mx="auto"
+                className={classes.playButtonStyle}
+                onClick={() => {
+                    playFunc(file.id);
+                }}
+            >
+                <PlayerPlay />
+            </UnstyledButton>
         </Paper>
     );
 }

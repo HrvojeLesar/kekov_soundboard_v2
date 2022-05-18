@@ -1,5 +1,5 @@
 import { Avatar, Group, Text, Switch, Box } from "@mantine/core";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { UserFile } from "../views/UserFiles";
 
 type FileToggleProps = {
@@ -15,7 +15,7 @@ export function FileToggle({
     addCallback,
     removeCallback,
 }: FileToggleProps) {
-    const [checked, setChecked] = useState(isActive);
+    const [checked, setChecked] = useState(false);
 
     const toggleFile = async (state: boolean) => {
         try {
@@ -30,6 +30,10 @@ export function FileToggle({
             console.log(e);
         }
     };
+
+    useEffect(() => {
+        setChecked(isActive);
+    }, []);
 
     return (
         <>

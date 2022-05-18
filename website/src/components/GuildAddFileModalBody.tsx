@@ -66,6 +66,28 @@ export default function GuildAddFileModalBody({
         fetchFiles();
     }, []);
 
+    // const Row = ({ index, style }: { index: number, style: any }) => {
+    //     return (
+    //         <Box style={style}>
+    //             <PlayControl
+    //                 file={guildFiles[index]}
+    //                 playFunc={playFunc}
+    //                 key={guildFiles[index].id}
+    //             />
+    //         </Box>
+    //     );
+    // };
+    //                 <FixedSizeList
+    //                     height={height - 35}
+    //                     width="100%"
+    //                     itemCount={guildFiles.length}
+    //                     itemSize={80}
+    //                 >
+    //                     {Row}
+    //                 </FixedSizeList>
+
+    // const { height } = useViewportSize();
+
     return (
         <>
             {files.map((file) => {

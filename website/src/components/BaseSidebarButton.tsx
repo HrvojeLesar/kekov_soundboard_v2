@@ -16,33 +16,33 @@ import {
 import { forwardRef, useEffect, useState } from "react";
 import { Link, useLocation, useMatch } from "react-router-dom";
 
-const baseSidebarButton: (theme: MantineTheme) => CSSObject = (
-    theme: MantineTheme
-) => {
-    return {
-        height: "48px",
-        width: "48px",
-        color: theme.colors.gray[0],
-        backgroundColor: theme.colors.blue[6],
-        borderRadius: "50%",
-        overflow: "hidden",
-        display: "flex",
-        textAlign: "center",
-        alignItems: "center",
-        justifyContent: "center",
+export const baseSidebarButtonStyle = (theme: MantineTheme): CSSObject => ({
+    height: "48px",
+    width: "48px",
+    color: theme.colors.gray[0],
+    backgroundColor: theme.colors.blue[6],
+    borderRadius: "50%",
+    overflow: "hidden",
+    display: "flex",
+    textAlign: "center",
+    alignItems: "center",
+    justifyContent: "center",
 
-        "&:hover": {
-            backgroundColor: theme.colors.blue[7],
-            borderRadius: "40%",
-            transition: ".2s",
-        },
-    };
-};
+    "&:hover": {
+        backgroundColor: theme.colors.blue[7],
+        borderRadius: "40%",
+        transition: ".2s",
+    },
+
+    ":active": {
+        transform: "translateY(1px)",
+    }
+});
 
 export const baseSidebarButtonStyles = createStyles((theme) => ({
-    baseLinkButton: baseSidebarButton(theme),
+    baseLinkButton: baseSidebarButtonStyle(theme),
     baseLinkButtonActive: {
-        ...baseSidebarButton(theme),
+        ...baseSidebarButtonStyle(theme),
 
         backgroundColor: theme.colors.blue[7],
         borderRadius: "40%",

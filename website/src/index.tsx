@@ -28,11 +28,11 @@ root.render(
                         <Route
                             element={
                                 <MantineProvider>
-                                        <AppShell
-                                            fixed
-                                            children={<Outlet />}
-                                            navbar={<Sidebar />}
-                                        />
+                                    <AppShell
+                                        fixed
+                                        children={<Outlet />}
+                                        navbar={<Sidebar />}
+                                    />
                                 </MantineProvider>
                             }
                         >

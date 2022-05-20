@@ -52,16 +52,8 @@ const useStyles = createStyles((theme) => ({
     },
 }));
 
-export type Guild = {
-    id: string;
-    name: string;
-    icon?: string;
-    icon_hash?: string;
-};
-
 export default function Sidebar() {
-    let { tokens, user } = useContext(AuthContext);
-    const [guilds, setGuilds] = useState<Guild[]>([]);
+    let { user, guilds, fetchGuilds } = useContext(AuthContext);
     const { classes } = useStyles();
 
     const spawnSkeletons = () => {
@@ -72,28 +64,8 @@ export default function Sidebar() {
         return skeletons;
     };
 
-    const fetchGuilds = async () => {
-        try {
-            if (tokens) {
-                let { data } = await axios.get<Guild[]>(
-                    `${API_URL}${UserRoute.getGuilds}`,
-                    {
-                        headers: {
-                            Authorization: `${tokens.access_token}`,
-                        },
-                    }
-                );
-                console.log(data);
-                setGuilds(data);
-            }
-        } catch (e) {
-            // TODO: HANDLE
-            console.log(e);
-        }
-    };
-
     const renderGuilds = () => {
-        return guilds.map((guild) => {
+        return guilds?.map((guild) => {
             return <GuildLinkButton key={guild.id} guild={guild} />;
         });
     };

@@ -12,6 +12,7 @@ import {
     SimpleGrid,
     Skeleton,
     Text,
+    Title,
 } from "@mantine/core";
 import { useViewportSize } from "@mantine/hooks";
 import axios from "axios";
@@ -134,16 +135,21 @@ export function Guild() {
             <Grid>
                 <Grid.Col span={8}>
                     <Paper
-                        p="sm"
-                        component={ScrollArea}
                         withBorder
-                        // TODO: Flexaj boxe
+                        shadow="sm"
+                        p="sm"
                         style={{
-                            height: "calc(100vh - 32px)",
+                            height: "calc(100vh - 80px)",
+                            display: "flex",
+                            flexDirection: "column",
+                            overflow: "hidden",
                         }}
-                        offsetScrollbars
                     >
-                        <Group position="center" >
+                        <Title order={3} pb="xs">
+                            Title
+                        </Title>
+                        <ScrollArea style={{ height: "100%" }}>
+                        <Group>
                             {guildFiles.map((file) => {
                                 return (
                                     <PlayControl
@@ -154,6 +160,7 @@ export function Guild() {
                                 );
                             })}
                         </Group>
+                        </ScrollArea>
                     </Paper>
                 </Grid.Col>
                 <Grid.Col span={4}>

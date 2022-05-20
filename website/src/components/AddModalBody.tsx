@@ -2,8 +2,7 @@ import { Button, Group, Stack, Text, TextInput } from "@mantine/core";
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import { API_URL, UserRoute } from "../api/ApiRoutes";
-import { AuthContext } from "../auth/AuthProvider";
-import { Guild } from "../LoginCallback";
+import { AuthContext, Guild } from "../auth/AuthProvider";
 import { GuildToggle } from "./GuildToggle";
 import { UserFile } from "../views/UserFiles";
 

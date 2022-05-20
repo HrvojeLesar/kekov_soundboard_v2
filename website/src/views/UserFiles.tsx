@@ -5,10 +5,12 @@ import {
     Group,
     Modal,
     Pagination,
+    Paper,
     Skeleton,
     Stack,
     Table,
     Text,
+    Title,
 } from "@mantine/core";
 import { useHover, usePagination } from "@mantine/hooks";
 import axios from "axios";
@@ -120,6 +122,27 @@ export default function UserFiles() {
     // TODO: Make performant
     return (
         <>
+            <Grid>
+                <Grid.Col xs={9}>
+                    <Paper
+                        withBorder
+                        shadow="sm"
+                        p="sm"
+                        style={{
+                            height: "calc(100vh - 255px)",
+                            display: "flex",
+                            flexDirection: "column",
+                            overflow: "hidden",
+                        }}
+                    >
+                        <Title order={3} pb="xs">
+                            Title
+                        </Title>
+                    </Paper>
+                </Grid.Col>
+                <Grid.Col xs={9}>
+                </Grid.Col>
+            </Grid>
             <Modal
                 overflow="inside"
                 title={modalTitle()}
@@ -129,21 +152,17 @@ export default function UserFiles() {
                 {renderModal()}
             </Modal>
             {isFetching && <Skeleton>placeholder</Skeleton>}
-            {!isFetching && files.length > 0 && (
-                <Table striped highlightOnHover verticalSpacing="md">
-                    <tbody>
-                        {files.map((file) => {
-                            return (
-                                <UserFileContainer
-                                    key={file.id}
-                                    file={file}
-                                    openModal={openModal}
-                                />
-                            );
-                        })}
-                    </tbody>
-                </Table>
-            )}
+            {!isFetching && files.length > 0 &&
+                files.map((file) => {
+                    return (
+                        <UserFileContainer
+                            key={file.id}
+                            file={file}
+                            openModal={openModal}
+                        />
+                    );
+                })
+            }
         </>
     );
 }

@@ -3,14 +3,7 @@ import { useContext, useEffect } from "react";
 import { useCookies } from "react-cookie";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CookieSetOptions } from "universal-cookie";
-import { AuthContext } from "./auth/AuthProvider";
-
-export type Guild = {
-    id: string,
-    name: string,
-    icon?: string,
-    icon_hash?: string,
-}
+import { AuthContext, Guild } from "./auth/AuthProvider";
 
 type LoginResponse = {
     access_token: string,

@@ -13,6 +13,7 @@ import { AppShell, Footer, MantineProvider } from "@mantine/core";
 import Sidebar from "./components/Sidebar";
 import Upload from "./views/Upload";
 import UserFiles from "./views/UserFiles";
+import { NotificationsProvider } from "@mantine/notifications";
 
 const root = ReactDOM.createRoot(
     document.getElementById("root") as HTMLElement
@@ -42,7 +43,14 @@ root.render(
                                 path="/guilds/:guildId"
                                 element={<Guild />}
                             />
-                            <Route path="/upload" element={<Upload />} />
+                            <Route
+                                path="/upload"
+                                element={
+                                    <NotificationsProvider position="top-right">
+                                        <Upload />
+                                    </NotificationsProvider>
+                                }
+                            />
                             <Route path="/user" element={<UserFiles />} />
                         </Route>
                     </Route>

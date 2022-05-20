@@ -1,5 +1,6 @@
 import { createStyles, Text } from "@mantine/core";
-import { Guild } from "../LoginCallback";
+import { Guild } from "../auth/AuthProvider";
+import { nameToInitials } from "../utils/utils";
 import BaseSidebarButton from "./BaseSidebarButton";
 
 const useStyles = createStyles(() => ({
@@ -11,16 +12,6 @@ const useStyles = createStyles(() => ({
 
 export default function GuildLinkButton({ guild }: { guild: Guild }) {
     const { classes } = useStyles();
-
-    const nameToInitials = (guildName: string): string => {
-        let initials = "";
-        guildName.split(" ").forEach((word) => {
-            if (word[0]) {
-                initials = initials.concat(word[0]);
-            }
-        });
-        return initials;
-    };
 
     return (
         <BaseSidebarButton route={`/guilds/${guild.id}`} label={guild.name}>

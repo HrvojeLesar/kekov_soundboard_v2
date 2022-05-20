@@ -13,6 +13,7 @@ import {
     Box,
     Button,
     Center,
+    Checkbox,
     Container,
     createStyles,
     Grid,
@@ -37,6 +38,10 @@ import axios from "axios";
 import { API_URL, FilesRoute } from "../api/ApiRoutes";
 import { Files, FileUpload, Icon, X } from "tabler-icons-react";
 import { v4 as uuidv4 } from "uuid";
+import { UserFile } from "./UserFiles";
+import { showNotification } from "@mantine/notifications";
+import UploadGuildCheckbox from "../components/Upload/UploadGuildCheckbox";
+import UploadGuildWindow from "../components/Upload/UploadGuildWindow";
 
 const MAX_TOTAL_SIZE = 10_000_000;
 const ACCEPTED_MIMES = [
@@ -62,10 +67,10 @@ const getIconColor = (status: DropzoneStatus, theme: MantineTheme) => {
     return status.accepted
         ? theme.colors[theme.primaryColor][theme.colorScheme === "dark" ? 4 : 6]
         : status.rejected
-        ? theme.colors.red[theme.colorScheme === "dark" ? 4 : 6]
-        : theme.colorScheme === "dark"
-        ? theme.colors.dark[0]
-        : theme.colors.gray[7];
+            ? theme.colors.red[theme.colorScheme === "dark" ? 4 : 6]
+            : theme.colorScheme === "dark"
+                ? theme.colors.dark[0]
+                : theme.colors.gray[7];
 };
 
 const UploadIcon = ({
@@ -103,9 +108,9 @@ const useStyles = createStyles((theme) => {
 });
 
 export default function Upload() {
-    const { tokens } = useContext(AuthContext);
+    const { tokens, guilds } = useContext(AuthContext);
     const { classes } = useStyles();
-    const openRef = useRef<() => void>(() => {});
+    const openRef = useRef<() => void>(() => { });
     const containerRefs = useRef<FileContainerRef[]>([]);
     const [files, setFiles] = useState<FileWithId[]>([]);
     const [totalSize, setTotalSize] = useState<number>(0);
@@ -142,6 +147,31 @@ export default function Upload() {
         }
     };
 
+    const compareUploaded: (uploadedFiles: UserFile[]) => FileWithId[] = (
+        uploadedFiles: UserFile[]
+    ) => {
+        const maxLen = files.length - uploadedFiles.length;
+        let len = 0;
+        if (uploadedFiles.length != files.length) {
+            return files.filter((file, index) => {
+                if (len > maxLen) {
+                    return;
+                }
+                let { fileName } = containerRefs.current[index];
+                fileName = fileName.trim() == "" ? file.file.name : fileName;
+                if (
+                    uploadedFiles.find((userFile) => {
+                        return userFile.display_name === fileName;
+                    }) === undefined
+                ) {
+                    len++;
+                    return file;
+                }
+            });
+        }
+        return [];
+    };
+
     const upload = async () => {
         if (tokens?.access_token) {
             try {
@@ -154,21 +184,40 @@ export default function Upload() {
                 });
                 setIsUploading(true);
                 axios
-                    .post(`${API_URL}${FilesRoute.postUpload}`, formData, {
-                        headers: {
-                            Authorization: `${tokens?.access_token}`,
-                            "Content-Type": "multipart/form-data",
-                        },
-                        onUploadProgress: (progress) => {
-                            const uploadPercent = Math.round(
-                                (progress.loaded / progress.total) * 100
-                            );
-                            setProgressValue(uploadPercent);
-                        },
-                    })
-                    .then(() => {
+                    .post<UserFile[]>(
+                        `${API_URL}${FilesRoute.postUpload}`,
+                        formData,
+                        {
+                            headers: {
+                                Authorization: `${tokens?.access_token}`,
+                                "Content-Type": "multipart/form-data",
+                            },
+                            onUploadProgress: (progress) => {
+                                const uploadPercent = Math.round(
+                                    (progress.loaded / progress.total) * 100
+                                );
+                                setProgressValue(uploadPercent);
+                            },
+                        }
+                    )
+                    .then((resp) => {
                         // TODO: notify and remove successfully uploaded files
-                        console.log("Gotovo");
+                        const { data } = resp;
+                        const failedFiles = compareUploaded(data);
+                        const hasFailedFiles = failedFiles.length > 0;
+                        showNotification({
+                            title: hasFailedFiles
+                                ? "Some files failed to upload"
+                                : "All files uploaded",
+                            message: hasFailedFiles
+                                ? "Files left in selected files have failed to upload!"
+                                : "All files have been successfully uploaded!",
+                            autoClose: hasFailedFiles ? false : 3000,
+                            color: hasFailedFiles ? "red" : "green",
+                            icon: hasFailedFiles ? <X /> : null,
+                        });
+
+                        setFiles(failedFiles);
                         setIsUploading(false);
                     });
             } catch (e) {
@@ -208,176 +257,193 @@ export default function Upload() {
     }, [files]);
 
     return (
-        <Group direction="column">
-            <Paper withBorder shadow="sm" p="sm" style={{ width: "100%" }}>
-                <Title order={2} pb="xs">
-                    Upload
-                </Title>
-                <Group>
-                    {/* TODO: Animate ring ?? */}
-                    <RingProgress
-                        sections={[
-                            {
-                                value: limitPercentage,
-                                color: isLimitExceeded ? "red" : "blue",
-                            },
-                        ]}
-                        label={
-                            <>
-                                <Text align="center" size="sm">
-                                    Total size:
-                                </Text>
-                                <Text align="center" size="sm">
-                                    {limitPercentage}%
-                                </Text>
-                            </>
-                        }
-                    />
-                    <Box style={{ width: "300px" }}>
-                        <Group direction="column">
-                            <Group position="apart" style={{ width: "100%" }}>
-                                <Button
-                                    onClick={() => openRef.current()}
-                                    disabled={isUploading}
-                                >
-                                    Select files
-                                </Button>
-                                <Text>
-                                    {isUploading ? `${progressValue}%` : null}
-                                </Text>
-                                <Button
-                                    disabled={
-                                        isUploading ||
-                                        isUploadDisabled ||
-                                        isLimitExceeded ||
-                                        inputErrorsCount.count != 0
-                                    }
-                                    onClick={() => upload()}
-                                >
-                                    Upload
-                                </Button>
-                            </Group>
-                            <Progress
-                                style={{ width: "100%" }}
-                                animate
-                                value={progressValue}
-                            />
-                        </Group>
-                    </Box>
-                    <Box style={{ flexGrow: 1 }}>
-                        <Dropzone
-                            disabled={isUploading}
-                            onDrop={addFiles}
-                            onReject={(file) => console.log("rejected: ", file)}
-                            openRef={openRef}
-                            className={
-                                isUploading ? classes.disabled : undefined
+        <>
+            <Group direction="column">
+                <Paper withBorder shadow="sm" p="sm" style={{ width: "100%" }}>
+                    <Title order={2} pb="xs">
+                        Upload
+                    </Title>
+                    <Group>
+                        {/* TODO: Animate ring ?? */}
+                        <RingProgress
+                            sections={[
+                                {
+                                    value: limitPercentage,
+                                    color: isLimitExceeded ? "red" : "blue",
+                                },
+                            ]}
+                            label={
+                                <>
+                                    <Text align="center" size="sm">
+                                        Total size:
+                                    </Text>
+                                    <Text align="center" size="sm">
+                                        {limitPercentage}%
+                                    </Text>
+                                </>
                             }
-                            accept={ACCEPTED_MIMES}
-                        >
-                            {(status) => {
-                                return (
-                                    <Group
-                                        direction="column"
-                                        position="center"
-                                        spacing="sm"
-                                        style={{ pointerEvents: "none" }}
-                                    >
-                                        <UploadIcon
-                                            status={status}
-                                            size={32}
-                                            style={{
-                                                color: getIconColor(
-                                                    status,
-                                                    theme
-                                                ),
-                                            }}
-                                        />
-                                        <div>
-                                            <Text
-                                                align="center"
-                                                weight="bold"
-                                                size="lg"
-                                            >
-                                                Sound file upload
-                                            </Text>
-                                            <Text
-                                                align="center"
-                                                size="sm"
-                                                color="dimmed"
-                                            >
-                                                Drag sound files here or click
-                                                to select files
-                                            </Text>
-                                        </div>
-                                    </Group>
-                                );
-                            }}
-                        </Dropzone>
-                    </Box>
-                </Group>
-            </Paper>
-
-            <Paper
-                withBorder
-                shadow="sm"
-                p="sm"
-                style={{
-                    width: "100%",
-                    height: "calc(100vh - 250px)",
-                    display: "flex",
-                    flexDirection: "column",
-                    overflow: "hidden",
-                }}
-            >
-                <Title order={3} pb="xs">
-                    Selected files
-                </Title>
-                {files.length > 0 ? (
-                    <ScrollArea style={{ height: "100%" }}>
-                        <Group>
-                            {files.map((file, index) => {
-                                return (
-                                    <FileUploadContainer
-                                        key={file.id}
-                                        ref={(ref) => {
-                                            if (ref) {
-                                                containerRefs.current[index] =
-                                                    ref;
-                                            }
-                                        }}
+                        />
+                        <Box style={{ width: "300px" }}>
+                            <Group direction="column">
+                                <Group
+                                    position="apart"
+                                    style={{ width: "100%" }}
+                                >
+                                    <Button
+                                        onClick={() => openRef.current()}
                                         disabled={isUploading}
-                                        file={file.file}
-                                        deleteCallback={(
-                                            file: File,
-                                            hasError: boolean
-                                        ) => removeFile(file, hasError)}
-                                        inputErrorCallback={handleInputErrors}
-                                    />
-                                );
-                            })}
-                        </Group>
-                    </ScrollArea>
-                ) : (
-                    <Box
+                                    >
+                                        Select files
+                                    </Button>
+                                    <Text>
+                                        {isUploading
+                                            ? `${progressValue}%`
+                                            : null}
+                                    </Text>
+                                    <Button
+                                        disabled={
+                                            isUploading ||
+                                            isUploadDisabled ||
+                                            isLimitExceeded ||
+                                            inputErrorsCount.count != 0
+                                        }
+                                        onClick={() => upload()}
+                                    >
+                                        Upload
+                                    </Button>
+                                </Group>
+                                <Progress
+                                    style={{ width: "100%" }}
+                                    animate
+                                    value={progressValue}
+                                />
+                            </Group>
+                        </Box>
+                        <Box style={{ flexGrow: 1 }}>
+                            <Dropzone
+                                disabled={isUploading}
+                                onDrop={addFiles}
+                                onReject={(file) =>
+                                    console.log("rejected: ", file)
+                                }
+                                openRef={openRef}
+                                className={
+                                    isUploading ? classes.disabled : undefined
+                                }
+                                accept={ACCEPTED_MIMES}
+                            >
+                                {(status) => {
+                                    return (
+                                        <Group
+                                            direction="column"
+                                            position="center"
+                                            spacing="sm"
+                                            style={{ pointerEvents: "none" }}
+                                        >
+                                            <UploadIcon
+                                                status={status}
+                                                size={32}
+                                                style={{
+                                                    color: getIconColor(
+                                                        status,
+                                                        theme
+                                                    ),
+                                                }}
+                                            />
+                                            <div>
+                                                <Text
+                                                    align="center"
+                                                    weight="bold"
+                                                    size="lg"
+                                                >
+                                                    Sound file upload
+                                                </Text>
+                                                <Text
+                                                    align="center"
+                                                    size="sm"
+                                                    color="dimmed"
+                                                >
+                                                    Drag sound files here or
+                                                    click to select files
+                                                </Text>
+                                            </div>
+                                        </Group>
+                                    );
+                                }}
+                            </Dropzone>
+                        </Box>
+                    </Group>
+                </Paper>
+            </Group>
+            <Grid mt="sm">
+                <Grid.Col xs={9}>
+                    <Paper
+                        withBorder
+                        shadow="sm"
+                        p="sm"
                         style={{
-                            height: "100%",
-                            justifyContent: "center",
+                            height: "calc(100vh - 255px)",
                             display: "flex",
-                            textAlign: "center",
-                            alignItems: "center",
                             flexDirection: "column",
+                            overflow: "hidden",
                         }}
                     >
-                        <Text weight="bold" align="center">
-                            No files selected
-                        </Text>
-                        <Text size="sm" color="dimmed" align="center">
-                            Please add some files to upload
-                        </Text>
-                    </Box>
-                )}
-            </Paper>
-        </Group>
+                        <Title order={3} pb="xs">
+                            Selected files
+                        </Title>
+                        {files.length > 0 ? (
+                            <ScrollArea style={{ height: "100%" }}>
+                                <Group>
+                                    {files.map((file, index) => {
+                                        return (
+                                            <FileUploadContainer
+                                                key={file.id}
+                                                ref={(ref) => {
+                                                    if (ref) {
+                                                        containerRefs.current[
+                                                            index
+                                                        ] = ref;
+                                                    }
+                                                }}
+                                                disabled={isUploading}
+                                                file={file.file}
+                                                deleteCallback={(
+                                                    file: File,
+                                                    hasError: boolean
+                                                ) => removeFile(file, hasError)}
+                                                inputErrorCallback={
+                                                    handleInputErrors
+                                                }
+                                            />
+                                        );
+                                    })}
+                                </Group>
+                            </ScrollArea>
+                        ) : (
+                            <Box
+                                style={{
+                                    height: "100%",
+                                    justifyContent: "center",
+                                    display: "flex",
+                                    textAlign: "center",
+                                    alignItems: "center",
+                                    flexDirection: "column",
+                                }}
+                            >
+                                <Text weight="bold" align="center">
+                                    No files selected
+                                </Text>
+                                <Text size="sm" color="dimmed" align="center">
+                                    Please add some files to upload
+                                </Text>
+                            </Box>
+                        )}
+                    </Paper>
+                </Grid.Col>
+                <Grid.Col xs={3}>
+                    <UploadGuildWindow guilds={guilds} />
+                </Grid.Col>
+            </Grid>
+        </>
     );
 }

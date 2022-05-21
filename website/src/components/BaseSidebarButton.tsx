@@ -27,6 +27,7 @@ export const baseSidebarButtonStyle = (theme: MantineTheme): CSSObject => ({
     textAlign: "center",
     alignItems: "center",
     justifyContent: "center",
+    transition: ".2s",
 
     "&:hover": {
         backgroundColor: theme.colors.blue[7],

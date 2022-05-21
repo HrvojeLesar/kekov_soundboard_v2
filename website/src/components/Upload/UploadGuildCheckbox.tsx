@@ -79,7 +79,7 @@ export default function UploadGuildCheckbox({
                 onChange(!isChecked);
             }}
         >
-            <Group position="apart" style={{ flexGrow: 1 }}>
+            <Group position="apart" style={{ flexGrow: 1 }} noWrap>
                 <Group>
                     {guild.icon ? (
                         <Image
@@ -92,17 +92,17 @@ export default function UploadGuildCheckbox({
                             {nameToInitials(guild.name)}
                         </Text>
                     )}
-                    <Tooltip label={guild.name}>
-                        <Text
-                            style={{
-                                maxWidth: "19ch",
-                                textOverflow: "ellipsis",
-                                overflow: "hidden",
-                            }}
-                        >
-                            {guild.name}
-                        </Text>
-                    </Tooltip>
+                    <Text
+                        title={guild.name}
+                        style={{
+                            maxWidth: "19ch",
+                            textOverflow: "ellipsis",
+                            overflow: "hidden",
+                        }}
+                        lineClamp={1}
+                    >
+                        {guild.name}
+                    </Text>
                 </Group>
                 <Checkbox
                     checked={isChecked}

@@ -6,6 +6,7 @@ import {
     Modal,
     Pagination,
     Paper,
+    ScrollArea,
     Skeleton,
     Stack,
     Table,
@@ -21,7 +22,9 @@ import AddModalBody from "../components/AddModalBody";
 import DeleteModalBody from "../components/DeleteModalBody";
 import EditModalBody from "../components/EditModalBody";
 import { GuildToggle } from "../components/GuildToggle";
-import UserFileContainer from "../components/UserFileContainer";
+import UploadGuildWindow from "../components/Upload/UploadGuildWindow";
+import ServerSelect from "../components/UserFiles/ServerSelect";
+import UserFileContainer from "../components/UserFiles/UserFileContainer";
 
 export type UserFile = {
     id: string;
@@ -38,9 +41,9 @@ export default function UserFiles() {
     const { tokens } = useContext(AuthContext);
     const [files, setFiles] = useState<UserFile[]>([]);
     const [isFetching, setIsFetching] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modalType, setModalType] = useState<UserFilesModalType>();
-    const [currentFile, setCurrentFile] = useState<UserFile>();
+    const [selectedIndex, setSelectedIndex] = useState<number | undefined>(
+        undefined
+    );
 
     const fetchFiles = async () => {
         if (tokens?.access_token) {
@@ -60,63 +63,15 @@ export default function UserFiles() {
         }
     };
 
+    const getEditTitle = () => {
+        return selectedIndex !== undefined
+            ? `Edit: ${files[selectedIndex].display_name}`
+            : "Edit";
+    }
+
     useEffect(() => {
         fetchFiles();
     }, []);
-
-    const renderModal = () => {
-        switch (modalType) {
-            case UserFilesModalType.Add: {
-                if (currentFile) {
-                    return <AddModalBody file={currentFile} />;
-                }
-                // WARN: This should be unreachable
-                console.log("Unreachable!");
-                return <></>;
-            }
-            case UserFilesModalType.Edit: {
-                return (
-                    <EditModalBody
-                        file={currentFile}
-                        closeModalCallback={() => setIsModalOpen(false)}
-                        editSuccessCallback={() => { }}
-                    />
-                );
-            }
-            case UserFilesModalType.Delete: {
-                return (
-                    <DeleteModalBody
-                        file={currentFile}
-                        closeModalCallback={() => setIsModalOpen(false)}
-                        deletionSuccessCallback={() => {
-                            setIsModalOpen(false);
-                            setFiles(files.filter((f) => f !== currentFile));
-                        }}
-                    />
-                );
-            }
-        }
-    };
-
-    const openModal = (type: UserFilesModalType, file: UserFile) => {
-        setModalType(type);
-        setCurrentFile(file);
-        setIsModalOpen(true);
-    };
-
-    const modalTitle = () => {
-        switch (modalType) {
-            case UserFilesModalType.Add: {
-                return "Add to server";
-            }
-            case UserFilesModalType.Edit: {
-                return "Edit";
-            }
-            case UserFilesModalType.Delete: {
-                return "Delete confirmation!";
-            }
-        }
-    };
 
     // WARN: Make performant
     // TODO: Make performant
@@ -129,40 +84,92 @@ export default function UserFiles() {
                         shadow="sm"
                         p="sm"
                         style={{
-                            height: "calc(100vh - 255px)",
+                            height: "calc(100vh - 50px)",
                             display: "flex",
                             flexDirection: "column",
                             overflow: "hidden",
                         }}
                     >
                         <Title order={3} pb="xs">
-                            Title
+                            Your files
                         </Title>
+                        <ScrollArea style={{ height: "100%" }}>
+                            <Group>
+                                {!isFetching &&
+                                    files.length > 0 &&
+                                    files.map((file, index) => {
+                                        return (
+                                            <UserFileContainer
+                                                key={file.id}
+                                                file={file}
+                                                isSelected={
+                                                    selectedIndex === index
+                                                }
+                                                onClickCallback={() => {
+                                                    setSelectedIndex(index);
+                                                }}
+                                            />
+                                        );
+                                    })}
+                            </Group>
+                        </ScrollArea>
                     </Paper>
                 </Grid.Col>
-                <Grid.Col xs={9}>
+                <Grid.Col xs={3}>
+                    <Group
+                        direction="column"
+                        style={{ width: "100%", height: "calc(100vh - 50px)" }}
+                    >
+                        <Paper
+                            withBorder
+                            shadow="sm"
+                            p="sm"
+                            style={{
+                                height: "20%",
+                                width: "100%",
+                                display: "flex",
+                                flexDirection: "column",
+                                overflow: "hidden",
+                            }}
+                        >
+                            <Title
+                                order={3}
+                                pb="xs"
+                                title={getEditTitle()}
+                                style={{
+                                    textOverflow: "ellipsis",
+                                    overflow: "hidden",
+                                    whiteSpace: "nowrap",
+                                }}
+                            >
+                                {getEditTitle()}
+                            </Title>
+                            {/*TODO: Add delete, toggle public, private*/}
+                        </Paper>
+                        <Paper
+                            withBorder
+                            shadow="sm"
+                            p="sm"
+                            style={{
+                                flexGrow: 1,
+                                width: "100%",
+                                display: "flex",
+                                flexDirection: "column",
+                                overflow: "hidden",
+                            }}
+                        >
+                            <Title order={3} pb="xs">
+                                Servers
+                            </Title>
+                            <ScrollArea>
+                                {selectedIndex !== undefined && (
+                                    <ServerSelect file={files[selectedIndex]} />
+                                )}
+                            </ScrollArea>
+                        </Paper>
+                    </Group>
                 </Grid.Col>
             </Grid>
-            <Modal
-                overflow="inside"
-                title={modalTitle()}
-                opened={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-            >
-                {renderModal()}
-            </Modal>
-            {isFetching && <Skeleton>placeholder</Skeleton>}
-            {!isFetching && files.length > 0 &&
-                files.map((file) => {
-                    return (
-                        <UserFileContainer
-                            key={file.id}
-                            file={file}
-                            openModal={openModal}
-                        />
-                    );
-                })
-            }
         </>
     );
 }

@@ -69,26 +69,16 @@ export function PlayControl({
             className={classes.container}
             style={{ overflow: "hidden" }}
         >
-            <Tooltip
-                wrapLines
-                withArrow
-                position="top"
-                label={file.display_name}
-                styles={{
-                    body: { maxWidth: "300px" }
-                }}
-                style={{ display: "block" }}
+            <Text
+                title={file.display_name}
+                lineClamp={1}
+                weight="bold"
+                align="center"
+                mb="sm"
+                mx="xl"
             >
-                <Text
-                    lineClamp={1}
-                    weight="bold"
-                    align="center"
-                    mb="sm"
-                    mx="xl"
-                >
-                    {file.display_name}
-                </Text>
-            </Tooltip>
+                {file.display_name}
+            </Text>
             <UnstyledButton
                 mx="auto"
                 className={classes.playButtonStyle}

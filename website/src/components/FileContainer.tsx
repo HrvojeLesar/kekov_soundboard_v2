@@ -159,41 +159,27 @@ export const FileUploadContainer = forwardRef<
             style={{ width: "250px", overflow: "hidden" }}
         >
             <Group position="apart" style={{ flexGrow: 1 }} mb="xs">
-                <Tooltip
-                    wrapLines
-                    withArrow
-                    position="top"
-                    label={file.name}
-                    styles={{
-                        body: { maxWidth: "300px" },
+                <Text
+                    lineClamp={1}
+                    weight="bold"
+                    title={file.name}
+                    style={{
+                        textOverflow: "ellipsis",
+                        overflow: "hidden",
+                        whiteSpace: "nowrap",
                     }}
                 >
-                    <Text
-                        lineClamp={1}
-                        weight="bold"
-                        style={{ maxWidth: "19ch", textOverflow: "ellipsis" }}
-                    >
-                        {file.name}
-                    </Text>
-                </Tooltip>
-                <Tooltip
-                    wrapLines
-                    withArrow
-                    position="top"
-                    label="Remove file"
+                    {file.name}
+                </Text>
+                <ActionIcon
+                    title="Remove file"
+                    disabled={disabled}
                     color="red"
+                    variant="outline"
+                    onClick={() => deleteCallback(file, isNameLenghtExceeded)}
                 >
-                    <ActionIcon
-                        disabled={disabled}
-                        color="red"
-                        variant="outline"
-                        onClick={() =>
-                            deleteCallback(file, isNameLenghtExceeded)
-                        }
-                    >
-                        <Trash />
-                    </ActionIcon>
-                </Tooltip>
+                    <Trash />
+                </ActionIcon>
             </Group>
             <TextInput
                 disabled={disabled}

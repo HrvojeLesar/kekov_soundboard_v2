@@ -43,17 +43,6 @@ export default function AddModalBody({ file }: AddModalBodyProps) {
 
     return (
         <>
-            {guilds.map((guild, index) => {
-                return (
-                    <GuildToggle
-                        key={index}
-                        file={file}
-                        guildId={guild.guild.id}
-                        guildName={guild.guild.name}
-                        hasFile={guild.has_file}
-                    />
-                );
-            })}
         </>
     );
 }

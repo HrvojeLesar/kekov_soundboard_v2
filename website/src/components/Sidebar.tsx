@@ -8,31 +8,32 @@ import {
     Tooltip,
     UnstyledButton,
 } from "@mantine/core";
-import axios from "axios";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { Upload } from "tabler-icons-react";
-import { Icon } from "@iconify/react"
+import { Icon } from "@iconify/react";
 import discordIcon from "@iconify/icons-simple-icons/discord";
-import { API_URL, DISCORD_CND_USER_AVATAR, UserRoute } from "../api/ApiRoutes";
+import { DISCORD_CND_USER_AVATAR } from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
-import BaseSidebarButton, { baseSidebarButtonStyle, baseSidebarButtonStyles } from "./BaseSidebarButton";
+import BaseSidebarButton, { baseSidebarButtonStyle } from "./BaseSidebarButton";
 import GuildLinkButton from "./GuildLinkButton";
 
 const useStyles = createStyles((theme) => ({
     navbarHeader: {
         padding: theme.spacing.xs,
-        borderBottom: `3px solid ${theme.colorScheme === "dark"
+        borderBottom: `3px solid ${
+            theme.colorScheme === "dark"
                 ? theme.colors.dark[4]
                 : theme.colors.gray[3]
-            }`,
+        }`,
     },
 
     navbarFooter: {
         padding: theme.spacing.xs,
-        borderTop: `3px solid ${theme.colorScheme === "dark"
+        borderTop: `3px solid ${
+            theme.colorScheme === "dark"
                 ? theme.colors.dark[4]
                 : theme.colors.gray[3]
-            }`,
+        }`,
     },
 
     botInviteButton: {

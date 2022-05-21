@@ -1,10 +1,9 @@
 import { useContext, useEffect, useState } from "react";
-import { Box, Paper, ScrollArea, Title } from "@mantine/core";
+import { Box } from "@mantine/core";
 import axios from "axios";
 import { AuthContext, Guild } from "../../auth/AuthProvider";
 import { UserFile } from "../../views/UserFiles";
 import { API_URL, UserRoute } from "../../api/ApiRoutes";
-import UploadGuildCheckbox from "../Upload/UploadGuildCheckbox";
 import { GuildToggle } from "../GuildToggle";
 
 type GuildsWithFile = {

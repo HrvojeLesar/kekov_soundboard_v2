@@ -2,33 +2,14 @@ import {
     RingProgress,
     TextInput,
     Text,
-    Progress,
     ActionIcon,
     Paper,
-    Grid,
-    Center,
-    Box,
-    Button,
-    Stack,
     Group,
     Checkbox,
     createStyles,
-    Tooltip,
 } from "@mantine/core";
-import { assignRef } from "@mantine/hooks";
-import axios from "axios";
-import {
-    forwardRef,
-    ReactNode,
-    useCallback,
-    useContext,
-    useEffect,
-    useImperativeHandle,
-    useState,
-} from "react";
-import { AlertTriangle, Trash } from "tabler-icons-react";
-import { API_URL, FilesRoute } from "../api/ApiRoutes";
-import { AuthContext } from "../auth/AuthProvider";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { Trash } from "tabler-icons-react";
 
 const MAXLEN = 50;
 

@@ -1,28 +1,8 @@
-import {
-    Box,
-    Button,
-    Grid,
-    Group,
-    Modal,
-    Pagination,
-    Paper,
-    ScrollArea,
-    Skeleton,
-    Stack,
-    Table,
-    Text,
-    Title,
-} from "@mantine/core";
-import { useHover, usePagination } from "@mantine/hooks";
+import { Grid, Group, Paper, ScrollArea, Title } from "@mantine/core";
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import { API_URL, UserRoute } from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
-import AddModalBody from "../components/AddModalBody";
-import DeleteModalBody from "../components/DeleteModalBody";
-import EditModalBody from "../components/EditModalBody";
-import { GuildToggle } from "../components/GuildToggle";
-import UploadGuildWindow from "../components/Upload/UploadGuildWindow";
 import ServerSelect from "../components/UserFiles/ServerSelect";
 import UserFileContainer from "../components/UserFiles/UserFileContainer";
 
@@ -67,7 +47,7 @@ export default function UserFiles() {
         return selectedIndex !== undefined
             ? `Edit: ${files[selectedIndex].display_name}`
             : "Edit";
-    }
+    };
 
     useEffect(() => {
         fetchFiles();

@@ -46,7 +46,10 @@ export default function DeleteModalBody({
                 </Button>
                 <Button
                     disabled={isDeletionInProgress}
-                    onClick={() => { setIsDeletionInProgress(true); deleteFile(); }}
+                    onClick={() => {
+                        setIsDeletionInProgress(true);
+                        deleteFile();
+                    }}
                     color="red"
                 >
                     Confirm

@@ -1,20 +1,12 @@
 import {
-    Button,
-    Image,
     createStyles,
-    UnstyledButton,
-    Group,
     CSSObject,
     MantineTheme,
-    Text,
     Tooltip,
-    DefaultProps,
-    PolymorphicComponentProps,
-    PolymorphicRef,
-    Box,
+    UnstyledButton,
 } from "@mantine/core";
-import { forwardRef, useEffect, useState } from "react";
-import { Link, useLocation, useMatch } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useMatch } from "react-router-dom";
 
 export const baseSidebarButtonStyle = (theme: MantineTheme): CSSObject => ({
     height: "48px",
@@ -37,7 +29,7 @@ export const baseSidebarButtonStyle = (theme: MantineTheme): CSSObject => ({
 
     ":active": {
         transform: "translateY(1px)",
-    }
+    },
 });
 
 export const baseSidebarButtonStyles = createStyles((theme) => ({

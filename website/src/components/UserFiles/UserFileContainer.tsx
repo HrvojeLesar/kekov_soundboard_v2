@@ -1,19 +1,10 @@
 import {
-    Button,
     Text,
-    Center,
     Group,
     Paper,
-    Badge,
-    Tooltip,
-    ActionIcon,
-    Box,
     UnstyledButton,
     createStyles,
 } from "@mantine/core";
-import { useHover } from "@mantine/hooks";
-import { useEffect } from "react";
-import { CirclePlus, Pencil, Trash } from "tabler-icons-react";
 import { UserFile } from "../../views/UserFiles";
 
 type UserFileContainerProps = {

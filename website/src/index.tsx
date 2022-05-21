@@ -9,7 +9,7 @@ import AuthProvider from "./auth/AuthProvider";
 import ProtectedRoutes from "./auth/ProtectedRoutes";
 import { Login } from "./Login";
 import { Guild } from "./views/Guild";
-import { AppShell, Footer, MantineProvider } from "@mantine/core";
+import { AppShell, MantineProvider } from "@mantine/core";
 import Sidebar from "./components/Sidebar";
 import Upload from "./views/Upload";
 import UserFiles from "./views/UserFiles";

@@ -1,16 +1,13 @@
 import {
-    Avatar,
     Group,
     Text,
     Switch,
     Image,
     UnstyledButton,
     createStyles,
-    Tooltip,
-    Checkbox,
 } from "@mantine/core";
 import axios from "axios";
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import { API_URL, GuildRoute } from "../api/ApiRoutes";
 import { AuthContext, Guild } from "../auth/AuthProvider";
 import { nameToInitials } from "../utils/utils";

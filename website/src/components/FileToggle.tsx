@@ -1,5 +1,5 @@
-import { Avatar, Group, Text, Switch, Box } from "@mantine/core";
-import { useContext, useEffect, useState } from "react";
+import { Avatar, Group, Text, Switch } from "@mantine/core";
+import { useEffect, useState } from "react";
 import { UserFile } from "../views/UserFiles";
 
 type FileToggleProps = {

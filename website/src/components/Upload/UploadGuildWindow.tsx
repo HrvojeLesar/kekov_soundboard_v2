@@ -1,6 +1,6 @@
 import { Box, Checkbox, Paper, ScrollArea, Title } from "@mantine/core";
 import { useListState } from "@mantine/hooks";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Guild } from "../../auth/AuthProvider";
 import UploadGuildCheckbox from "./UploadGuildCheckbox";
 

@@ -1,24 +1,15 @@
 import {
-    Box,
     Button,
-    Card,
-    Divider,
     Grid,
     Group,
-    List,
     Modal,
     Paper,
     ScrollArea,
-    SimpleGrid,
-    Skeleton,
-    Text,
     Title,
 } from "@mantine/core";
-import { useViewportSize } from "@mantine/hooks";
 import axios from "axios";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FixedSizeList } from "react-window";
 import { API_URL, ControlsRoute, GuildRoute } from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
 import Channels from "../components/Channels";
@@ -149,17 +140,17 @@ export function Guild() {
                             Title
                         </Title>
                         <ScrollArea style={{ height: "100%" }}>
-                        <Group>
-                            {guildFiles.map((file) => {
-                                return (
-                                    <PlayControl
-                                        key={file.id}
-                                        file={file}
-                                        playFunc={playFunc}
-                                    />
-                                );
-                            })}
-                        </Group>
+                            <Group>
+                                {guildFiles.map((file) => {
+                                    return (
+                                        <PlayControl
+                                            key={file.id}
+                                            file={file}
+                                            playFunc={playFunc}
+                                        />
+                                    );
+                                })}
+                            </Group>
                         </ScrollArea>
                     </Paper>
                 </Grid.Col>

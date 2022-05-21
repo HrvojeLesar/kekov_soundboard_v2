@@ -1,19 +1,12 @@
 import {
     Text,
-    Avatar,
-    Box,
-    Button,
-    Center,
     createStyles,
     CSSObject,
-    Group,
     MantineTheme,
     Paper,
-    Title,
     UnstyledButton,
-    Tooltip,
 } from "@mantine/core";
-import { PlayerPlay, Plus } from "tabler-icons-react";
+import { PlayerPlay } from "tabler-icons-react";
 import { GuildFile } from "../views/Guild";
 
 const playButtonStyle = (theme: MantineTheme): CSSObject => ({

@@ -5,9 +5,7 @@ import {
     Checkbox,
     createStyles,
     Group,
-    Tooltip,
 } from "@mantine/core";
-import { useState } from "react";
 import { Guild } from "../../auth/AuthProvider";
 import { nameToInitials } from "../../utils/utils";
 

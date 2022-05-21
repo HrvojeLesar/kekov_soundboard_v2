@@ -1,8 +1,5 @@
 import {
-    ChangeEvent,
     ComponentProps,
-    ReactNode,
-    useCallback,
     useContext,
     useEffect,
     useMemo,
@@ -12,9 +9,6 @@ import {
 import {
     Box,
     Button,
-    Center,
-    Checkbox,
-    Container,
     createStyles,
     Grid,
     Group,
@@ -23,7 +17,6 @@ import {
     Progress,
     RingProgress,
     ScrollArea,
-    Stack,
     Text,
     Title,
     useMantineTheme,
@@ -36,11 +29,10 @@ import {
 import { AuthContext } from "../auth/AuthProvider";
 import axios from "axios";
 import { API_URL, FilesRoute } from "../api/ApiRoutes";
-import { Files, FileUpload, Icon, X } from "tabler-icons-react";
+import { FileUpload, Icon, X } from "tabler-icons-react";
 import { v4 as uuidv4 } from "uuid";
 import { UserFile } from "./UserFiles";
 import { showNotification } from "@mantine/notifications";
-import UploadGuildCheckbox from "../components/Upload/UploadGuildCheckbox";
 import UploadGuildWindow from "../components/Upload/UploadGuildWindow";
 
 const MAX_TOTAL_SIZE = 10_000_000;
@@ -67,10 +59,10 @@ const getIconColor = (status: DropzoneStatus, theme: MantineTheme) => {
     return status.accepted
         ? theme.colors[theme.primaryColor][theme.colorScheme === "dark" ? 4 : 6]
         : status.rejected
-            ? theme.colors.red[theme.colorScheme === "dark" ? 4 : 6]
-            : theme.colorScheme === "dark"
-                ? theme.colors.dark[0]
-                : theme.colors.gray[7];
+        ? theme.colors.red[theme.colorScheme === "dark" ? 4 : 6]
+        : theme.colorScheme === "dark"
+        ? theme.colors.dark[0]
+        : theme.colors.gray[7];
 };
 
 const UploadIcon = ({
@@ -110,7 +102,7 @@ const useStyles = createStyles((theme) => {
 export default function Upload() {
     const { tokens, guilds } = useContext(AuthContext);
     const { classes } = useStyles();
-    const openRef = useRef<() => void>(() => { });
+    const openRef = useRef<() => void>(() => {});
     const containerRefs = useRef<FileContainerRef[]>([]);
     const [files, setFiles] = useState<FileWithId[]>([]);
     const [totalSize, setTotalSize] = useState<number>(0);

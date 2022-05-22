@@ -172,12 +172,33 @@ impl GuildFile {
                 };
 
                 SoundFile {
-                id: SoundFileId(r.id as u64),
-                display_name: r.display_name,
-                owner,
-            }})
+                    id: SoundFileId(r.id as u64),
+                    display_name: r.display_name,
+                    owner,
+                }
+            })
             .collect();
 
         return Ok(enabled_sounds);
+    }
+
+    pub async fn bulk_insert(
+        guild_ids: &Vec<GuildId>,
+        file_ids: &Vec<SoundFileId>,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), KekServerError> {
+        let guild_ids = guild_ids.iter().map(|g| g.0 as i64).collect::<Vec<i64>>();
+        let file_ids = file_ids.iter().map(|f| f.0 as i64).collect::<Vec<i64>>();
+        let records = sqlx::query!(
+            "
+            INSERT INTO guild_file (guild_id, file_id)
+            SELECT guild_id, file_id FROM UNNEST($1::bigint[]) as guild_id, UNNEST($2::bigint[]) as file_id
+            ",
+            &guild_ids,
+            &file_ids
+        )
+        .execute(&mut *transaction)
+        .await?;
+        return Ok(());
     }
 }

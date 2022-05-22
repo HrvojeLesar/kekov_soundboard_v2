@@ -18,7 +18,7 @@ impl Validation {
     pub async fn is_user_in_guild(
         authorized_user: &AuthorizedUser,
         guild_id: &GuildId,
-        user_guilds_cache: Data<UserGuildsCache>,
+        user_guilds_cache: &Data<UserGuildsCache>,
     ) -> Result<(), KekServerError> {
         match user_guilds_cache.get(authorized_user.get_discord_user().get_id()) {
             Some(guilds) => {
@@ -30,6 +30,40 @@ impl Validation {
             None => return Err(KekServerError::UserNotInCacheError),
         }
 
+        return Ok(());
+    }
+
+    pub async fn is_user_in_provided_guilds(
+        authorized_user: &AuthorizedUser,
+        guild_ids: &Vec<GuildId>,
+        user_guilds_cache: &Data<UserGuildsCache>,
+    ) -> Result<(), KekServerError> {
+        match user_guilds_cache.get(authorized_user.get_discord_user().get_id()) {
+            Some(guilds) => {
+                for id in guild_ids {
+                    if !guilds.contains(&id) {
+                        return Err(KekServerError::NotInGuildError);
+                    }
+                }
+            }
+            None => return Err(KekServerError::UserNotInCacheError),
+        }
+        return Ok(());
+    }
+
+    pub async fn user_owns_provided_files(
+        authorized_user: &AuthorizedUser,
+        file_ids: &Vec<SoundFileId>,
+        user_owned_files: &Vec<SoundFile>,
+    ) -> Result<(), KekServerError> {
+        for id in file_ids {
+            if user_owned_files.iter().find(|s| s.get_id() == id).is_none() {
+                return Err(KekServerError::Other(format!(
+                    "User doesn't own file with id {}",
+                    id.0
+                )));
+            }
+        }
         return Ok(());
     }
 }

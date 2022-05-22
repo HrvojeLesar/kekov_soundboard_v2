@@ -51,7 +51,14 @@ root.render(
                                     </NotificationsProvider>
                                 }
                             />
-                            <Route path="/user" element={<UserFiles />} />
+                            <Route
+                                path="/user"
+                                element={
+                                    <NotificationsProvider position="top-right">
+                                        <UserFiles />
+                                    </NotificationsProvider>
+                                }
+                            />
                         </Route>
                     </Route>
                     <Route path="/login" element={<Login />} />

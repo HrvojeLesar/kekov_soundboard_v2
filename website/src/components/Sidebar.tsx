@@ -66,7 +66,7 @@ export default function Sidebar() {
     };
 
     const renderGuilds = () => {
-        return guilds?.map((guild) => {
+        return guilds.map((guild) => {
             return <GuildLinkButton key={guild.id} guild={guild} />;
         });
     };

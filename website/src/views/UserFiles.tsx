@@ -3,6 +3,7 @@ import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import { API_URL, UserRoute } from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
+import DeleteFile from "../components/UserFiles/DeleteFile";
 import ServerSelect from "../components/UserFiles/ServerSelect";
 import UserFileContainer from "../components/UserFiles/UserFileContainer";
 
@@ -47,6 +48,36 @@ export default function UserFiles() {
         return selectedIndex !== undefined
             ? `Edit: ${files[selectedIndex].display_name}`
             : "Edit";
+    };
+
+    const deleteFile = (file: UserFile): Promise<void> => {
+        return new Promise((resolve, reject) => {
+            if (tokens?.access_token) {
+                axios
+                    .delete<UserFile>(
+                        `${API_URL}${UserRoute.deleteFile}${file.id}`,
+                        {
+                            headers: {
+                                authorization: `${tokens.access_token}`,
+                            },
+                        }
+                    )
+                    .then(({ data }) => {
+                        resolve();
+                        setSelectedIndex(undefined);
+                        setFiles([
+                            ...files.filter((file) => {
+                                return file.id !== data.id;
+                            }),
+                        ]);
+                    })
+                    .catch((e) => {
+                        reject(e);
+                    });
+            } else {
+                reject("No access token present!");
+            }
+        });
     };
 
     useEffect(() => {
@@ -125,6 +156,16 @@ export default function UserFiles() {
                                 {getEditTitle()}
                             </Title>
                             {/*TODO: Add delete, toggle public, private*/}
+                            {selectedIndex !== undefined ? (
+                                <DeleteFile
+                                    deleteCallback={() =>
+                                        deleteFile(files[selectedIndex])
+                                    }
+                                    file={files[selectedIndex]}
+                                />
+                            ) : (
+                                "No file selected"
+                            )}
                         </Paper>
                         <Paper
                             withBorder

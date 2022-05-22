@@ -148,6 +148,7 @@ export const FileUploadContainer = forwardRef<
                         textOverflow: "ellipsis",
                         overflow: "hidden",
                         whiteSpace: "nowrap",
+                        maxWidth: "19ch",
                     }}
                 >
                     {file.name}

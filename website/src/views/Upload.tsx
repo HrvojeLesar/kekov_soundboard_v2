@@ -59,10 +59,10 @@ const getIconColor = (status: DropzoneStatus, theme: MantineTheme) => {
     return status.accepted
         ? theme.colors[theme.primaryColor][theme.colorScheme === "dark" ? 4 : 6]
         : status.rejected
-        ? theme.colors.red[theme.colorScheme === "dark" ? 4 : 6]
-        : theme.colorScheme === "dark"
-        ? theme.colors.dark[0]
-        : theme.colors.gray[7];
+            ? theme.colors.red[theme.colorScheme === "dark" ? 4 : 6]
+            : theme.colorScheme === "dark"
+                ? theme.colors.dark[0]
+                : theme.colors.gray[7];
 };
 
 const UploadIcon = ({
@@ -102,7 +102,7 @@ const useStyles = createStyles((theme) => {
 export default function Upload() {
     const { tokens, guilds } = useContext(AuthContext);
     const { classes } = useStyles();
-    const openRef = useRef<() => void>(() => {});
+    const openRef = useRef<() => void>(() => { });
     const containerRefs = useRef<FileContainerRef[]>([]);
     const [files, setFiles] = useState<FileWithId[]>([]);
     const [totalSize, setTotalSize] = useState<number>(0);
@@ -114,29 +114,31 @@ export default function Upload() {
     const theme = useMantineTheme();
 
     const addFiles = (selectedFiles: File[]) => {
-        let size = totalSize;
         let newFiles = selectedFiles.map((file) => {
-            size += file.size;
             return { id: uuidv4(), file: file };
         });
-        setTotalSize(size);
         setFiles([...files, ...newFiles]);
     };
 
     const removeFile = (file: File, hasError: boolean) => {
-        let size = totalSize;
         let others = files.filter((f) => {
             if (f.file === file) {
-                size -= file.size;
                 return false;
             }
             return true;
         });
-        setTotalSize(size);
         setFiles(others);
         if (hasError) {
             handleInputErrors(false);
         }
+    };
+
+    const calcSize = () => {
+        let size = 0;
+        files.forEach((f) => {
+            size += f.file.size;
+        });
+        return size;
     };
 
     const compareUploaded: (uploadedFiles: UserFile[]) => FileWithId[] = (
@@ -218,6 +220,10 @@ export default function Upload() {
             }
         }
     };
+
+    useEffect(() => {
+        setTotalSize(calcSize());
+    }, [files])
 
     const handleInputErrors = (inputError: boolean) => {
         if (inputError) {

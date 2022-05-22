@@ -6,7 +6,7 @@ export default function ProtectedRoutes() {
     let auth = useContext(AuthContext);
 
     if (!auth.tokens) {
-        return <Navigate to="/login" replace />
+        return <Navigate to="/login" replace />;
     }
     return <Outlet />;
 }

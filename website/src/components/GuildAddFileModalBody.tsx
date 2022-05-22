@@ -1,4 +1,3 @@
-import { Avatar, Group, Switch, Text } from "@mantine/core";
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import { API_URL, GuildRoute, UserRoute } from "../api/ApiRoutes";

@@ -116,7 +116,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     // TODO: add
-    const refresh = async () => { };
+    const refresh = async () => {};
 
     const fetchGuilds = async () => {
         try {

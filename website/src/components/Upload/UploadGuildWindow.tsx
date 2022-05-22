@@ -1,6 +1,6 @@
 import { Box, Checkbox, Paper, ScrollArea, Title } from "@mantine/core";
 import { useListState } from "@mantine/hooks";
-import { useEffect } from "react";
+import { forwardRef, useEffect, useImperativeHandle } from "react";
 import { Guild } from "../../auth/AuthProvider";
 import UploadGuildCheckbox from "./UploadGuildCheckbox";
 
@@ -8,7 +8,16 @@ type UploadGuildWindowProps = {
     guilds: Guild[];
 };
 
-export default function UploadGuildWindow({ guilds }: UploadGuildWindowProps) {
+export type UploadGuildWindowRef = {
+    selectedGuildIds: string[];
+};
+
+export const UploadGuildWindow = forwardRef<
+    UploadGuildWindowRef,
+    UploadGuildWindowProps
+>((props, ref) => {
+    const { guilds } = props;
+
     const mappedGuilds = guilds.map((guild) => {
         return { key: guild.id, checked: false };
     });
@@ -23,6 +32,12 @@ export default function UploadGuildWindow({ guilds }: UploadGuildWindowProps) {
     useEffect(() => {
         handlers.setState(mappedGuilds);
     }, [guilds]);
+
+    useImperativeHandle(ref, () => {
+        return {
+            selectedGuildIds: values.filter((val) => val.checked).map((val) => val.key),
+        };
+    }, [values]);
 
     return (
         <Paper
@@ -81,4 +96,4 @@ export default function UploadGuildWindow({ guilds }: UploadGuildWindowProps) {
             )}
         </Paper>
     );
-}
+});

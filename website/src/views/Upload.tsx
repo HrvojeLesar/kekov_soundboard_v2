@@ -28,12 +28,15 @@ import {
 } from "../components/FileContainer";
 import { AuthContext } from "../auth/AuthProvider";
 import axios from "axios";
-import { API_URL, FilesRoute } from "../api/ApiRoutes";
+import { API_URL, FilesRoute, GuildRoute } from "../api/ApiRoutes";
 import { FileUpload, Icon, X } from "tabler-icons-react";
 import { v4 as uuidv4 } from "uuid";
 import { UserFile } from "./UserFiles";
 import { showNotification } from "@mantine/notifications";
-import UploadGuildWindow from "../components/Upload/UploadGuildWindow";
+import {
+    UploadGuildWindow,
+    UploadGuildWindowRef,
+} from "../components/Upload/UploadGuildWindow";
 
 const MAX_TOTAL_SIZE = 10_000_000;
 const ACCEPTED_MIMES = [
@@ -59,10 +62,10 @@ const getIconColor = (status: DropzoneStatus, theme: MantineTheme) => {
     return status.accepted
         ? theme.colors[theme.primaryColor][theme.colorScheme === "dark" ? 4 : 6]
         : status.rejected
-            ? theme.colors.red[theme.colorScheme === "dark" ? 4 : 6]
-            : theme.colorScheme === "dark"
-                ? theme.colors.dark[0]
-                : theme.colors.gray[7];
+        ? theme.colors.red[theme.colorScheme === "dark" ? 4 : 6]
+        : theme.colorScheme === "dark"
+        ? theme.colors.dark[0]
+        : theme.colors.gray[7];
 };
 
 const UploadIcon = ({
@@ -102,8 +105,9 @@ const useStyles = createStyles((theme) => {
 export default function Upload() {
     const { tokens, guilds } = useContext(AuthContext);
     const { classes } = useStyles();
-    const openRef = useRef<() => void>(() => { });
+    const openRef = useRef<() => void>(() => {});
     const containerRefs = useRef<FileContainerRef[]>([]);
+    const selectedGuildsRef = useRef<UploadGuildWindowRef>(null!);
     const [files, setFiles] = useState<FileWithId[]>([]);
     const [totalSize, setTotalSize] = useState<number>(0);
     const [progressValue, setProgressValue] = useState(0);
@@ -166,64 +170,98 @@ export default function Upload() {
         return [];
     };
 
-    const upload = async () => {
-        if (tokens?.access_token) {
-            try {
-                const formData = new FormData();
-                files.forEach((file, index) => {
-                    let { fileName } = containerRefs.current[index];
-                    fileName =
-                        fileName.trim() == "" ? file.file.name : fileName;
-                    formData.append(fileName, file.file);
-                });
-                setIsUploading(true);
-                axios
-                    .post<UserFile[]>(
-                        `${API_URL}${FilesRoute.postUpload}`,
-                        formData,
-                        {
-                            headers: {
-                                Authorization: `${tokens?.access_token}`,
-                                "Content-Type": "multipart/form-data",
-                            },
-                            onUploadProgress: (progress) => {
-                                const uploadPercent = Math.round(
-                                    (progress.loaded / progress.total) * 100
-                                );
-                                setProgressValue(uploadPercent);
-                            },
-                        }
-                    )
-                    .then((resp) => {
-                        // TODO: notify and remove successfully uploaded files
-                        const { data } = resp;
-                        const failedFiles = compareUploaded(data);
-                        const hasFailedFiles = failedFiles.length > 0;
-                        showNotification({
-                            title: hasFailedFiles
-                                ? "Some files failed to upload"
-                                : "All files uploaded",
-                            message: hasFailedFiles
-                                ? "Files left in selected files have failed to upload!"
-                                : "All files have been successfully uploaded!",
-                            autoClose: hasFailedFiles ? false : 3000,
-                            color: hasFailedFiles ? "red" : "green",
-                            icon: hasFailedFiles ? <X /> : null,
-                        });
-
-                        setFiles(failedFiles);
-                        setIsUploading(false);
-                    });
-            } catch (e) {
-                // TODO: Handle
-                console.log(e);
-            }
+    const upload = () => {
+        if (!tokens?.access_token) {
+            return;
         }
+        const formData = new FormData();
+        files.forEach((file, index) => {
+            let { fileName } = containerRefs.current[index];
+            fileName = fileName.trim() == "" ? file.file.name : fileName;
+            formData.append(fileName, file.file);
+        });
+        setIsUploading(true);
+        axios
+            .post<UserFile[]>(`${API_URL}${FilesRoute.postUpload}`, formData, {
+                headers: {
+                    Authorization: `${tokens.access_token}`,
+                    "Content-Type": "multipart/form-data",
+                },
+                onUploadProgress: (progress) => {
+                    const uploadPercent = Math.round(
+                        (progress.loaded / progress.total) * 100
+                    );
+                    setProgressValue(uploadPercent);
+                },
+            })
+            .then(async ({ data }) => {
+                const selectedGuildIds =
+                    selectedGuildsRef.current.selectedGuildIds;
+
+                const failedFiles = compareUploaded(data);
+                const hasFailedFiles = failedFiles.length > 0;
+                let hasQuickEnableFailed = false;
+
+                if (selectedGuildIds.length > 0 && data.length > 0) {
+                    await quickEnable(selectedGuildIds, data).catch((err) => {
+                        console.log(err);
+                        hasQuickEnableFailed = true;
+                    });
+                }
+
+                showNotification({
+                    title: hasFailedFiles
+                        ? hasQuickEnableFailed
+                            ? "Error"
+                            : "Some files failed to upload"
+                        : hasQuickEnableFailed
+                        ? "Upload successful, server addition failed"
+                        : "All files uploaded",
+                    message: hasFailedFiles
+                        ? hasQuickEnableFailed
+                            ? "Files left in selected files have failed to upload and successfully uploaded files failed to be added to selected servers!"
+                            : "Files left in selected files have failed to upload!"
+                        : hasQuickEnableFailed
+                        ? "Failed to add files to servers but files have successfully uploaded and are available in user files!"
+                        : "All files have been successfully uploaded!",
+                    autoClose: hasFailedFiles || hasQuickEnableFailed ? false : 3000,
+                    color: hasFailedFiles || hasQuickEnableFailed ? "red" : "green",
+                    icon: hasFailedFiles || hasQuickEnableFailed ? <X /> : null,
+                });
+
+                setFiles(failedFiles);
+                setIsUploading(false);
+            })
+            .catch((e) => {
+                console.log(e);
+                showNotification({
+                    title: "Error",
+                    message: "File upload failed!",
+                    autoClose: false,
+                    color: "red",
+                    icon: <X />,
+                });
+            });
+    };
+
+    const quickEnable = (guilds: string[], files: UserFile[]) => {
+        if (!tokens?.access_token) {
+            return Promise.reject("Access token not set");
+        }
+        const bulk = {
+            guilds: guilds,
+            files: files.map((f) => f.id),
+        };
+        return axios.post(`${API_URL}${GuildRoute.postBulkenable}`, bulk, {
+            headers: {
+                Authorization: `${tokens.access_token}`,
+            },
+        });
     };
 
     useEffect(() => {
         setTotalSize(calcSize());
-    }, [files])
+    }, [files]);
 
     const handleInputErrors = (inputError: boolean) => {
         if (inputError) {
@@ -439,7 +477,10 @@ export default function Upload() {
                     </Paper>
                 </Grid.Col>
                 <Grid.Col xs={3}>
-                    <UploadGuildWindow guilds={guilds} />
+                    <UploadGuildWindow
+                        ref={selectedGuildsRef}
+                        guilds={guilds}
+                    />
                 </Grid.Col>
             </Grid>
         </>

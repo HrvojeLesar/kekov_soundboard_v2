@@ -38,6 +38,7 @@ export enum UserRoute {
 export enum GuildRoute {
     getGuildSounds = "/guilds/",
     postAddSound = "/guilds/",
+    postBulkenable = "/guilds/bulkenable",
     deleteSound = "/guilds/",
 }
 

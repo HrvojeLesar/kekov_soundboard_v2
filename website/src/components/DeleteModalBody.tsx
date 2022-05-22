@@ -1,10 +1,7 @@
 import { Button, Group, Stack, Text } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
-import axios from "axios";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { X } from "tabler-icons-react";
-import { API_URL, UserRoute } from "../api/ApiRoutes";
-import { AuthContext } from "../auth/AuthProvider";
 import { UserFile } from "../views/UserFiles";
 
 type DeleteModalBodyProps = {

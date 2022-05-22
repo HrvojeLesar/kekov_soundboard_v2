@@ -312,13 +312,12 @@ pub async fn auth_refresh(
     let client = oauth_client.get_client();
     let request = client.exchange_refresh_token(&payload.refresh_token);
 
-    let access_token = match request.request_async(send_oauth_request).await {
-        Ok(nekaj) => {
-            println!("{:#?}", nekaj);
-            nekaj
+    let new_tokens = match request.request_async(send_oauth_request).await {
+        Ok(token) => {
+            token
         },
         Err(err) => return Err(KekServerError::RequestTokenError(Box::new(err))),
     };
 
-    return Ok(HttpResponse::Ok().json(access_token));
+    return Ok(HttpResponse::Ok().json(new_tokens));
 }

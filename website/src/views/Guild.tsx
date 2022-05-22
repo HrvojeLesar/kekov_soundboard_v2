@@ -34,7 +34,6 @@ export function Guild() {
     const { guildId } = useParams();
     const { tokens } = useContext(AuthContext);
     const [guildFiles, setGuildFiles] = useState<GuildFile[]>([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const fetchGuildFiles = async () => {
         if (tokens?.access_token) {
@@ -75,54 +74,12 @@ export function Guild() {
         }
     };
 
-    const addFile = (file: UserFile) => {
-        // WARN: owner not set
-        setGuildFiles([
-            ...guildFiles,
-            { id: file.id, display_name: file.display_name },
-        ]);
-    };
-
-    const removeFile = (file: UserFile) => {
-        setGuildFiles(guildFiles.filter((f) => f.id !== file.id));
-    };
-
     useEffect(() => {
         fetchGuildFiles();
     }, [guildId]);
 
-    // const Row = ({ index, style }: { index: number, style: any }) => {
-    //     return (
-    //         <Box style={style}>
-    //             <PlayControl
-    //                 file={guildFiles[index]}
-    //                 playFunc={playFunc}
-    //                 key={guildFiles[index].id}
-    //             />
-    //         </Box>
-    //     );
-    // };
-    //                 <FixedSizeList
-    //                     height={height - 35}
-    //                     width="100%"
-    //                     itemCount={guildFiles.length}
-    //                     itemSize={80}
-    //                 >
-    //                     {Row}
-    //                 </FixedSizeList>
-
-    // const { height } = useViewportSize();
-
     return (
         <>
-            <Modal opened={isModalOpen} onClose={() => setIsModalOpen(false)}>
-                <GuildAddFileModalBody
-                    addFileCallback={(file) => addFile(file)}
-                    removeFileCallback={(file) => removeFile(file)}
-                    guildId={guildId ?? "0"}
-                />
-            </Modal>
-            <Button onClick={() => setIsModalOpen(true)}>Open modal</Button>
             <Grid>
                 <Grid.Col span={8}>
                     <Paper

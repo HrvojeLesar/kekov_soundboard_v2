@@ -2,6 +2,7 @@ import { Box, Checkbox, Paper, ScrollArea, Title } from "@mantine/core";
 import { useListState } from "@mantine/hooks";
 import { forwardRef, useEffect, useImperativeHandle } from "react";
 import { Guild } from "../../auth/AuthProvider";
+import { uploadMaximumWindowHeight } from "../../views/Upload";
 import UploadGuildCheckbox from "./UploadGuildCheckbox";
 
 type UploadGuildWindowProps = {
@@ -45,10 +46,10 @@ export const UploadGuildWindow = forwardRef<
             shadow="sm"
             p="sm"
             style={{
-                height: "calc(100vh - 255px)",
                 display: "flex",
                 flexDirection: "column",
                 overflow: "hidden",
+                ...uploadMaximumWindowHeight,
             }}
         >
             <Title order={3} pb="xs">

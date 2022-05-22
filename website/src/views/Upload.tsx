@@ -1,5 +1,6 @@
 import {
     ComponentProps,
+    CSSProperties,
     useContext,
     useEffect,
     useMemo,
@@ -10,6 +11,7 @@ import {
     Box,
     Button,
     createStyles,
+    CSSObject,
     Grid,
     Group,
     MantineTheme,
@@ -101,6 +103,10 @@ const useStyles = createStyles((theme) => {
         },
     };
 });
+
+export const uploadMaximumWindowHeight: CSSProperties = {
+    height: "calc(100vh - 255px)",
+};
 
 export default function Upload() {
     const { tokens, guilds } = useContext(AuthContext);
@@ -224,8 +230,12 @@ export default function Upload() {
                         : hasQuickEnableFailed
                         ? "Failed to add files to servers but files have successfully uploaded and are available in user files!"
                         : "All files have been successfully uploaded!",
-                    autoClose: hasFailedFiles || hasQuickEnableFailed ? false : 3000,
-                    color: hasFailedFiles || hasQuickEnableFailed ? "red" : "green",
+                    autoClose:
+                        hasFailedFiles || hasQuickEnableFailed ? false : 3000,
+                    color:
+                        hasFailedFiles || hasQuickEnableFailed
+                            ? "red"
+                            : "green",
                     icon: hasFailedFiles || hasQuickEnableFailed ? <X /> : null,
                 });
 
@@ -418,10 +428,10 @@ export default function Upload() {
                         shadow="sm"
                         p="sm"
                         style={{
-                            height: "calc(100vh - 255px)",
                             display: "flex",
                             flexDirection: "column",
                             overflow: "hidden",
+                            ...uploadMaximumWindowHeight,
                         }}
                     >
                         <Title order={3} pb="xs">

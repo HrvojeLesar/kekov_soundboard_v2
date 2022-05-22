@@ -1,6 +1,6 @@
 import { Grid, Group, Paper, ScrollArea, Title } from "@mantine/core";
 import axios from "axios";
-import { useContext, useEffect, useState } from "react";
+import { CSSProperties, useContext, useEffect, useState } from "react";
 import { API_URL, UserRoute } from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
 import DeleteFile from "../components/UserFiles/DeleteFile";
@@ -17,6 +17,10 @@ export enum UserFilesModalType {
     Edit,
     Delete,
 }
+
+export const userFilesMaximumWindowHeight: CSSProperties = {
+    height: "calc(100vh - 34px)",
+};
 
 export default function UserFiles() {
     const { tokens } = useContext(AuthContext);
@@ -95,10 +99,10 @@ export default function UserFiles() {
                         shadow="sm"
                         p="sm"
                         style={{
-                            height: "calc(100vh - 50px)",
                             display: "flex",
                             flexDirection: "column",
                             overflow: "hidden",
+                            ...userFilesMaximumWindowHeight,
                         }}
                     >
                         <Title order={3} pb="xs">
@@ -129,7 +133,7 @@ export default function UserFiles() {
                 <Grid.Col xs={3}>
                     <Group
                         direction="column"
-                        style={{ width: "100%", height: "calc(100vh - 50px)" }}
+                        style={{ width: "100%", ...userFilesMaximumWindowHeight }}
                     >
                         <Paper
                             withBorder

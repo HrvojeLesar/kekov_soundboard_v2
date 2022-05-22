@@ -4,7 +4,7 @@ use actix_web::{
     get,
     http::header::LOCATION,
     post,
-    web::{scope, Data, Form, Query, ServiceConfig},
+    web::{scope, Data, Form, Query, ServiceConfig, Json},
     HttpResponse,
 };
 use awc::Client;
@@ -58,7 +58,8 @@ pub fn config(cfg: &mut ServiceConfig) {
             .service(auth_init)
             .service(auth_callback)
             .service(auth_revoke)
-            .service(bot_invite),
+            .service(bot_invite)
+            .service(auth_refresh),
     );
 }
 
@@ -296,4 +297,28 @@ pub async fn auth_revoke(
     }
 
     return Ok(HttpResponse::Ok().finish());
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RefreshTokenJson {
+    refresh_token: RefreshToken,
+}
+
+#[post("/refresh")]
+pub async fn auth_refresh(
+    oauth_client: Data<OAuthClient>,
+    payload: Json<RefreshTokenJson>,
+) -> Result<HttpResponse, KekServerError> {
+    let client = oauth_client.get_client();
+    let request = client.exchange_refresh_token(&payload.refresh_token);
+
+    let access_token = match request.request_async(send_oauth_request).await {
+        Ok(nekaj) => {
+            println!("{:#?}", nekaj);
+            nekaj
+        },
+        Err(err) => return Err(KekServerError::RequestTokenError(Box::new(err))),
+    };
+
+    return Ok(HttpResponse::Ok().json(access_token));
 }

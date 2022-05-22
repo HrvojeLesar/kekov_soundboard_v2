@@ -11,7 +11,6 @@ import {
     Box,
     Button,
     createStyles,
-    CSSObject,
     Grid,
     Group,
     MantineTheme,

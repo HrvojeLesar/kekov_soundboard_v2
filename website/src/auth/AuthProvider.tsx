@@ -129,7 +129,6 @@ function AuthProvider({ children }: { children: ReactNode }) {
                         },
                     }
                 );
-                console.log("got guilds", data);
                 setGuilds(data);
             }
         } catch (e) {

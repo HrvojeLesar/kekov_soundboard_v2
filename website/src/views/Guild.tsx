@@ -8,11 +8,17 @@ import {
     Title,
 } from "@mantine/core";
 import axios from "axios";
-import { useContext, useEffect, useState } from "react";
+import { CSSProperties, useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { API_URL, ControlsRoute, GuildRoute } from "../api/ApiRoutes";
+import {
+    API_URL,
+    ControlsRoute,
+    GuildRoute,
+    UserRoute,
+} from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
 import Channels from "../components/Channels";
+import ControlsWindow from "../components/Guild/ControlsWindow";
 import GuildAddFileModalBody from "../components/GuildAddFileModalBody";
 import { PlayControl } from "../components/PlayControl";
 import Queue from "../components/Queue";
@@ -30,10 +36,15 @@ type PlayPayload = {
     channel_id?: string;
 };
 
+export const guildMaximumWindowHeight: CSSProperties = {
+    height: "calc(100vh - 34px)",
+};
+
 export function Guild() {
     const { guildId } = useParams();
     const { tokens } = useContext(AuthContext);
     const [guildFiles, setGuildFiles] = useState<GuildFile[]>([]);
+    const [userFiles, setUserFiles] = useState<UserFile[]>([]);
 
     const fetchGuildFiles = async () => {
         if (tokens?.access_token) {
@@ -47,6 +58,24 @@ export function Guild() {
                     }
                 );
                 setGuildFiles(data);
+            } catch (e) {
+                // TODO: Handle
+                console.log(e);
+            }
+        }
+    };
+
+    const fetchUserFiles = async () => {
+        if (tokens?.access_token) {
+            try {
+                const { data } = await axios.get<UserFile[]>(
+                    `${API_URL}${UserRoute.getFiles}`,
+                    {
+                        headers: { authorization: `${tokens.access_token}` },
+                    }
+                );
+                console.log("files: ", data);
+                setUserFiles(data);
             } catch (e) {
                 // TODO: Handle
                 console.log(e);
@@ -78,23 +107,27 @@ export function Guild() {
         fetchGuildFiles();
     }, [guildId]);
 
+    // useEffect(() => {
+    //     fetchUserFiles();
+    // }, []);
+
     return (
         <>
             <Grid>
-                <Grid.Col span={8}>
+                <Grid.Col xs={9}>
                     <Paper
                         withBorder
                         shadow="sm"
                         p="sm"
                         style={{
-                            height: "calc(100vh - 80px)",
                             display: "flex",
                             flexDirection: "column",
                             overflow: "hidden",
+                            ...guildMaximumWindowHeight,
                         }}
                     >
-                        <Title order={3} pb="xs">
-                            Title
+                        <Title title="Server sounds" order={3} pb="xs">
+                            Server sounds
                         </Title>
                         <ScrollArea style={{ height: "100%" }}>
                             <Group>
@@ -111,10 +144,31 @@ export function Guild() {
                         </ScrollArea>
                     </Paper>
                 </Grid.Col>
-                <Grid.Col span={4}>
-                    <Group direction="column">
-                        <Queue />
-                        <Channels />
+                <Grid.Col xs={3}>
+                    <Group
+                        direction="column"
+                        style={{ width: "100%", ...guildMaximumWindowHeight }}
+                    >
+                        <ControlsWindow guildId={guildId} />
+                        <Paper
+                            withBorder
+                            shadow="sm"
+                            p="sm"
+                            style={{
+                                flexGrow: 1,
+                                width: "100%",
+                                display: "flex",
+                                flexDirection: "column",
+                                overflow: "hidden",
+                            }}
+                        >
+                            <Title title="Quick enable files" order={3} pb="xs">
+                                Quick enable files
+                            </Title>
+                            <ScrollArea>
+                                <Group></Group>
+                            </ScrollArea>
+                        </Paper>
                     </Group>
                 </Grid.Col>
             </Grid>

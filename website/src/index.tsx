@@ -41,12 +41,16 @@ root.render(
                             {/* TODO: check if route is valid, guild exists, user is in guild... */}
                             <Route
                                 path="/guilds/:guildId"
-                                element={<Guild />}
+                                element={
+                                    <NotificationsProvider>
+                                        <Guild />
+                                    </NotificationsProvider>
+                                }
                             />
                             <Route
                                 path="/upload"
                                 element={
-                                    <NotificationsProvider position="top-right">
+                                    <NotificationsProvider>
                                         <Upload />
                                     </NotificationsProvider>
                                 }
@@ -54,7 +58,7 @@ root.render(
                             <Route
                                 path="/user"
                                 element={
-                                    <NotificationsProvider position="top-right">
+                                    <NotificationsProvider>
                                         <UserFiles />
                                     </NotificationsProvider>
                                 }

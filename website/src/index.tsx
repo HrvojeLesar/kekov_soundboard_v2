@@ -1,5 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
@@ -13,6 +14,7 @@ import Sidebar from "./components/Sidebar";
 import Upload from "./views/Upload";
 import UserFiles from "./views/UserFiles";
 import { NotificationsProvider } from "@mantine/notifications";
+import NotFound from "./views/NotFound";
 
 const root = ReactDOM.createRoot(
     document.getElementById("root") as HTMLElement
@@ -20,9 +22,10 @@ const root = ReactDOM.createRoot(
 
 root.render(
     <React.StrictMode>
-        <AuthProvider>
-            <BrowserRouter>
+        <BrowserRouter>
+            <AuthProvider>
                 <Routes>
+                    <Route path="/*" element={<NotFound />} />
                     <Route element={<ProtectedRoutes />}>
                         <Route
                             element={
@@ -66,8 +69,8 @@ root.render(
                     <Route path="/login" element={<Login />} />
                     <Route path="/login-callback" element={<LoginCallback />} />
                 </Routes>
-            </BrowserRouter>
-        </AuthProvider>
+            </AuthProvider>
+        </BrowserRouter>
     </React.StrictMode>
 );
 

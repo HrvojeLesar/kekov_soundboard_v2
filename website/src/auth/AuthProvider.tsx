@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import { useCookies } from "react-cookie";
 import qs from "qs";
 import { API_URL, AuthRoute, DiscordRoutes, UserRoute } from "../api/ApiRoutes";
+import { Navigate, useNavigate } from "react-router-dom";
 
 enum TokenType {
     AccessToken = "access_token",
@@ -55,6 +56,7 @@ type AuthContextType = {
 export const AuthContext = createContext<AuthContextType>(null!);
 
 function AuthProvider({ children }: { children: ReactNode }) {
+    const navigate = useNavigate();
     const [user, setUser] = useState<User | undefined>();
     const [tokens, setTokens] = useState<Tokens | undefined>();
     const [guilds, setGuilds] = useState<Guild[]>([]);
@@ -108,6 +110,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
                     }
                 );
                 revokeAccess();
+                navigate("/");
             } catch (e) {
                 // TODO: Handle
                 console.log(e);

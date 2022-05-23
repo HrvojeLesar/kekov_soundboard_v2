@@ -1,16 +1,22 @@
-use std::sync::Arc;
-
 use actix::Addr;
 use actix_web::{
     get,
-    web::{scope, Payload, ServiceConfig, Data},
+    web::{scope, Data, Payload, ServiceConfig},
     HttpRequest, HttpResponse,
 };
 use actix_web_actors::ws;
 use log::info;
 use sqlx::PgPool;
 
-use crate::{error::errors::KekServerError, ws::{ws_session::{ControlsSession, WsSessionCommChannels}, ws_server::ControlsServer, ws_sync::SyncSession}, utils::cache::UserGuildsCache};
+use crate::{
+    error::errors::KekServerError,
+    utils::cache::UserGuildsCache,
+    ws::{
+        ws_server::ControlsServer,
+        ws_session::{ControlsSession, WsSessionCommChannels},
+        ws_sync::SyncSession,
+    },
+};
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
@@ -30,7 +36,11 @@ pub async fn controls_ws(
 ) -> Result<HttpResponse, KekServerError> {
     info!("New controls websocket connection");
     let address = server_address.get_ref().clone();
-    return Ok(ws::start(ControlsSession::new(address, ws_channels), &request, stream)?);
+    return Ok(ws::start(
+        ControlsSession::new(address, ws_channels),
+        &request,
+        stream,
+    )?);
 }
 
 #[get("sync")]
@@ -41,5 +51,9 @@ pub async fn sync_ws(
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
     info!("New sync websocket connection");
-    return Ok(ws::start(SyncSession::new(user_guilds_cache, db_pool), &request, stream)?);
+    return Ok(ws::start(
+        SyncSession::new(user_guilds_cache, db_pool),
+        &request,
+        stream,
+    )?);
 }

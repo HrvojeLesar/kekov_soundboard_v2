@@ -52,7 +52,6 @@ impl Validation {
     }
 
     pub async fn user_owns_provided_files(
-        authorized_user: &AuthorizedUser,
         file_ids: &Vec<SoundFileId>,
         user_owned_files: &Vec<SoundFile>,
     ) -> Result<(), KekServerError> {
@@ -83,30 +82,4 @@ pub async fn guild_and_file_exist(
         None => return Err(KekServerError::InvalidFileIdError),
     }
     return Ok(());
-}
-
-pub async fn is_user_in_guild(
-    authorized_user: &AuthorizedUser,
-    guild_id: &GuildId,
-) -> Result<bool, KekServerError> {
-    let user_guilds = authorized_user.get_guilds().await?;
-
-    if user_guilds
-        .iter()
-        .find(|guild| *guild.get_id() == *guild_id)
-        .is_none()
-    {
-        return Ok(false);
-    }
-    return Ok(true);
-}
-
-pub async fn validate_guild_and_file_ids(
-    authorized_user: &AuthorizedUser,
-    guild_id: &GuildId,
-    file_id: &SoundFileId,
-    transaction: &mut Transaction<'_, Postgres>,
-) -> Result<bool, KekServerError> {
-    guild_and_file_exist(guild_id, file_id, &mut *transaction).await?;
-    return Ok(is_user_in_guild(&authorized_user, guild_id).await?);
 }

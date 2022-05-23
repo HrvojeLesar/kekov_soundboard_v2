@@ -4,23 +4,20 @@ use actix_web::{
     HttpResponse,
 };
 use serde::Deserialize;
-use sqlx::{PgPool, Postgres, Transaction};
+use sqlx::PgPool;
 
 use crate::{
     error::errors::KekServerError,
     middleware::{auth_middleware::AuthService, user_guilds_middleware::UserGuildsService},
     models::{
-        guild::Guild,
         guild_file::GuildFile,
         ids::{GuildId, SoundFileId},
         sound_file::SoundFile,
     },
     utils::{
-        auth::{AuthorizedUser, AuthorizedUserExt},
+        auth::AuthorizedUserExt,
         cache::UserGuildsCache,
-        validation::{
-            guild_and_file_exist, is_user_in_guild, validate_guild_and_file_ids, Validation,
-        },
+        validation::{guild_and_file_exist, Validation},
     },
 };
 
@@ -116,7 +113,7 @@ pub async fn bulk_enable(
             &mut transaction,
         )
         .await?;
-        Validation::user_owns_provided_files(&authorized_user, &bulk_payload.files, &files).await?;
+        Validation::user_owns_provided_files(&bulk_payload.files, &files).await?;
     }
 
     GuildFile::bulk_insert(&bulk_payload.guilds, &bulk_payload.files, &mut transaction).await?;

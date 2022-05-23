@@ -3,7 +3,7 @@ use sqlx::{Postgres, Transaction};
 
 use crate::{
     error::errors::KekServerError, utils::deserialize_string_to_number,
-    utils::serialize_i64_to_string, utils::serialize_id_to_string,
+    utils::serialize_id_to_string,
 };
 
 use super::ids::UserId;

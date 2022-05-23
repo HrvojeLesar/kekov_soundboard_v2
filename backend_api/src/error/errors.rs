@@ -64,14 +64,10 @@ pub enum KekServerError {
     ParseFloatError(#[from] std::num::ParseFloatError),
     #[error("Provided files faild to upload")]
     NoFilesUploadedError,
-    #[error("Recieved request has no session cookie set")]
-    SessionCookieNotSet,
     #[error("Invalid Authorization Credentials")]
     InvalidCredentialsError,
     #[error("Discord request error")]
     DiscordRequestError,
-    #[error("Disallowed mime type")]
-    DisallowedMimeTypeError,
     #[error("Not in guild error")]
     NotInGuildError,
     #[error("Unable to get mime from file")]
@@ -90,8 +86,6 @@ pub enum KekServerError {
     AuthorizedUserNotFoundError,
     #[error("User not in cache error")]
     UserNotInCacheError,
-    #[error("Canceled authorization error")]
-    CanceledAuthError,
     #[error("Time to authorize expired")]
     AuthorizationTimeExpiredError,
     #[error("Invalid guild id error")]
@@ -126,14 +120,5 @@ impl ResponseError for KekServerError {
             },
             description: &self.to_string(),
         });
-    }
-}
-
-pub struct ErrorHelpers {}
-
-impl ErrorHelpers {
-    pub fn e500<E: std::fmt::Debug + std::fmt::Display + 'static>(err: E) -> actix_web::Error {
-        log::warn!("Session Service encounted an error: {}", err);
-        return actix_web::error::ErrorInternalServerError(err);
     }
 }

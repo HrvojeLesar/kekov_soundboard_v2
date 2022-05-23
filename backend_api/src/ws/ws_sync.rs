@@ -1,16 +1,20 @@
-use std::{time::{Duration, Instant}, sync::Arc};
+use std::{
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use actix::{Actor, ActorContext, AsyncContext, ContextFutureSpawner, StreamHandler, WrapFuture};
 use actix_http::ws;
 use actix_web::web::Data;
 use actix_web_actors::ws::WebsocketContext;
-use log::{error, warn, info};
-use serde::{Serialize, Deserialize};
+use log::{error, info, warn};
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
-use crate::{models::{user::User, ids::{UserId, GuildId}}, utils::cache::UserGuildsCache};
-
-use super::ws_server::OpCode;
+use crate::{
+    models::ids::{GuildId, UserId},
+    utils::cache::UserGuildsCache,
+};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(HEARTBEAT_INTERVAL.as_secs() * 2);
@@ -109,7 +113,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for SyncSession {
                                 info!("Trying to invalidate user with id: {}", &id.0);
                                 user_guilds_cache.invalidate(id).await;
                             }
-                        },
+                        }
                         SyncOpCode::InvalidateGuildsCache => {
                             if let Some(id) = &message.guild_id {
                                 info!("Invalidating guilds cache");

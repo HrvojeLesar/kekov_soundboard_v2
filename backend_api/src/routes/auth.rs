@@ -4,7 +4,7 @@ use actix_web::{
     get,
     http::header::LOCATION,
     post,
-    web::{scope, Data, Form, Query, ServiceConfig, Json},
+    web::{scope, Data, Form, Json, Query, ServiceConfig},
     HttpResponse,
 };
 use awc::Client;
@@ -22,7 +22,7 @@ use crate::{
     oauth_client::{GuildTokenField, OAuthClient},
     utils::{
         auth::{self, get_discord_user_from_token},
-        GenericSuccess, cache::AuthorizedUsersCache,
+        cache::AuthorizedUsersCache,
     },
 };
 
@@ -277,22 +277,26 @@ pub async fn auth_revoke(
     match revoke_token.token_type {
         TokenType::AccessToken | TokenType::InvalidTokenType => {
             request = client.revoke_token(StandardRevocableToken::AccessToken(
-                    AccessToken::new(revoke_token.token.clone()),
-                    ))?;
+                AccessToken::new(revoke_token.token.clone()),
+            ))?;
         }
         TokenType::RefreshToken => {
             request = client.revoke_token(StandardRevocableToken::RefreshToken(
-                    RefreshToken::new(revoke_token.token.clone()),
-                    ))?;
+                RefreshToken::new(revoke_token.token.clone()),
+            ))?;
         }
     }
 
     match request.request_async(send_oauth_request).await {
         Ok(_) => {
-            if revoke_token.token_type == TokenType::AccessToken || revoke_token.token_type == TokenType::InvalidTokenType {
-                authorized_users_cache.invalidate(&Arc::new(auth::AccessToken(revoke_token.token))).await;
+            if revoke_token.token_type == TokenType::AccessToken
+                || revoke_token.token_type == TokenType::InvalidTokenType
+            {
+                authorized_users_cache
+                    .invalidate(&Arc::new(auth::AccessToken(revoke_token.token)))
+                    .await;
             }
-        },
+        }
         Err(err) => return Err(KekServerError::RevocationRequestTokenError(Box::new(err))),
     }
 
@@ -313,9 +317,7 @@ pub async fn auth_refresh(
     let request = client.exchange_refresh_token(&payload.refresh_token);
 
     let new_tokens = match request.request_async(send_oauth_request).await {
-        Ok(token) => {
-            token
-        },
+        Ok(token) => token,
         Err(err) => return Err(KekServerError::RequestTokenError(Box::new(err))),
     };
 

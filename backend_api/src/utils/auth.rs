@@ -1,6 +1,6 @@
 use actix_http::StatusCode;
 use actix_web::{dev::ServiceRequest, http::header::AUTHORIZATION, FromRequest, HttpMessage};
-use log::{debug, warn};
+use log::debug;
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use crate::{
@@ -77,7 +77,9 @@ pub async fn get_access_token(req: &ServiceRequest) -> Result<AccessToken, KekSe
 }
 
 // TODO: Handle rate limiting
-pub async fn get_discord_user_from_token(access_token: &AccessToken) -> Result<User, KekServerError> {
+pub async fn get_discord_user_from_token(
+    access_token: &AccessToken,
+) -> Result<User, KekServerError> {
     let mut resp = awc::Client::new()
         .get("https://discord.com/api/v9/users/@me")
         .append_header((AUTHORIZATION, format!("Bearer {}", access_token.0)))
@@ -94,14 +96,4 @@ pub async fn get_discord_user_from_token(access_token: &AccessToken) -> Result<U
     }
 
     return Ok(resp.json().await?);
-}
-
-pub async fn validate_request(req: &ServiceRequest) -> Result<AuthorizedUser, KekServerError> {
-    let token = get_access_token(req).await?;
-    let discord_user = get_discord_user_from_token(&token).await?;
-
-    return Ok(AuthorizedUser {
-        access_token: Arc::new(token),
-        discord_user,
-    });
 }

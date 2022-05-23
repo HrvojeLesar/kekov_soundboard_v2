@@ -11,11 +11,9 @@ use actix::{
 use actix_http::ws;
 use actix_web::web::Data;
 use actix_web_actors::ws::WebsocketContext;
-use log::{debug, error, info, warn};
+use log::{error, info, warn};
 use tokio::sync::{oneshot::Sender, RwLock};
 use uuid::Uuid;
-
-use crate::error::errors::KekServerError;
 
 use super::ws_server::{
     ClientError, Connect, ControlsServer, ControlsServerMessage, Disconnect, OpCode,

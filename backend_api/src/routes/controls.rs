@@ -1,13 +1,11 @@
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use actix::{clock::timeout, Addr};
 use actix_web::{
-    dev::Service,
-    get, post,
+    post,
     web::{scope, Data, Json, ServiceConfig},
     HttpResponse,
 };
-use log::warn;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use tokio::sync::oneshot::{channel, Receiver};
@@ -17,16 +15,15 @@ use crate::{
     middleware::{auth_middleware::AuthService, user_guilds_middleware::UserGuildsService},
     models::{
         guild_file::GuildFile,
-        ids::{ChannelId, GuildId, Id, SoundFileId},
+        ids::{ChannelId, GuildId, SoundFileId},
         sound_file::SoundFile,
     },
     utils::{
-        auth::{AuthorizedUser, AuthorizedUserExt},
+        auth::AuthorizedUserExt,
         cache::{UserGuildsCache, UserGuildsCacheUtil},
-        validation::{is_user_in_guild, validate_guild_and_file_ids},
     },
     ws::{
-        ws_server::{ClientError, ControlsServer, ControlsServerMessage, PlayControl},
+        ws_server::{ClientError, ControlsServer, ControlsServerMessage},
         ws_session::WsSessionCommChannels,
     },
 };
@@ -157,7 +154,6 @@ pub async fn stop_request(
     server_address: Data<Addr<ControlsServer>>,
     AuthorizedUserExt(authorized_user): AuthorizedUserExt,
     Json(stop_payload): Json<StopPayload>,
-    db_pool: Data<PgPool>,
     ws_channels: Data<WsSessionCommChannels>,
     user_guilds_cache: Data<UserGuildsCache>,
 ) -> Result<HttpResponse, KekServerError> {
@@ -178,7 +174,6 @@ pub async fn skip_request(
     server_address: Data<Addr<ControlsServer>>,
     AuthorizedUserExt(authorized_user): AuthorizedUserExt,
     Json(skip_payload): Json<SkipPayload>,
-    db_pool: Data<PgPool>,
     ws_channels: Data<WsSessionCommChannels>,
     user_guilds_cache: Data<UserGuildsCache>,
 ) -> Result<HttpResponse, KekServerError> {
@@ -199,7 +194,6 @@ pub async fn queue_request(
     server_address: Data<Addr<ControlsServer>>,
     AuthorizedUserExt(authorized_user): AuthorizedUserExt,
     Json(queue_payload): Json<QueuePayload>,
-    db_pool: Data<PgPool>,
     ws_channels: Data<WsSessionCommChannels>,
     user_guilds_cache: Data<UserGuildsCache>,
 ) -> Result<HttpResponse, KekServerError> {

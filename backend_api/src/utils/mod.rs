@@ -1,14 +1,11 @@
-use std::{
-    str::FromStr,
-    time::{Duration, Instant},
-};
+use std::{str::FromStr, time::Duration};
 
-use actix::clock::{sleep, sleep_until};
+use actix::clock::sleep;
 use actix_http::{encoding::Decoder, Payload, StatusCode};
 use actix_web::http::header::AUTHORIZATION;
 use awc::{error::SendRequestError, ClientResponse};
 use log::{debug, warn};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serializer};
 
 use crate::{error::errors::KekServerError, models::ids::Id};
 
@@ -20,34 +17,6 @@ pub mod validation;
 
 pub const USERGUILDS: &str = "/users/@me/guilds";
 pub const MAX_RETRIES: u8 = 3;
-
-#[derive(Serialize, Deserialize)]
-pub struct GenericSuccess {
-    pub success: String,
-}
-
-impl GenericSuccess {
-    pub fn new(message: &str) -> Self {
-        return GenericSuccess {
-            success: message.to_owned(),
-        };
-    }
-}
-
-impl Default for GenericSuccess {
-    fn default() -> Self {
-        return Self {
-            success: "success".to_owned(),
-        };
-    }
-}
-
-#[derive(Clone, Debug, Deserialize)]
-struct RateLimitResponse {
-    message: String,
-    retry_after: f64,
-    global: bool,
-}
 
 pub fn deserialize_string_to_number<'de, T, D>(deserializer: D) -> Result<T, D::Error>
 where
@@ -66,13 +35,6 @@ where
         StringOrNum::String(s) => s.parse::<T>().map_err(serde::de::Error::custom),
         StringOrNum::Number(n) => Ok(n),
     };
-}
-
-pub fn serialize_i64_to_string<S>(num: &i64, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    return serializer.serialize_str(&num.to_string());
 }
 
 pub fn serialize_id_to_string<S>(num: &dyn Id, serializer: S) -> Result<S::Ok, S::Error>

@@ -1,11 +1,11 @@
 use actix_web::web::{scope, ServiceConfig};
 
 mod auth;
-mod file;
-mod user;
-mod guild;
-mod ws;
 mod controls;
+mod file;
+mod guild;
+mod user;
+mod ws;
 
 pub mod not_found;
 
@@ -17,6 +17,6 @@ pub fn routes_config(cfg: &mut ServiceConfig) {
             .configure(user::config)
             .configure(guild::config)
             .configure(ws::config)
-            .configure(controls::config)
+            .configure(controls::config),
     );
 }

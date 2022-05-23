@@ -69,11 +69,11 @@ impl TryFrom<String> for UserId {
 
 impl Serialize for UserId {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
-        {
-            return serializer.serialize_str(&self.0.to_string());
-        }
+    where
+        S: serde::Serializer,
+    {
+        return serializer.serialize_str(&self.0.to_string());
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
@@ -104,11 +104,11 @@ impl TryFrom<String> for SoundFileId {
 
 impl Serialize for SoundFileId {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
-        {
-            return serializer.serialize_str(&self.0.to_string());
-        }
+    where
+        S: serde::Serializer,
+    {
+        return serializer.serialize_str(&self.0.to_string());
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
@@ -139,9 +139,9 @@ impl TryFrom<String> for ChannelId {
 
 impl Serialize for ChannelId {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: serde::Serializer,
-        {
-            return serializer.serialize_str(&self.0.to_string());
-        }
+    where
+        S: serde::Serializer,
+    {
+        return serializer.serialize_str(&self.0.to_string());
+    }
 }

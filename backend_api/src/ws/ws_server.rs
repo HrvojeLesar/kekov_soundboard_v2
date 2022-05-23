@@ -1,18 +1,14 @@
 use std::{collections::HashMap, fmt::Display};
 
-use actix::{
-    fut, Actor, ActorContext, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner,
-    Handler, Message, Recipient, Supervised, Supervisor, WrapFuture,
-};
-use actix_web_actors::ws::WebsocketContext;
-use log::{debug, info, warn};
+use actix::{Actor, Addr, Context, Handler, Message, Supervised, Supervisor};
+use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::{
-    error::errors::KekServerError,
-    models::{ids::{ChannelId, GuildId, SoundFileId}, sound_file::SoundFile},
+use crate::models::{
+    ids::{ChannelId, GuildId, SoundFileId},
+    sound_file::SoundFile,
 };
 
 use super::ws_session::ControlsSession;

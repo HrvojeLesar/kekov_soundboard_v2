@@ -1,7 +1,5 @@
 use std::{
     collections::HashMap,
-    fs::File,
-    io::BufReader,
     sync::{Arc, Mutex},
     time::UNIX_EPOCH,
 };
@@ -10,8 +8,6 @@ use actix_cors::Cors;
 use actix_web::{web::Data, App, HttpServer};
 use env::check_required_env_variables;
 use routes::{not_found::not_found, routes_config};
-use rustls::{Certificate, PrivateKey, ServerConfig};
-use rustls_pemfile::{certs, pkcs8_private_keys};
 
 use dotenv::dotenv;
 use snowflake::SnowflakeIdGenerator;
@@ -35,31 +31,6 @@ mod ws;
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
     check_required_env_variables();
-
-    let config = ServerConfig::builder()
-        .with_safe_defaults()
-        .with_no_client_auth();
-    let cert_file = &mut BufReader::new(File::open("127.0.0.1.pem").unwrap());
-    let key_file = &mut BufReader::new(File::open("127.0.0.1-key.pem").unwrap());
-
-    let cert_chain = certs(cert_file)
-        .unwrap()
-        .into_iter()
-        .map(Certificate)
-        .collect();
-
-    let mut keys: Vec<PrivateKey> = pkcs8_private_keys(key_file)
-        .unwrap()
-        .into_iter()
-        .map(PrivateKey)
-        .collect();
-
-    if keys.is_empty() {
-        eprintln!("Could not locate PKCS 8 private keys.");
-        std::process::exit(1);
-    }
-
-    let config = config.with_single_cert(cert_chain, keys.remove(0)).unwrap();
 
     let bind_address = format!(
         "localhost:{}",

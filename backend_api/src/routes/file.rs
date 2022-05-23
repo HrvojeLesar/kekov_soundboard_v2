@@ -1,7 +1,4 @@
-use std::{
-    io::Write,
-    sync::{Arc, Mutex},
-};
+use std::sync::{Arc, Mutex};
 
 use actix_multipart::{Field, Multipart};
 use actix_web::{
@@ -10,7 +7,7 @@ use actix_web::{
     HttpResponse,
 };
 use futures_util::TryStreamExt;
-use log::{error, warn};
+use log::error;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::PgPool;
 use tokio::{
@@ -21,11 +18,8 @@ use tokio::{
 use crate::{
     error::errors::KekServerError,
     middleware::auth_middleware::AuthService,
-    models::{
-        ids::SoundFileId,
-        sound_file::{self, SoundFile},
-    },
-    utils::auth::{AuthorizedUser, AuthorizedUserExt},
+    models::{ids::SoundFileId, sound_file::SoundFile},
+    utils::auth::AuthorizedUserExt,
 };
 use lazy_static::lazy_static;
 
@@ -42,14 +36,21 @@ pub fn config(cfg: &mut ServiceConfig) {
 }
 
 async fn delete_file(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
-    let full_file_path = format!("{}{}", dotenv::var("SOUNDFILE_DIR")?, sound_file.get_id().0.to_string());
+    let full_file_path = format!(
+        "{}{}",
+        dotenv::var("SOUNDFILE_DIR")?,
+        sound_file.get_id().0.to_string()
+    );
     return Ok(remove_file(full_file_path).await?);
 }
 
 async fn validate_audio_mime(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
-    let full_file_path = format!("{}{}", dotenv::var("SOUNDFILE_DIR")?, sound_file.get_id().0.to_string());
-    let mime =
-        web::block(move || infer::get_from_path(full_file_path)).await??;
+    let full_file_path = format!(
+        "{}{}",
+        dotenv::var("SOUNDFILE_DIR")?,
+        sound_file.get_id().0.to_string()
+    );
+    let mime = web::block(move || infer::get_from_path(full_file_path)).await??;
 
     let mime = match mime {
         Some(m) => m,
@@ -134,7 +135,11 @@ pub async fn upload_file(
         ));
         files.push(Arc::clone(&sound_file));
 
-        let full_file_path = format!("{}{}", dotenv::var("SOUNDFILE_DIR")?, sound_file.get_id().0.to_string());
+        let full_file_path = format!(
+            "{}{}",
+            dotenv::var("SOUNDFILE_DIR")?,
+            sound_file.get_id().0.to_string()
+        );
 
         let mut file_handle = File::create(full_file_path).await?;
 

@@ -25,9 +25,7 @@ impl DiscordClientConfig {
                 Scope::new("email".to_string()),
                 Scope::new("guilds".to_string()),
             ],
-            bot_scopes: vec![
-                Scope::new("bot".to_string()),
-            ],
+            bot_scopes: vec![Scope::new("bot".to_string())],
             // TODO: read from env or remove
             redirect_url: RedirectUrl::new("https://localhost:8080/authcallback".to_string())
                 .expect("Requires valid redirect url!"),

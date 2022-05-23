@@ -4,20 +4,16 @@ use std::{
     sync::Arc,
 };
 
-use actix::clock::Instant;
 use actix_web::{
     dev::{Service, ServiceRequest, ServiceResponse, Transform},
     web::Data,
     Error, HttpMessage,
 };
-use log::{debug, warn};
+use log::warn;
 
 use crate::{
     error::errors::KekServerError,
-    utils::{
-        auth::{validate_request, AuthorizedUser, AuthorizedUserServiceType},
-        cache::UserGuildsCache,
-    },
+    utils::{auth::AuthorizedUserServiceType, cache::UserGuildsCache},
 };
 
 pub struct UserGuildsService;
@@ -84,7 +80,7 @@ where
                     cache.insert(user_id.clone(), user_guilds).await;
                 }
             }
-            
+
             let resp = service.call(req).await?;
             return Ok(resp);
         });

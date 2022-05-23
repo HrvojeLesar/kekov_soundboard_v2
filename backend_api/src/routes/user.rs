@@ -1,6 +1,6 @@
 use actix_web::{
-    delete, get, post,
-    web::{delete, scope, Data, Json, Path, ServiceConfig},
+    delete, get,
+    web::{scope, Data, Json, Path, ServiceConfig},
     HttpResponse,
 };
 use serde::{Deserialize, Serialize};
@@ -14,12 +14,10 @@ use crate::{
         guild_file::GuildFile,
         ids::{GuildId, SoundFileId},
         sound_file::SoundFile,
-        user::User,
     },
     utils::{
-        auth::{AuthorizedUser, AuthorizedUserExt},
+        auth::AuthorizedUserExt,
         cache::{UserGuildsCache, UserGuildsCacheUtil},
-        make_discord_get_request, USERGUILDS,
     },
 };
 
@@ -173,10 +171,16 @@ pub async fn get_enabled_user_files(
     .await?;
     transaction.commit().await?;
 
-    let enabled_files = files.into_iter().map(|f| {
-        let enabled = enabled_files.get(&f).is_some();
-        EnabledFile { sound_file: f, enabled}
-    }).collect::<Vec<EnabledFile>>();
+    let enabled_files = files
+        .into_iter()
+        .map(|f| {
+            let enabled = enabled_files.get(&f).is_some();
+            EnabledFile {
+                sound_file: f,
+                enabled,
+            }
+        })
+        .collect::<Vec<EnabledFile>>();
 
     return Ok(HttpResponse::Ok().json(enabled_files));
 }

@@ -10,10 +10,16 @@ use actix_web::{
     Error, HttpMessage,
 };
 
-use crate::{utils::{
-    auth::{get_access_token, get_discord_user_from_token, validate_request, AuthorizedUser, AuthorizedUserServiceType},
-    cache::AuthorizedUsersCache,
-}, error::errors::KekServerError};
+use crate::{
+    error::errors::KekServerError,
+    utils::{
+        auth::{
+            get_access_token, get_discord_user_from_token, AuthorizedUser,
+            AuthorizedUserServiceType,
+        },
+        cache::AuthorizedUsersCache,
+    },
+};
 
 pub struct AuthService;
 
@@ -66,7 +72,9 @@ where
                     discord_user: user,
                 });
 
-                cache.insert(access_token, Arc::clone(&authorized_user)).await;
+                cache
+                    .insert(access_token, Arc::clone(&authorized_user))
+                    .await;
             } else {
                 authorized_user = match cache.get(&access_token) {
                     Some(au) => au,

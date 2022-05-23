@@ -27,7 +27,7 @@ import {
     FileUploadContainer,
     FileContainerRef,
 } from "../components/FileContainer";
-import { AuthContext } from "../auth/AuthProvider";
+import { AuthContext, COOKIE_NAMES } from "../auth/AuthProvider";
 import axios from "axios";
 import { API_URL, FilesRoute, GuildRoute } from "../api/ApiRoutes";
 import { FileUpload, Icon, X } from "tabler-icons-react";
@@ -38,6 +38,7 @@ import {
     UploadGuildWindow,
     UploadGuildWindowRef,
 } from "../components/Upload/UploadGuildWindow";
+import { useCookies } from "react-cookie";
 
 const MAX_TOTAL_SIZE = 10_000_000;
 const ACCEPTED_MIMES = [
@@ -108,7 +109,8 @@ export const uploadMaximumWindowHeight: CSSProperties = {
 };
 
 export default function Upload() {
-    const { tokens, guilds } = useContext(AuthContext);
+    const { guilds } = useContext(AuthContext);
+    const [cookies] = useCookies(COOKIE_NAMES);
     const { classes } = useStyles();
     const openRef = useRef<() => void>(() => {});
     const containerRefs = useRef<FileContainerRef[]>([]);
@@ -176,7 +178,7 @@ export default function Upload() {
     };
 
     const upload = () => {
-        if (!tokens?.access_token) {
+        if (!cookies.access_token) {
             return;
         }
         const formData = new FormData();
@@ -189,7 +191,7 @@ export default function Upload() {
         axios
             .post<UserFile[]>(`${API_URL}${FilesRoute.postUpload}`, formData, {
                 headers: {
-                    Authorization: `${tokens.access_token}`,
+                    Authorization: `${cookies.access_token}`,
                     "Content-Type": "multipart/form-data",
                 },
                 onUploadProgress: (progress) => {
@@ -254,7 +256,7 @@ export default function Upload() {
     };
 
     const quickEnable = (guilds: string[], files: UserFile[]) => {
-        if (!tokens?.access_token) {
+        if (!cookies.access_token) {
             return Promise.reject("Access token not set");
         }
         const bulk = {
@@ -263,7 +265,7 @@ export default function Upload() {
         };
         return axios.post(`${API_URL}${GuildRoute.postBulkenable}`, bulk, {
             headers: {
-                Authorization: `${tokens.access_token}`,
+                Authorization: `${cookies.access_token}`,
             },
         });
     };

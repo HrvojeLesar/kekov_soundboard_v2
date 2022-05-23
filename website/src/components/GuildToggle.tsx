@@ -8,8 +8,9 @@ import {
 } from "@mantine/core";
 import axios from "axios";
 import { useContext } from "react";
+import { useCookies } from "react-cookie";
 import { API_URL, GuildRoute } from "../api/ApiRoutes";
-import { AuthContext, Guild } from "../auth/AuthProvider";
+import { AuthContext, COOKIE_NAMES, Guild } from "../auth/AuthProvider";
 import { nameToInitials } from "../utils/utils";
 import { UserFile } from "../views/UserFiles";
 
@@ -74,7 +75,7 @@ export function GuildToggle({
     file,
     toggleCallback,
 }: GuildToggleProps) {
-    const { tokens } = useContext(AuthContext);
+    const [cookies] = useCookies(COOKIE_NAMES);
     const { classes } = useStyles({ checked: hasFile });
 
     const handleToggle = async (state: boolean) => {
@@ -95,14 +96,14 @@ export function GuildToggle({
         return await axios.post(
             `${API_URL}${GuildRoute.postAddSound}${guild.id}/${file.id}`,
             {},
-            { headers: { authorization: `${tokens?.access_token}` } }
+            { headers: { authorization: `${cookies.access_token}` } }
         );
     };
 
     const removeFromGuild = async () => {
         return await axios.delete(
             `${API_URL}${GuildRoute.postAddSound}${guild.id}/${file.id}`,
-            { headers: { authorization: `${tokens?.access_token}` } }
+            { headers: { authorization: `${cookies.access_token}` } }
         );
     };
 

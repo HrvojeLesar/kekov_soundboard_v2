@@ -1,11 +1,12 @@
 import { useContext } from "react";
+import { useCookies } from "react-cookie";
 import { Navigate } from "react-router-dom";
-import { AuthContext } from "./auth/AuthProvider";
+import { AuthContext, COOKIE_NAMES } from "./auth/AuthProvider";
 
 export function Login() {
-    const auth = useContext(AuthContext);
+    const [cookies] = useCookies(COOKIE_NAMES);
 
-    if (auth.tokens) {
+    if (cookies.access_token && cookies.refresh_token && cookies.expires) {
         return <Navigate to="/" replace/>;
     }
 

@@ -1,8 +1,9 @@
-import { Grid, Group, Paper, ScrollArea, Title } from "@mantine/core";
+import { Button, Grid, Group, Paper, ScrollArea, Title } from "@mantine/core";
 import axios from "axios";
 import { CSSProperties, useContext, useEffect, useState } from "react";
+import { useCookies } from "react-cookie";
 import { API_URL, UserRoute } from "../api/ApiRoutes";
-import { AuthContext } from "../auth/AuthProvider";
+import { AuthContext, COOKIE_NAMES } from "../auth/AuthProvider";
 import DeleteFile from "../components/UserFiles/DeleteFile";
 import ServerSelect from "../components/UserFiles/ServerSelect";
 import UserFileContainer from "../components/UserFiles/UserFileContainer";
@@ -23,7 +24,7 @@ export const userFilesMaximumWindowHeight: CSSProperties = {
 };
 
 export default function UserFiles() {
-    const { tokens } = useContext(AuthContext);
+    const [cookies] = useCookies(COOKIE_NAMES);
     const [files, setFiles] = useState<UserFile[]>([]);
     const [isFetching, setIsFetching] = useState(true);
     const [selectedIndex, setSelectedIndex] = useState<number | undefined>(
@@ -31,12 +32,12 @@ export default function UserFiles() {
     );
 
     const fetchFiles = async () => {
-        if (tokens?.access_token) {
+        if (cookies.access_token) {
             try {
                 const { data } = await axios.get<UserFile[]>(
                     `${API_URL}${UserRoute.getFiles}`,
                     {
-                        headers: { authorization: `${tokens.access_token}` },
+                        headers: { authorization: `${cookies.access_token}` },
                     }
                 );
                 setIsFetching(false);
@@ -56,13 +57,13 @@ export default function UserFiles() {
 
     const deleteFile = (file: UserFile): Promise<void> => {
         return new Promise((resolve, reject) => {
-            if (tokens?.access_token) {
+            if (cookies.access_token) {
                 axios
                     .delete<UserFile>(
                         `${API_URL}${UserRoute.deleteFile}${file.id}`,
                         {
                             headers: {
-                                authorization: `${tokens.access_token}`,
+                                authorization: `${cookies.access_token}`,
                             },
                         }
                     )
@@ -133,7 +134,10 @@ export default function UserFiles() {
                 <Grid.Col xs={3}>
                     <Group
                         direction="column"
-                        style={{ width: "100%", ...userFilesMaximumWindowHeight }}
+                        style={{
+                            width: "100%",
+                            ...userFilesMaximumWindowHeight,
+                        }}
                     >
                         <Paper
                             withBorder

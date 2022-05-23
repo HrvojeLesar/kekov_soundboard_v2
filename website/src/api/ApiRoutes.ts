@@ -24,6 +24,7 @@ export enum AuthRoute {
     getBotInvite = "/auth/botinvite",
     getCallback = "/auth/callback",
     postRevoke = "/auth/revoke",
+    postRefresh = "/auth/refresh",
 }
 
 export enum UserRoute {

@@ -1,8 +1,9 @@
 import { Button, createStyles, Group, Paper, Title } from "@mantine/core";
 import axios from "axios";
 import { useContext } from "react";
+import { useCookies } from "react-cookie";
 import { API_URL, ControlsRoute } from "../../api/ApiRoutes";
-import { AuthContext } from "../../auth/AuthProvider";
+import { AuthContext, COOKIE_NAMES } from "../../auth/AuthProvider";
 const useStyles = createStyles((theme) => {
     return {
         paperStyling: {
@@ -16,7 +17,7 @@ type ControlsWindowProps = {
 };
 
 export default function ControlsWindow({ guildId }: ControlsWindowProps) {
-    const { tokens } = useContext(AuthContext);
+    const [cookies] = useCookies(COOKIE_NAMES);
     const { classes } = useStyles();
 
     const handleGetQueue = () => {
@@ -26,7 +27,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                 { guild_id: guildId },
                 {
                     headers: {
-                        Authorization: `${tokens?.access_token}`,
+                        Authorization: `${cookies.access_token}`,
                     },
                 }
             )
@@ -45,7 +46,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                 { guild_id: guildId },
                 {
                     headers: {
-                        Authorization: `${tokens?.access_token}`,
+                        Authorization: `${cookies.access_token}`,
                     },
                 }
             )
@@ -64,7 +65,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                 { guild_id: guildId },
                 {
                     headers: {
-                        Authorization: `${tokens?.access_token}`,
+                        Authorization: `${cookies.access_token}`,
                     },
                 }
             )

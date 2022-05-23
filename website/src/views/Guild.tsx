@@ -9,6 +9,7 @@ import {
 } from "@mantine/core";
 import axios from "axios";
 import { CSSProperties, useContext, useEffect, useState } from "react";
+import { useCookies } from "react-cookie";
 import { useParams } from "react-router-dom";
 import {
     API_URL,
@@ -16,7 +17,7 @@ import {
     GuildRoute,
     UserRoute,
 } from "../api/ApiRoutes";
-import { AuthContext } from "../auth/AuthProvider";
+import { AuthContext, COOKIE_NAMES } from "../auth/AuthProvider";
 import Channels from "../components/Channels";
 import ControlsWindow from "../components/Guild/ControlsWindow";
 import GuildAddFileModalBody from "../components/GuildAddFileModalBody";
@@ -42,18 +43,18 @@ export const guildMaximumWindowHeight: CSSProperties = {
 
 export function Guild() {
     const { guildId } = useParams();
-    const { tokens } = useContext(AuthContext);
+    const [cookies] = useCookies(COOKIE_NAMES);
     const [guildFiles, setGuildFiles] = useState<GuildFile[]>([]);
     const [userFiles, setUserFiles] = useState<UserFile[]>([]);
 
     const fetchGuildFiles = async () => {
-        if (tokens?.access_token) {
+        if (cookies?.access_token) {
             try {
                 let { data } = await axios.get<GuildFile[]>(
                     `${API_URL}${GuildRoute.getGuildSounds}${guildId}`,
                     {
                         headers: {
-                            Authorization: `${tokens.access_token}`,
+                            Authorization: `${cookies.access_token}`,
                         },
                     }
                 );
@@ -66,12 +67,12 @@ export function Guild() {
     };
 
     const fetchUserFiles = async () => {
-        if (tokens?.access_token) {
+        if (cookies.access_token) {
             try {
                 const { data } = await axios.get<UserFile[]>(
                     `${API_URL}${UserRoute.getFiles}`,
                     {
-                        headers: { authorization: `${tokens.access_token}` },
+                        headers: { authorization: `${cookies.access_token}` },
                     }
                 );
                 console.log("files: ", data);
@@ -84,7 +85,7 @@ export function Guild() {
     };
 
     const playFunc = async (fileId: string) => {
-        if (tokens?.access_token && guildId) {
+        if (cookies.access_token && guildId) {
             try {
                 let payload: PlayPayload = {
                     guild_id: guildId,
@@ -93,7 +94,7 @@ export function Guild() {
                 await axios.post<PlayPayload>(
                     `${API_URL}${ControlsRoute.postPlay}`,
                     payload,
-                    { headers: { Authorization: `${tokens.access_token}` } }
+                    { headers: { Authorization: `${cookies.access_token}` } }
                 );
             } catch (e) {
                 // TODO: Handle

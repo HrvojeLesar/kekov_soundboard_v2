@@ -1,7 +1,8 @@
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
+import { useCookies } from "react-cookie";
 import { API_URL, GuildRoute, UserRoute } from "../api/ApiRoutes";
-import { AuthContext } from "../auth/AuthProvider";
+import { AuthContext, COOKIE_NAMES } from "../auth/AuthProvider";
 import { UserFile } from "../views/UserFiles";
 import { FileToggle } from "./FileToggle";
 
@@ -21,16 +22,16 @@ export default function GuildAddFileModalBody({
     addFileCallback,
     removeFileCallback,
 }: GuildAddFileModalBodyPropsType) {
-    const { tokens } = useContext(AuthContext);
+    const [cookies] = useCookies(COOKIE_NAMES);
     const [files, setFiles] = useState<EnabledFile[]>([]);
 
     const fetchFiles = async () => {
-        if (tokens?.access_token) {
+        if (cookies.access_token) {
             try {
                 const { data } = await axios.get<EnabledFile[]>(
                     `${API_URL}${UserRoute.getEnabledFiles}${guildId}`,
                     {
-                        headers: { authorization: `${tokens.access_token}` },
+                        headers: { authorization: `${cookies.access_token}` },
                     }
                 );
                 console.log(data);
@@ -46,7 +47,7 @@ export default function GuildAddFileModalBody({
         await axios.post(
             `${API_URL}${GuildRoute.postAddSound}${guildId}/${file.id}`,
             {},
-            { headers: { authorization: `${tokens?.access_token}` } }
+            { headers: { authorization: `${cookies.access_token}` } }
         );
         addFileCallback(file);
         return;
@@ -55,7 +56,7 @@ export default function GuildAddFileModalBody({
     const removeFromGuild = async (file: UserFile) => {
         await axios.delete(
             `${API_URL}${GuildRoute.postAddSound}${guildId}/${file.id}`,
-            { headers: { authorization: `${tokens?.access_token}` } }
+            { headers: { authorization: `${cookies.access_token}` } }
         );
         removeFileCallback(file);
         return;

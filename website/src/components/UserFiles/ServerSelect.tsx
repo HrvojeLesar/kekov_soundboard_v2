@@ -1,10 +1,11 @@
 import { useContext, useEffect, useState } from "react";
 import { Box } from "@mantine/core";
 import axios from "axios";
-import { AuthContext, Guild } from "../../auth/AuthProvider";
+import { AuthContext, COOKIE_NAMES, Guild } from "../../auth/AuthProvider";
 import { UserFile } from "../../views/UserFiles";
 import { API_URL, UserRoute } from "../../api/ApiRoutes";
 import { GuildToggle } from "../GuildToggle";
+import { useCookies } from "react-cookie";
 
 type GuildsWithFile = {
     guild: Guild;
@@ -16,16 +17,16 @@ type ServerSelectProps = {
 };
 
 export default function ServerSelect({ file }: ServerSelectProps) {
-    const { tokens } = useContext(AuthContext);
+    const [cookies] = useCookies(COOKIE_NAMES);
     const [guilds, setGuilds] = useState<GuildsWithFile[]>([]);
 
     const fetchGuilds = async () => {
-        if (tokens?.access_token) {
+        if (cookies.access_token) {
             try {
                 const { data } = await axios.get<GuildsWithFile[]>(
                     `${API_URL}${UserRoute.getGuildsWithFile}${file?.id}`,
                     {
-                        headers: { authorization: `${tokens.access_token}` },
+                        headers: { authorization: `${cookies.access_token}` },
                     }
                 );
                 console.log(data);

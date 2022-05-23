@@ -5,7 +5,6 @@ import { useCookies } from "react-cookie";
 import qs from "qs";
 import { API_URL, AuthRoute, DiscordRoutes, UserRoute } from "../api/ApiRoutes";
 import { useNavigate } from "react-router-dom";
-import { CookieSetOptions } from "universal-cookie";
 import { cookieOptions } from "../utils/utils";
 
 enum TokenType {
@@ -61,14 +60,6 @@ export type LoginResponse = {
 export const COOKIE_NAMES = ["access_token", "refresh_token", "expires"];
 
 export const AuthContext = createContext<AuthContextType>(null!);
-
-// Auth provider loads
-// check cookies
-//      if tokens are present continue
-//      else reroute to login
-// check token expiration
-//      if nearly expired get new tokens
-//      else do nothing
 
 function AuthProvider({ children }: { children: ReactNode }) {
     const navigate = useNavigate();

@@ -5,7 +5,7 @@ import {
     Container,
     Group,
 } from "@mantine/core";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const useStyles = createStyles((theme) => ({
     root: {

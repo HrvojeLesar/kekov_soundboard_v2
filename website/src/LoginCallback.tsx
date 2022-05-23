@@ -2,7 +2,6 @@ import axios from "axios";
 import { useEffect } from "react";
 import { useCookies } from "react-cookie";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { CookieSetOptions } from "universal-cookie";
 import { COOKIE_NAMES, LoginResponse } from "./auth/AuthProvider";
 import { cookieOptions } from "./utils/utils";
 

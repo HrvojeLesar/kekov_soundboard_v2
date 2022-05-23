@@ -1,11 +1,10 @@
-import React, { useContext } from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import LoginCallback from "./LoginCallback";
-import AuthProvider, { AuthContext } from "./auth/AuthProvider";
+import AuthProvider from "./auth/AuthProvider";
 import ProtectedRoutes from "./auth/ProtectedRoutes";
 import { Login } from "./Login";
 import { Guild } from "./views/Guild";
@@ -21,65 +20,41 @@ const root = ReactDOM.createRoot(
     document.getElementById("root") as HTMLElement
 );
 
-const Main = () => {
-    const { isFetching } = useContext(AuthContext);
-    return isFetching ? (
-        <div />
-    ) : (
-        <Routes>
-            <Route path="/*" element={<NotFound />} />
-            <Route element={<ProtectedRoutes />}>
-                <Route
-                    element={
-                        <MantineProvider>
-                            <AppShell
-                                fixed
-                                children={<Outlet />}
-                                navbar={<Sidebar />}
-                            />
-                        </MantineProvider>
-                    }
-                >
-                    <Route path="/" element={<App />} />
-                    {/* TODO: check if route is valid, guild exists, user is in guild... */}
-                    <Route
-                        path="/guilds/:guildId"
-                        element={
-                            <NotificationsProvider>
-                                <Guild />
-                            </NotificationsProvider>
-                        }
-                    />
-                    <Route
-                        path="/upload"
-                        element={
-                            <NotificationsProvider>
-                                <Upload />
-                            </NotificationsProvider>
-                        }
-                    />
-                    <Route
-                        path="/user"
-                        element={
-                            <NotificationsProvider>
-                                <UserFiles />
-                            </NotificationsProvider>
-                        }
-                    />
-                </Route>
-            </Route>
-            <Route path="/login" element={<Login />} />
-            <Route path="/login-callback" element={<LoginCallback />} />
-        </Routes>
-    );
-};
-
 root.render(
     <BrowserRouter>
         <CookiesProvider>
-            <AuthProvider>
-                <Main />
-            </AuthProvider>
+            <Routes>
+                <Route path="/*" element={<NotFound />} />
+                <Route
+                    element={
+                        <AuthProvider>
+                            <ProtectedRoutes />
+                        </AuthProvider>
+                    }
+                >
+                    <Route
+                        element={
+                            <MantineProvider>
+                                <NotificationsProvider>
+                                    <AppShell
+                                        fixed
+                                        children={<Outlet />}
+                                        navbar={<Sidebar />}
+                                    />
+                                </NotificationsProvider>
+                            </MantineProvider>
+                        }
+                    >
+                        <Route path="/" element={<App />} />
+                        {/* TODO: check if route is valid, guild exists, user is in guild... */}
+                        <Route path="/guilds/:guildId" element={<Guild />} />
+                        <Route path="/upload" element={<Upload />} />
+                        <Route path="/user" element={<UserFiles />} />
+                    </Route>
+                </Route>
+                <Route path="/login-callback" element={<LoginCallback />} />
+                <Route path="/login" element={<Login />} />
+            </Routes>
         </CookiesProvider>
     </BrowserRouter>
 );

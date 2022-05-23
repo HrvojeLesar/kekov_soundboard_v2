@@ -4,9 +4,9 @@ import { ReactNode } from "react";
 import { useCookies } from "react-cookie";
 import qs from "qs";
 import { API_URL, AuthRoute, DiscordRoutes, UserRoute } from "../api/ApiRoutes";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { CookieSetOptions } from "universal-cookie";
-import { Button } from "@mantine/core";
+import { cookieOptions } from "../utils/utils";
 
 enum TokenType {
     AccessToken = "access_token",
@@ -129,7 +129,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const refreshAccess = (newData: LoginResponse) => {
-        let options: CookieSetOptions = { maxAge: newData.expires_in };
+        const options = cookieOptions(newData);
         setCookie("access_token", newData.access_token, options);
         setCookie("refresh_token", newData.refresh_token, options);
         setCookie("expires", Date.now() + newData.expires_in * 1000, options);
@@ -184,8 +184,8 @@ function AuthProvider({ children }: { children: ReactNode }) {
                 var newAccessToken = await refreshToken();
             }
             await fetchUserInfo(newAccessToken ?? cookies.access_token);
-            setIsFetching(false);
         }
+        setIsFetching(false);
     };
 
     useEffect(() => {

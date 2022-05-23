@@ -9,7 +9,7 @@ import {
     UnstyledButton,
 } from "@mantine/core";
 import { useContext, useEffect } from "react";
-import { Upload } from "tabler-icons-react";
+import { Logout, Upload } from "tabler-icons-react";
 import { Icon } from "@iconify/react";
 import discordIcon from "@iconify/icons-simple-icons/discord";
 import { DISCORD_CND_USER_AVATAR } from "../api/ApiRoutes";
@@ -47,6 +47,19 @@ const useStyles = createStyles((theme) => ({
         },
     },
 
+    logoutButton: {
+        ...baseSidebarButtonStyle(theme),
+        backgroundColor: theme.colors.red[5],
+        height: "25px",
+        width: "25px",
+
+        "&:hover": {
+            backgroundColor: theme.colors.red[6],
+            borderRadius: "40%",
+            transition: ".2s",
+        },
+    },
+
     userImg: {
         width: "100%",
         height: "100%",
@@ -54,7 +67,7 @@ const useStyles = createStyles((theme) => ({
 }));
 
 export default function Sidebar() {
-    let { user, guilds, fetchGuilds } = useContext(AuthContext);
+    let { user, guilds, fetchGuilds, logout } = useContext(AuthContext);
     const { classes } = useStyles();
 
     const spawnSkeletons = () => {
@@ -110,7 +123,7 @@ export default function Sidebar() {
             </Navbar.Section>
             <Navbar.Section className={classes.navbarFooter}>
                 <Center>
-                    <Group direction="column">
+                    <Group direction="column" style={{ alignItems: "center" }}>
                         <Tooltip
                             label="Invite bot to server"
                             position="right"
@@ -122,6 +135,14 @@ export default function Sidebar() {
                                 href="http://localhost:8080/v1/auth/botinvite"
                             >
                                 <Icon width="70%" icon={discordIcon} />
+                            </UnstyledButton>
+                        </Tooltip>
+                        <Tooltip label="Logout" position="right" withArrow>
+                            <UnstyledButton
+                                onClick={() => logout()}
+                                className={classes.logoutButton}
+                            >
+                                <Logout />
                             </UnstyledButton>
                         </Tooltip>
                     </Group>

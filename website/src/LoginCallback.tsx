@@ -1,15 +1,15 @@
 import axios from "axios";
-import { useContext, useEffect } from "react";
+import { useEffect } from "react";
 import { useCookies } from "react-cookie";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CookieSetOptions } from "universal-cookie";
-import { AuthContext, COOKIE_NAMES, LoginResponse } from "./auth/AuthProvider";
+import { COOKIE_NAMES, LoginResponse } from "./auth/AuthProvider";
+import { cookieOptions } from "./utils/utils";
 
 function LoginCallback() {
     let [searchParams] = useSearchParams();
     let [_cookies, setCookie] = useCookies(COOKIE_NAMES);
     let navigate = useNavigate();
-    let { login } = useContext(AuthContext);
 
     useEffect(() => {
         const code = searchParams.get("code");
@@ -22,11 +22,10 @@ function LoginCallback() {
                     `http://localhost:8080/v1/auth/callback?code=${code}&state=${state}`
                 )
                 .then(({ data }) => {
-                    let options: CookieSetOptions = { maxAge: data.expires_in };
+                    const options = cookieOptions(data);
                     setCookie("access_token", data.access_token, options);
                     setCookie("refresh_token", data.refresh_token, options);
                     setCookie("expires", Date.now() + data.expires_in * 1000, options);
-                    login(data);
                     navigate("/", { replace: true });
                 })
                 .catch((e) => {

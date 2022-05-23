@@ -1,3 +1,6 @@
+import { CookieSetOptions } from "universal-cookie";
+import { LoginResponse } from "../auth/AuthProvider";
+
 export const nameToInitials = (guildName: string): string => {
     let initials = "";
     guildName.split(" ").forEach((word) => {
@@ -6,4 +9,8 @@ export const nameToInitials = (guildName: string): string => {
         }
     });
     return initials;
+};
+
+export const cookieOptions = (data: LoginResponse): CookieSetOptions => {
+    return { path: "/", maxAge: data.expires_in };
 };

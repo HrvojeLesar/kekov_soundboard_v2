@@ -153,8 +153,7 @@ pub async fn get_enabled_user_files(
     let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
     if !user_guilds.contains(&guild_id) {
-        // TODO: Deni errora
-        return Err(KekServerError::Other("Deni errora".into()));
+        return Err(KekServerError::NotInGuildError);
     }
 
     let mut transaction = db_pool.begin().await?;

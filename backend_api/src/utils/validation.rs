@@ -57,8 +57,8 @@ impl Validation {
     ) -> Result<(), KekServerError> {
         for id in file_ids {
             if user_owned_files.iter().find(|s| s.get_id() == id).is_none() {
-                return Err(KekServerError::Other(format!(
-                    "User doesn't own file with id {}",
+                return Err(KekServerError::UnauthorizedFileAccessError(format!(
+                    "User doesn't own file with id: [{}]",
                     id.0
                 )));
             }

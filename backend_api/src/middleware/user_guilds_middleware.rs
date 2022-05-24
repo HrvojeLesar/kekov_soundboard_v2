@@ -73,9 +73,6 @@ where
                         authorized_user
                             .get_guilds()
                             .await?
-                            .into_iter()
-                            .map(|guild| guild.id)
-                            .collect(),
                     );
                     cache.insert(user_id.clone(), user_guilds).await;
                 }

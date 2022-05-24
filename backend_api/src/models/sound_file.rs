@@ -66,7 +66,8 @@ impl SoundFile {
     ) -> Result<Option<Self>, KekServerError> {
         match sqlx::query!(
             "
-            DELETE FROM files
+            UPDATE files
+            SET is_deleted = TRUE
             WHERE id = $1 AND owner = $2
             RETURNING *
             ",
@@ -99,7 +100,8 @@ impl SoundFile {
         let ids = ids.iter().map(|id| id.0 as i64).collect::<Vec<i64>>();
         let records = sqlx::query!(
             "
-            DELETE FROM files
+            UPDATE files
+            SET is_deleted = TRUE
             WHERE id = ANY($1) AND owner = $2
             RETURNING *
             ",
@@ -161,7 +163,7 @@ impl SoundFile {
         let records = sqlx::query!(
             "
             SELECT * FROM files
-            WHERE owner = $1
+            WHERE owner = $1 AND is_deleted = FALSE
             ",
             user.0 as i64
         )

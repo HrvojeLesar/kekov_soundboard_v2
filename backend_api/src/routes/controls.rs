@@ -123,7 +123,7 @@ pub async fn play_request(
 ) -> Result<HttpResponse, KekServerError> {
     let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
-    if !user_guilds.contains(&req_payload.guild_id) {
+    if !user_guilds.iter().any(|guild| guild.get_id() == &req_payload.guild_id) {
         return Err(KekServerError::NotInGuildError);
     }
 
@@ -159,7 +159,7 @@ pub async fn stop_request(
 ) -> Result<HttpResponse, KekServerError> {
     let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
-    if !user_guilds.contains(&stop_payload.guild_id) {
+    if !user_guilds.iter().any(|guild| guild.get_id() == &stop_payload.guild_id) {
         return Err(KekServerError::NotInGuildError);
     }
 
@@ -179,7 +179,7 @@ pub async fn skip_request(
 ) -> Result<HttpResponse, KekServerError> {
     let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
-    if !user_guilds.contains(&skip_payload.guild_id) {
+    if !user_guilds.iter().any(|guild| guild.get_id() == &skip_payload.guild_id) {
         return Err(KekServerError::NotInGuildError);
     }
 
@@ -199,7 +199,7 @@ pub async fn queue_request(
 ) -> Result<HttpResponse, KekServerError> {
     let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
-    if !user_guilds.contains(&queue_payload.guild_id) {
+    if !user_guilds.iter().any(|guild| guild.get_id() == &queue_payload.guild_id) {
         return Err(KekServerError::NotInGuildError);
     }
 

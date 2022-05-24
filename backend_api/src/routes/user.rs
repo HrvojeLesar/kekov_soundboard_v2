@@ -102,6 +102,14 @@ pub async fn get_user_guilds(
     let guilds = Guild::get_existing_guilds(&*user_guilds, &mut transaction).await?;
     transaction.commit().await?;
 
+    let guilds = guilds.into_iter().map(|mut guild| {
+        match user_guilds.iter().find(|g| g.get_id() == guild.get_id()) {
+            Some(g) => guild = g.clone(),
+            None => (),
+        }
+        return guild;
+    }).collect::<Vec<Guild>>();
+
     return Ok(HttpResponse::Ok().json(guilds));
 }
 
@@ -150,9 +158,10 @@ pub async fn get_enabled_user_files(
     user_guilds_cache: Data<UserGuildsCache>,
     guild_id: Path<GuildId>,
 ) -> Result<HttpResponse, KekServerError> {
+    let guild_id = guild_id.into_inner();
     let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
-    if !user_guilds.contains(&guild_id) {
+    if !user_guilds.iter().any(|guild| guild.get_id() == &guild_id) {
         return Err(KekServerError::NotInGuildError);
     }
 

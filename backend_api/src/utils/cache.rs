@@ -5,12 +5,12 @@ use moka::future::Cache;
 
 use crate::{
     error::errors::KekServerError,
-    models::ids::{GuildId, UserId},
+    models::{ids::{GuildId, UserId}, guild::Guild},
 };
 
 use super::auth::{AccessToken, AuthorizedUser};
 
-pub type UserGuildsCache = Cache<UserId, Arc<Vec<GuildId>>>;
+pub type UserGuildsCache = Cache<UserId, Arc<Vec<Guild>>>;
 pub type AuthorizedUsersCache = Cache<Arc<AccessToken>, Arc<AuthorizedUser>>;
 
 pub fn create_user_guilds_cache() -> UserGuildsCache {
@@ -35,7 +35,7 @@ impl UserGuildsCacheUtil {
     pub fn get_user_guilds(
         authorized_user: &AuthorizedUser,
         user_guilds_cache: &Data<UserGuildsCache>,
-    ) -> Result<Arc<Vec<GuildId>>, KekServerError> {
+    ) -> Result<Arc<Vec<Guild>>, KekServerError> {
         match user_guilds_cache.get(authorized_user.get_discord_user().get_id()) {
             Some(ug) => return Ok(ug),
             None => return Err(KekServerError::UserNotInCacheError),

@@ -24,7 +24,7 @@ impl Validation {
             Some(guilds) => {
                 guilds
                     .iter()
-                    .find(|g_id| **g_id == *guild_id)
+                    .find(|guild| guild.get_id() == guild_id)
                     .ok_or(KekServerError::NotInGuildError)?;
             }
             None => return Err(KekServerError::UserNotInCacheError),
@@ -41,7 +41,7 @@ impl Validation {
         match user_guilds_cache.get(authorized_user.get_discord_user().get_id()) {
             Some(guilds) => {
                 for id in guild_ids {
-                    if !guilds.contains(&id) {
+                    if !guilds.iter().any(|guild| guild.get_id() == id) {
                         return Err(KekServerError::NotInGuildError);
                     }
                 }
@@ -67,6 +67,7 @@ impl Validation {
     }
 }
 
+// TODO: can add any file if id is right
 pub async fn guild_and_file_exist(
     guild_id: &GuildId,
     file_id: &SoundFileId,

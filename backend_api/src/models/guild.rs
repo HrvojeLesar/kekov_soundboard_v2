@@ -63,12 +63,12 @@ impl Guild {
     }
 
     pub async fn get_existing_guilds(
-        guild_ids: &Vec<GuildId>,
+        guild_ids: &Vec<Guild>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Self>, KekServerError> {
         let ids = guild_ids
             .iter()
-            .map(|guild_id| guild_id.0 as i64)
+            .map(|guild| guild.get_id().0 as i64)
             .collect::<Vec<i64>>();
         let records = sqlx::query!(
             "

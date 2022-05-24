@@ -35,6 +35,8 @@ pub fn config(cfg: &mut ServiceConfig) {
     );
 }
 
+// TODO: can add any file if id is right
+// WARN: can add any file if id is right
 #[post("/{guild_id}/{file_id}")]
 pub async fn add_sound_to_guild(
     db_pool: Data<PgPool>,
@@ -52,6 +54,8 @@ pub async fn add_sound_to_guild(
     return Ok(HttpResponse::Created().finish());
 }
 
+// TODO: can add any file if id is right
+// WARN: can add any file if id is right
 #[delete("/{guild_id}/{file_id}")]
 pub async fn delete_sound_from_guild(
     db_pool: Data<PgPool>,

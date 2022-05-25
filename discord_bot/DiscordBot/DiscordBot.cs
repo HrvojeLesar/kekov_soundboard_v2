@@ -22,10 +22,10 @@ namespace KekovBot
 
         private DiscordBot()
         {
-            ControlsWebsocket = new ControlsWebsocket("ws://localhost:8080/v1/ws/controls");
-            SyncWebsocket = new SyncWebsocket("ws://localhost:8080/v1/ws/sync");
-
             var env = DotEnv.Read();
+            ControlsWebsocket = new ControlsWebsocket(env["WS_CONTROLS_URL"]);
+            SyncWebsocket = new SyncWebsocket(env["WS_SYNC_URL"]);
+
             DiscordClient = new DiscordClient(new DiscordConfiguration()
             {
                 Token = env["DISCORD_BOT_TOKEN"],

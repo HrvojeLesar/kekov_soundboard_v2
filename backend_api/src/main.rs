@@ -26,6 +26,19 @@ mod routes;
 mod utils;
 mod ws;
 
+pub static ALLOWED_USERS: [u64; 7] = [
+    132286945031094272, // jo
+    344472419085582347, // fejbijan
+    245956125713760258, // fijip
+    268420122090274816, // gospon menadzer
+    170561008786604034, // Hetosh
+    344121954124431360, // Sebek
+    252114544485335051, // Metajđoš
+];
+
+pub static ALLOWED_GUILDS: [u64; 1] = [173766075484340234];
+
+
 // #[cfg(debug_assertions)]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

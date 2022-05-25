@@ -24,6 +24,7 @@ use crate::{
         auth::{self, get_discord_user_from_token},
         cache::AuthorizedUsersCache,
     },
+    ALLOWED_USERS,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -192,6 +193,7 @@ pub async fn bot_invite(
     oauth_client: Data<OAuthClient>,
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
+    return Ok(HttpResponse::Forbidden().finish());
     let url_getter_fn = |pkce: PkceCodeChallenge| oauth_client.get_bot_url(pkce);
     return Ok(create_url(url_getter_fn, db_pool).await?);
 }
@@ -225,6 +227,11 @@ pub async fn auth_callback(
                 access_token.access_token().secret().to_string(),
             ))
             .await?;
+
+            if !ALLOWED_USERS.contains(&user.get_id().0) {
+                return Ok(HttpResponse::Forbidden().finish());
+            }
+
             if let None = User::get_with_id(user.get_id(), &mut transaction).await? {
                 User::insert_user(
                     user.get_id(),

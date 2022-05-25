@@ -1,7 +1,7 @@
-import { useContext } from "react";
 import { useCookies } from "react-cookie";
 import { Navigate } from "react-router-dom";
-import { AuthContext, COOKIE_NAMES } from "./auth/AuthProvider";
+import { API_URL, AuthRoute } from "./api/ApiRoutes";
+import { COOKIE_NAMES } from "./auth/AuthProvider";
 
 export function Login() {
     const [cookies] = useCookies(COOKIE_NAMES);
@@ -10,5 +10,5 @@ export function Login() {
         return <Navigate to="/" replace/>;
     }
 
-    return <a href="http://localhost:8080/v1/auth/init">LOGIN</a>
+    return <a href={`${API_URL}${AuthRoute.getInit}`}>LOGIN</a>
 }

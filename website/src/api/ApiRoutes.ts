@@ -1,4 +1,8 @@
-export const API_URL = "http://localhost:8080/v1";
+export const API_URL =
+    process.env.NODE_ENV !== "production"
+        ? "http://localhost:8080/v1"
+        : "https://api.hrveklesarov.com/v1";
+
 export const DISCORD_CND_USER_AVATAR = (
     id?: string,
     icon?: string,

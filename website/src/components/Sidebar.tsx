@@ -12,7 +12,7 @@ import { useContext, useEffect } from "react";
 import { Logout, Upload } from "tabler-icons-react";
 import { Icon } from "@iconify/react";
 import discordIcon from "@iconify/icons-simple-icons/discord";
-import { DISCORD_CND_USER_AVATAR } from "../api/ApiRoutes";
+import { API_URL, AuthRoute, DISCORD_CND_USER_AVATAR } from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
 import BaseSidebarButton, { baseSidebarButtonStyle } from "./BaseSidebarButton";
 import GuildLinkButton from "./GuildLinkButton";
@@ -133,7 +133,7 @@ export default function Sidebar() {
                             <UnstyledButton
                                 className={classes.botInviteButton}
                                 component={"a"}
-                                href="http://localhost:8080/v1/auth/botinvite"
+                                href={`${API_URL}${AuthRoute.getBotInvite}`}
                             >
                                 <Icon width="70%" icon={discordIcon} />
                             </UnstyledButton>

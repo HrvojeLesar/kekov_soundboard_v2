@@ -1,12 +1,11 @@
 import {
-    Button,
     Grid,
     Group,
-    Modal,
     Paper,
     ScrollArea,
     Title,
 } from "@mantine/core";
+import { useDocumentTitle } from "@mantine/hooks";
 import axios, { CanceledError } from "axios";
 import { CSSProperties, useContext, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
@@ -18,11 +17,8 @@ import {
     UserRoute,
 } from "../api/ApiRoutes";
 import { AuthContext, COOKIE_NAMES } from "../auth/AuthProvider";
-import Channels from "../components/Channels";
 import ControlsWindow from "../components/Guild/ControlsWindow";
-import GuildAddFileModalBody from "../components/GuildAddFileModalBody";
 import { PlayControl } from "../components/PlayControl";
-import Queue from "../components/Queue";
 import { UserFile } from "./UserFiles";
 
 export type GuildFile = {
@@ -44,11 +40,13 @@ export const guildMaximumWindowHeight: CSSProperties = {
 let abortController: AbortController | undefined = undefined;
 
 export function Guild() {
+    const { guilds } = useContext(AuthContext);
     const { guildId } = useParams();
     const [cookies] = useCookies(COOKIE_NAMES);
     const [guildFiles, setGuildFiles] = useState<GuildFile[]>([]);
     const [userFiles, setUserFiles] = useState<UserFile[]>([]);
     const [isUpdating, setIsUpdating] = useState(false);
+    useDocumentTitle(`KSv2 - ${guilds.find((g) => g.id === guildId)?.name}`);
 
     const fetchGuildFiles = async () => {
         if (cookies?.access_token) {
@@ -124,67 +122,76 @@ export function Guild() {
 
     return (
         <>
-        {isUpdating ? <>Loading...</> : 
-            <Grid>
-                <Grid.Col xs={9}>
-                    <Paper
-                        withBorder
-                        shadow="sm"
-                        p="sm"
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            overflow: "hidden",
-                            ...guildMaximumWindowHeight,
-                        }}
-                    >
-                        <Title title="Server sounds" order={3} pb="xs">
-                            Server sounds
-                        </Title>
-                        <ScrollArea style={{ height: "100%" }}>
-                            <Group>
-                                {guildFiles.map((file) => {
-                                    return (
-                                        <PlayControl
-                                            key={file.id}
-                                            file={file}
-                                            playFunc={playFunc}
-                                        />
-                                    );
-                                })}
-                            </Group>
-                        </ScrollArea>
-                    </Paper>
-                </Grid.Col>
-                <Grid.Col xs={3}>
-                    <Group
-                        direction="column"
-                        style={{ width: "100%", ...guildMaximumWindowHeight }}
-                    >
-                        <ControlsWindow guildId={guildId} />
+            {isUpdating ? (
+                <>Loading...</>
+            ) : (
+                <Grid>
+                    <Grid.Col xs={9}>
                         <Paper
                             withBorder
                             shadow="sm"
                             p="sm"
                             style={{
-                                flexGrow: 1,
-                                width: "100%",
                                 display: "flex",
                                 flexDirection: "column",
                                 overflow: "hidden",
+                                ...guildMaximumWindowHeight,
                             }}
                         >
-                            <Title title="Quick enable files" order={3} pb="xs">
-                                Quick enable files
+                            <Title title="Server sounds" order={3} pb="xs">
+                                Server sounds
                             </Title>
-                            <ScrollArea>
-                                <Group></Group>
+                            <ScrollArea style={{ height: "100%" }}>
+                                <Group>
+                                    {guildFiles.map((file) => {
+                                        return (
+                                            <PlayControl
+                                                key={file.id}
+                                                file={file}
+                                                playFunc={playFunc}
+                                            />
+                                        );
+                                    })}
+                                </Group>
                             </ScrollArea>
                         </Paper>
-                    </Group>
-                </Grid.Col>
-            </Grid>
-        }
+                    </Grid.Col>
+                    <Grid.Col xs={3}>
+                        <Group
+                            direction="column"
+                            style={{
+                                width: "100%",
+                                ...guildMaximumWindowHeight,
+                            }}
+                        >
+                            <ControlsWindow guildId={guildId} />
+                            <Paper
+                                withBorder
+                                shadow="sm"
+                                p="sm"
+                                style={{
+                                    flexGrow: 1,
+                                    width: "100%",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    overflow: "hidden",
+                                }}
+                            >
+                                <Title
+                                    title="Quick enable files"
+                                    order={3}
+                                    pb="xs"
+                                >
+                                    Quick enable files
+                                </Title>
+                                <ScrollArea>
+                                    <Group></Group>
+                                </ScrollArea>
+                            </Paper>
+                        </Group>
+                    </Grid.Col>
+                </Grid>
+            )}
         </>
     );
 }

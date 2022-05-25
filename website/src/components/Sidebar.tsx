@@ -67,7 +67,7 @@ const useStyles = createStyles((theme) => ({
 }));
 
 export default function Sidebar() {
-    let { user, guilds, fetchGuilds, logout } = useContext(AuthContext);
+    const { user, guilds, fetchGuilds, logout } = useContext(AuthContext);
     const { classes } = useStyles();
 
     const spawnSkeletons = () => {
@@ -101,6 +101,7 @@ export default function Sidebar() {
                                     user?.avatar,
                                     user?.discriminator
                                 )}
+                                alt=""
                             />
                         </BaseSidebarButton>
                         <BaseSidebarButton label="Upload" route="/upload">

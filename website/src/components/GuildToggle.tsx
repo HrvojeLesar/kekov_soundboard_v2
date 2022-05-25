@@ -7,10 +7,10 @@ import {
     createStyles,
 } from "@mantine/core";
 import axios from "axios";
-import { useContext, useState } from "react";
+import { useState } from "react";
 import { useCookies } from "react-cookie";
 import { API_URL, GuildRoute } from "../api/ApiRoutes";
-import { AuthContext, COOKIE_NAMES, Guild } from "../auth/AuthProvider";
+import { COOKIE_NAMES, Guild } from "../auth/AuthProvider";
 import { nameToInitials } from "../utils/utils";
 import { UserFile } from "../views/UserFiles";
 

@@ -1,9 +1,10 @@
-import { Button, Grid, Group, Paper, ScrollArea, Title } from "@mantine/core";
+import { Grid, Group, Paper, ScrollArea, Title } from "@mantine/core";
+import { useDocumentTitle } from "@mantine/hooks";
 import axios from "axios";
-import { CSSProperties, useContext, useEffect, useState } from "react";
+import { CSSProperties, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { API_URL, UserRoute } from "../api/ApiRoutes";
-import { AuthContext, COOKIE_NAMES } from "../auth/AuthProvider";
+import { COOKIE_NAMES } from "../auth/AuthProvider";
 import DeleteFile from "../components/UserFiles/DeleteFile";
 import ServerSelect from "../components/UserFiles/ServerSelect";
 import UserFileContainer from "../components/UserFiles/UserFileContainer";
@@ -30,6 +31,7 @@ export default function UserFiles() {
     const [selectedIndex, setSelectedIndex] = useState<number | undefined>(
         undefined
     );
+    useDocumentTitle("KSv2 - Your files");
 
     const fetchFiles = async () => {
         if (cookies.access_token) {

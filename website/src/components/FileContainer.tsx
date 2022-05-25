@@ -76,7 +76,7 @@ export const FileUploadContainer = forwardRef<
     const removeExtension = (initialValue: string) => {
         let index = initialValue.length - 1;
         for (; index >= 0; index--) {
-            if (initialValue[index] == ".") {
+            if (initialValue[index] === ".") {
                 break;
             }
         }
@@ -194,6 +194,8 @@ export const FileUploadContainer = forwardRef<
                 </Text>
             )}
             <Checkbox
+                // disabled={disabled}
+                disabled
                 mt="xs"
                 checked={isPublic}
                 label={"Public"}

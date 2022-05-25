@@ -39,6 +39,7 @@ import {
     UploadGuildWindowRef,
 } from "../components/Upload/UploadGuildWindow";
 import { useCookies } from "react-cookie";
+import { useDocumentTitle } from "@mantine/hooks";
 
 const MAX_TOTAL_SIZE = 10_000_000;
 const ACCEPTED_MIMES = [
@@ -123,6 +124,7 @@ export default function Upload() {
     const [isUploading, setIsUploading] = useState(false);
     const [inputErrorsCount, setInputErrorsCount] = useState({ count: 0 });
     const theme = useMantineTheme();
+    useDocumentTitle("KSv2 - Upload");
 
     const addFiles = (selectedFiles: File[]) => {
         let newFiles = selectedFiles.map((file) => {
@@ -157,21 +159,22 @@ export default function Upload() {
     ) => {
         const maxLen = files.length - uploadedFiles.length;
         let len = 0;
-        if (uploadedFiles.length != files.length) {
+        if (uploadedFiles.length !== files.length) {
             return files.filter((file, index) => {
                 if (len > maxLen) {
-                    return;
+                    return false;
                 }
                 let { fileName } = containerRefs.current[index];
-                fileName = fileName.trim() == "" ? file.file.name : fileName;
+                fileName = fileName.trim() === "" ? file.file.name : fileName;
                 if (
                     uploadedFiles.find((userFile) => {
                         return userFile.display_name === fileName;
                     }) === undefined
                 ) {
                     len++;
-                    return file;
+                    return true;
                 }
+                return false;
             });
         }
         return [];
@@ -184,7 +187,7 @@ export default function Upload() {
         const formData = new FormData();
         files.forEach((file, index) => {
             let { fileName } = containerRefs.current[index];
-            fileName = fileName.trim() == "" ? file.file.name : fileName;
+            fileName = fileName.trim() === "" ? file.file.name : fileName;
             formData.append(fileName, file.file);
         });
         setIsUploading(true);
@@ -298,7 +301,7 @@ export default function Upload() {
     useEffect(() => {
         if (files.length > 0 && isUploadDisabled) {
             setIsUploadDisabled(false);
-        } else if (files.length == 0 && !isUploadDisabled) {
+        } else if (files.length === 0 && !isUploadDisabled) {
             setIsUploadDisabled(true);
         }
     }, [files]);
@@ -352,7 +355,7 @@ export default function Upload() {
                                             isUploading ||
                                             isUploadDisabled ||
                                             isLimitExceeded ||
-                                            inputErrorsCount.count != 0
+                                            inputErrorsCount.count !== 0
                                         }
                                         onClick={() => upload()}
                                     >

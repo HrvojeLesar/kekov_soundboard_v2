@@ -5,6 +5,7 @@ import {
     Container,
     Group,
 } from "@mantine/core";
+import { useDocumentTitle } from "@mantine/hooks";
 import { Link } from "react-router-dom";
 
 const useStyles = createStyles((theme) => ({
@@ -50,6 +51,7 @@ const useStyles = createStyles((theme) => ({
 
 export default function NotFound() {
     const { classes } = useStyles();
+    useDocumentTitle("Not found");
 
     return (
         <Container className={classes.root}>

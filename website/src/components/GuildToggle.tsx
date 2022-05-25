@@ -7,7 +7,7 @@ import {
     createStyles,
 } from "@mantine/core";
 import axios from "axios";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { useCookies } from "react-cookie";
 import { API_URL, GuildRoute } from "../api/ApiRoutes";
 import { AuthContext, COOKIE_NAMES, Guild } from "../auth/AuthProvider";
@@ -76,9 +76,11 @@ export function GuildToggle({
     toggleCallback,
 }: GuildToggleProps) {
     const [cookies] = useCookies(COOKIE_NAMES);
+    const [isUpdating, setIsUpdating] = useState(false);
     const { classes } = useStyles({ checked: hasFile });
 
     const handleToggle = async (state: boolean) => {
+        setIsUpdating(true);
         try {
             if (state) {
                 await addToGuild();
@@ -87,13 +89,19 @@ export function GuildToggle({
             }
             toggleCallback(state);
         } catch (e) {
-            // TODO: Handle
+            // WARN: can desync state 
+            // post or delete gets applied on server
+            // but client returns connection error
+            // before server sends back the response
             console.log(e);
+            toggleCallback(!state);
+        } finally {
+            setIsUpdating(false);
         }
     };
 
     const addToGuild = async () => {
-        return await axios.post(
+        await axios.post(
             `${API_URL}${GuildRoute.postAddSound}${guild.id}/${file.id}`,
             {},
             { headers: { authorization: `${cookies.access_token}` } }
@@ -101,7 +109,7 @@ export function GuildToggle({
     };
 
     const removeFromGuild = async () => {
-        return await axios.delete(
+        await axios.delete(
             `${API_URL}${GuildRoute.postAddSound}${guild.id}/${file.id}`,
             { headers: { authorization: `${cookies.access_token}` } }
         );
@@ -111,7 +119,9 @@ export function GuildToggle({
         <UnstyledButton
             className={classes.button}
             onClick={() => {
-                handleToggle(!hasFile);
+                if (!isUpdating) {
+                    handleToggle(!hasFile);
+                }
             }}
         >
             <Group position="apart" style={{ flexGrow: 1 }} noWrap>
@@ -140,14 +150,13 @@ export function GuildToggle({
                     </Text>
                 </Group>
                 <Switch
+                    disabled={isUpdating}
                     checked={hasFile}
                     size="lg"
                     onLabel="ON"
                     offLabel="OFF"
                     styles={{ input: { cursor: "pointer" } }}
-                    onChange={() => {
-                        handleToggle(!hasFile);
-                    }}
+                    readOnly
                 />
             </Group>
         </UnstyledButton>

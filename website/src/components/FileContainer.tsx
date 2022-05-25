@@ -194,7 +194,6 @@ export const FileUploadContainer = forwardRef<
                 </Text>
             )}
             <Checkbox
-                disabled={disabled}
                 mt="xs"
                 checked={isPublic}
                 label={"Public"}

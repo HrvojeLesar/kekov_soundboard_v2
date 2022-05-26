@@ -66,6 +66,16 @@ const useStyles = createStyles((theme, { checked }: { checked: boolean }) => {
             justifyContent: "center",
             overflow: "hidden",
         },
+
+        groupStyle: {
+            flexGrow: 1,
+        },
+
+        textStyle: {
+            textOverflow: "ellipsis",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+        },
     };
 });
 
@@ -89,7 +99,7 @@ export function GuildToggle({
             }
             toggleCallback(state);
         } catch (e) {
-            // WARN: can desync state 
+            // WARN: can desync state
             // post or delete gets applied on server
             // but client returns connection error
             // before server sends back the response
@@ -124,7 +134,7 @@ export function GuildToggle({
                 }
             }}
         >
-            <Group position="apart" style={{ flexGrow: 1 }} noWrap>
+            <Group position="apart" className={classes.groupStyle} noWrap>
                 <Group>
                     {guild.icon ? (
                         <Image
@@ -139,11 +149,7 @@ export function GuildToggle({
                     )}
                     <Text
                         title={guild.name}
-                        style={{
-                            textOverflow: "ellipsis",
-                            overflow: "hidden",
-                            whiteSpace: "nowrap",
-                        }}
+                        className={classes.textStyle}
                         lineClamp={1}
                     >
                         {guild.name}

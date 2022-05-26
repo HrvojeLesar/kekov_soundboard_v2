@@ -60,6 +60,14 @@ const useStyles = createStyles((theme, { checked }: { checked: boolean }) => {
             justifyContent: "center",
             overflow: "hidden",
         },
+        groupStyle: {
+            flexGrow: 1,
+        },
+        textStyle: {
+            maxWidth: "19ch",
+            textOverflow: "ellipsis",
+            overflow: "hidden",
+        },
     };
 });
 
@@ -77,7 +85,7 @@ export default function UploadGuildCheckbox({
                 onChange(!isChecked);
             }}
         >
-            <Group position="apart" style={{ flexGrow: 1 }} noWrap>
+            <Group position="apart" className={classes.textStyle} noWrap>
                 <Group>
                     {guild.icon ? (
                         <Image
@@ -92,11 +100,7 @@ export default function UploadGuildCheckbox({
                     )}
                     <Text
                         title={guild.name}
-                        style={{
-                            maxWidth: "19ch",
-                            textOverflow: "ellipsis",
-                            overflow: "hidden",
-                        }}
+                        className={classes.textStyle}
                         lineClamp={1}
                     >
                         {guild.name}

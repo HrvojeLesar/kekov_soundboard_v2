@@ -1,4 +1,11 @@
-import { Box, Checkbox, Paper, ScrollArea, Title } from "@mantine/core";
+import {
+    Box,
+    Checkbox,
+    Paper,
+    ScrollArea,
+    Title,
+    createStyles,
+} from "@mantine/core";
 import { useListState } from "@mantine/hooks";
 import { forwardRef, useEffect, useImperativeHandle } from "react";
 import { Guild } from "../../auth/AuthProvider";
@@ -13,11 +20,23 @@ export type UploadGuildWindowRef = {
     selectedGuildIds: string[];
 };
 
+const useStyles = createStyles((_theme) => {
+    return {
+        paperStyle: {
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            ...uploadMaximumWindowHeight,
+        },
+    };
+});
+
 export const UploadGuildWindow = forwardRef<
     UploadGuildWindowRef,
     UploadGuildWindowProps
 >((props, ref) => {
     const { guilds } = props;
+    const { classes } = useStyles();
 
     const mappedGuilds = guilds.map((guild) => {
         return { key: guild.id, checked: false };
@@ -34,24 +53,20 @@ export const UploadGuildWindow = forwardRef<
         handlers.setState(mappedGuilds);
     }, [guilds]);
 
-    useImperativeHandle(ref, () => {
-        return {
-            selectedGuildIds: values.filter((val) => val.checked).map((val) => val.key),
-        };
-    }, [values]);
+    useImperativeHandle(
+        ref,
+        () => {
+            return {
+                selectedGuildIds: values
+                    .filter((val) => val.checked)
+                    .map((val) => val.key),
+            };
+        },
+        [values]
+    );
 
     return (
-        <Paper
-            withBorder
-            shadow="sm"
-            p="sm"
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                overflow: "hidden",
-                ...uploadMaximumWindowHeight,
-            }}
-        >
+        <Paper withBorder shadow="sm" p="sm" className={classes.paperStyle}>
             <Title order={3} pb="xs">
                 Add to server
             </Title>

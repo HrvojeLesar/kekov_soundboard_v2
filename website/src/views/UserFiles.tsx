@@ -1,4 +1,11 @@
-import { Grid, Group, Paper, ScrollArea, Title } from "@mantine/core";
+import {
+    createStyles,
+    Grid,
+    Group,
+    Paper,
+    ScrollArea,
+    Title,
+} from "@mantine/core";
 import { useDocumentTitle } from "@mantine/hooks";
 import axios from "axios";
 import { CSSProperties, useEffect, useState } from "react";
@@ -24,6 +31,43 @@ export const userFilesMaximumWindowHeight: CSSProperties = {
     height: "calc(100vh - 34px)",
 };
 
+const useStyle = createStyles((_theme) => {
+    return {
+        paperStyle: {
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            ...userFilesMaximumWindowHeight,
+        },
+        scollAreaStyle: {
+            height: "100%",
+        },
+        userFilesGroupStyle: {
+            width: "100%",
+            ...userFilesMaximumWindowHeight,
+        },
+        userFilesPaperStyle: {
+            height: "20%",
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+        },
+        userFilesTitleStyle: {
+            textOverflow: "ellipsis",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+        },
+        quickServerEnableStyle: {
+            flexGrow: 1,
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+        },
+    };
+});
+
 export default function UserFiles() {
     const [cookies] = useCookies(COOKIE_NAMES);
     const [files, setFiles] = useState<UserFile[]>([]);
@@ -31,6 +75,7 @@ export default function UserFiles() {
     const [selectedIndex, setSelectedIndex] = useState<number | undefined>(
         undefined
     );
+    const { classes } = useStyle();
     useDocumentTitle("KSv2 - Your files");
 
     const fetchFiles = async () => {
@@ -101,17 +146,12 @@ export default function UserFiles() {
                         withBorder
                         shadow="sm"
                         p="sm"
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            overflow: "hidden",
-                            ...userFilesMaximumWindowHeight,
-                        }}
+                        className={classes.paperStyle}
                     >
                         <Title order={3} pb="xs">
                             Your files
                         </Title>
-                        <ScrollArea style={{ height: "100%" }}>
+                        <ScrollArea className={classes.scollAreaStyle}>
                             <Group>
                                 {!isFetching &&
                                     files.length > 0 &&
@@ -136,32 +176,19 @@ export default function UserFiles() {
                 <Grid.Col xs={3}>
                     <Group
                         direction="column"
-                        style={{
-                            width: "100%",
-                            ...userFilesMaximumWindowHeight,
-                        }}
+                        className={classes.userFilesGroupStyle}
                     >
                         <Paper
                             withBorder
                             shadow="sm"
                             p="sm"
-                            style={{
-                                height: "20%",
-                                width: "100%",
-                                display: "flex",
-                                flexDirection: "column",
-                                overflow: "hidden",
-                            }}
+                            className={classes.userFilesPaperStyle}
                         >
                             <Title
                                 order={3}
                                 pb="xs"
                                 title={getEditTitle()}
-                                style={{
-                                    textOverflow: "ellipsis",
-                                    overflow: "hidden",
-                                    whiteSpace: "nowrap",
-                                }}
+                                className={classes.userFilesTitleStyle}
                             >
                                 {getEditTitle()}
                             </Title>
@@ -181,13 +208,7 @@ export default function UserFiles() {
                             withBorder
                             shadow="sm"
                             p="sm"
-                            style={{
-                                flexGrow: 1,
-                                width: "100%",
-                                display: "flex",
-                                flexDirection: "column",
-                                overflow: "hidden",
-                            }}
+                            className={classes.quickServerEnableStyle}
                         >
                             <Title order={3} pb="xs">
                                 Servers

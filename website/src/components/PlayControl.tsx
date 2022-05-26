@@ -36,6 +36,7 @@ const useStyles = createStyles((theme) => ({
 
     container: {
         width: "200px",
+        overflow: "hidden",
 
         "&:hover": {
             backgroundColor: theme.colors.gray[0],
@@ -60,7 +61,6 @@ export function PlayControl({
             shadow="sm"
             p="sm"
             className={classes.container}
-            style={{ overflow: "hidden" }}
         >
             <Text
                 title={file.display_name}

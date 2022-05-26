@@ -6,8 +6,13 @@ import { API_URL, ControlsRoute } from "../../api/ApiRoutes";
 import { AuthContext, COOKIE_NAMES } from "../../auth/AuthProvider";
 const useStyles = createStyles((theme) => {
     return {
-        paperStyling: {
+        paperStyle: {
             width: "100%",
+        },
+        titleStyle: {
+            textOverflow: "ellipsis",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
         },
     };
 });
@@ -78,37 +83,23 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
     };
 
     return (
-        <Paper withBorder shadow="sm" p="sm" className={classes.paperStyling}>
+        <Paper withBorder shadow="sm" p="sm" className={classes.paperStyle}>
             <Title
                 order={3}
                 pb="xs"
                 title="Controls"
-                style={{
-                    textOverflow: "ellipsis",
-                    overflow: "hidden",
-                    whiteSpace: "nowrap",
-                }}
+                className={classes.titleStyle}
             >
                 Controls
             </Title>
             <Group position="center">
-                <Button
-                    title="Get Queue"
-                    onClick={() => handleGetQueue()}
-                >
+                <Button title="Get Queue" onClick={() => handleGetQueue()}>
                     Get Queue
                 </Button>
-                <Button
-                    title="Skip"
-                    onClick={() => handleSkip()}
-                >
+                <Button title="Skip" onClick={() => handleSkip()}>
                     Skip
                 </Button>
-                <Button
-                    title="Stop"
-                    onClick={() => handleStop()}
-                    color="red"
-                >
+                <Button title="Stop" onClick={() => handleStop()} color="red">
                     Stop
                 </Button>
             </Group>

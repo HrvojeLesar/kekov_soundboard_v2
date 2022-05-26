@@ -46,6 +46,22 @@ const useStyles = createStyles((theme) => {
         icon: {
             color: theme.colors.red[theme.colorScheme === "dark" ? 7 : 6],
         },
+
+        paperStyle: {
+            width: "250px",
+            overflow: "hidden",
+        },
+
+        groupStyle: {
+            flexGrow: 1,
+        },
+
+        textStyle: {
+            textOverflow: "ellipsis",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            maxWidth: "19ch",
+        },
     };
 });
 
@@ -133,23 +149,13 @@ export const FileUploadContainer = forwardRef<
     }));
 
     return (
-        <Paper
-            withBorder
-            shadow="xs"
-            p="sm"
-            style={{ width: "250px", overflow: "hidden" }}
-        >
-            <Group position="apart" style={{ flexGrow: 1 }} mb="xs">
+        <Paper withBorder shadow="xs" p="sm" className={classes.paperStyle}>
+            <Group position="apart" mb="xs" className={classes.groupStyle}>
                 <Text
                     lineClamp={1}
                     weight="bold"
                     title={file.name}
-                    style={{
-                        textOverflow: "ellipsis",
-                        overflow: "hidden",
-                        whiteSpace: "nowrap",
-                        maxWidth: "19ch",
-                    }}
+                    className={classes.textStyle}
                 >
                     {file.name}
                 </Text>

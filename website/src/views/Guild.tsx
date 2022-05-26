@@ -1,4 +1,5 @@
 import {
+    createStyles,
     Grid,
     Group,
     Paper,
@@ -37,6 +38,31 @@ export const guildMaximumWindowHeight: CSSProperties = {
     height: "calc(100vh - 34px)",
 };
 
+const useStyles = createStyles((_theme) => {
+    return {
+        serverSoundsPaper: {
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            ...guildMaximumWindowHeight,
+        },
+        scollAreaStyle: {
+            height: "100%",
+        },
+        groupStyle: {
+            width: "100%",
+            ...guildMaximumWindowHeight,
+        },
+        quickEnablePaper: {
+            flexGrow: 1,
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+        },
+    };
+});
+
 let abortController: AbortController | undefined = undefined;
 
 export default function Guild() {
@@ -46,6 +72,7 @@ export default function Guild() {
     const [guildFiles, setGuildFiles] = useState<GuildFile[]>([]);
     const [userFiles, setUserFiles] = useState<UserFile[]>([]);
     const [isUpdating, setIsUpdating] = useState(false);
+    const { classes } = useStyles();
     useDocumentTitle(`KSv2 - ${guilds.find((g) => g.id === guildId)?.name}`);
 
     const fetchGuildFiles = async () => {
@@ -131,17 +158,12 @@ export default function Guild() {
                             withBorder
                             shadow="sm"
                             p="sm"
-                            style={{
-                                display: "flex",
-                                flexDirection: "column",
-                                overflow: "hidden",
-                                ...guildMaximumWindowHeight,
-                            }}
+                            className={classes.serverSoundsPaper}
                         >
                             <Title title="Server sounds" order={3} pb="xs">
                                 Server sounds
                             </Title>
-                            <ScrollArea style={{ height: "100%" }}>
+                            <ScrollArea className={classes.scollAreaStyle}>
                                 <Group>
                                     {guildFiles.map((file) => {
                                         return (
@@ -159,23 +181,14 @@ export default function Guild() {
                     <Grid.Col xs={3}>
                         <Group
                             direction="column"
-                            style={{
-                                width: "100%",
-                                ...guildMaximumWindowHeight,
-                            }}
+                            className={classes.groupStyle}
                         >
                             <ControlsWindow guildId={guildId} />
                             <Paper
                                 withBorder
                                 shadow="sm"
                                 p="sm"
-                                style={{
-                                    flexGrow: 1,
-                                    width: "100%",
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    overflow: "hidden",
-                                }}
+                                className={classes.quickEnablePaper}
                             >
                                 <Title
                                     title="Quick enable files"

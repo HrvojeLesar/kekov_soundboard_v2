@@ -2,10 +2,11 @@ import { Button, Group, Stack, Text } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useState } from "react";
 import { X } from "tabler-icons-react";
+import { GuildFile } from "../views/Guild";
 import { UserFile } from "../views/UserFiles";
 
 type DeleteModalBodyProps = {
-    file: UserFile;
+    file: UserFile | GuildFile;
     closeCallback: () => void;
     deleteCallback: () => Promise<void>;
 };

@@ -102,6 +102,38 @@ const useStyles = createStyles((theme) => {
                         : theme.colors.gray[5],
             },
         },
+        uploadPaperStyle: {
+            width: "100%",
+        },
+        uploadControlsBoxStyle: {
+            width: "300px",
+        },
+        uploadControlsGroupStyle: {
+            width: "100%",
+        },
+        dropzoneBoxStyle: {
+            flexGrow: 1,
+        },
+        dropzoneGroupStyle: {
+            pointerEvents: "none",
+        },
+        selectedFilesPaperStyle: {
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            ...uploadMaximumWindowHeight,
+        },
+        scrollAreaStyle: {
+            height: "100%",
+        },
+        selectedFilesBoxStyle: {
+            height: "100%",
+            justifyContent: "center",
+            display: "flex",
+            textAlign: "center",
+            alignItems: "center",
+            flexDirection: "column",
+        },
     };
 });
 
@@ -309,7 +341,12 @@ export default function Upload() {
     return (
         <>
             <Group direction="column">
-                <Paper withBorder shadow="sm" p="sm" style={{ width: "100%" }}>
+                <Paper
+                    withBorder
+                    shadow="sm"
+                    p="sm"
+                    className={classes.uploadPaperStyle}
+                >
                     <Title order={2} pb="xs">
                         Upload
                     </Title>
@@ -333,11 +370,11 @@ export default function Upload() {
                                 </>
                             }
                         />
-                        <Box style={{ width: "300px" }}>
+                        <Box className={classes.uploadControlsBoxStyle}>
                             <Group direction="column">
                                 <Group
                                     position="apart"
-                                    style={{ width: "100%" }}
+                                    className={classes.uploadControlsGroupStyle}
                                 >
                                     <Button
                                         onClick={() => openRef.current()}
@@ -363,13 +400,13 @@ export default function Upload() {
                                     </Button>
                                 </Group>
                                 <Progress
-                                    style={{ width: "100%" }}
+                                    className={classes.uploadControlsGroupStyle}
                                     animate
                                     value={progressValue}
                                 />
                             </Group>
                         </Box>
-                        <Box style={{ flexGrow: 1 }}>
+                        <Box className={classes.dropzoneBoxStyle}>
                             <Dropzone
                                 disabled={isUploading}
                                 onDrop={addFiles}
@@ -388,7 +425,9 @@ export default function Upload() {
                                             direction="column"
                                             position="center"
                                             spacing="sm"
-                                            style={{ pointerEvents: "none" }}
+                                            className={
+                                                classes.dropzoneGroupStyle
+                                            }
                                         >
                                             <UploadIcon
                                                 status={status}
@@ -431,18 +470,13 @@ export default function Upload() {
                         withBorder
                         shadow="sm"
                         p="sm"
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            overflow: "hidden",
-                            ...uploadMaximumWindowHeight,
-                        }}
+                        className={classes.selectedFilesPaperStyle}
                     >
                         <Title order={3} pb="xs">
                             Selected files
                         </Title>
                         {files.length > 0 ? (
-                            <ScrollArea style={{ height: "100%" }}>
+                            <ScrollArea className={classes.scrollAreaStyle}>
                                 <Group>
                                     {files.map((file, index) => {
                                         return (
@@ -470,16 +504,7 @@ export default function Upload() {
                                 </Group>
                             </ScrollArea>
                         ) : (
-                            <Box
-                                style={{
-                                    height: "100%",
-                                    justifyContent: "center",
-                                    display: "flex",
-                                    textAlign: "center",
-                                    alignItems: "center",
-                                    flexDirection: "column",
-                                }}
-                            >
+                            <Box className={classes.selectedFilesBoxStyle}>
                                 <Text weight="bold" align="center">
                                     No files selected
                                 </Text>

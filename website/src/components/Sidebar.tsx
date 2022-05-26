@@ -64,6 +64,10 @@ const useStyles = createStyles((theme) => ({
         width: "100%",
         height: "100%",
     },
+
+    sidebarBottomGroup: {
+        alignItems: "center",
+    },
 }));
 
 export default function Sidebar() {
@@ -124,7 +128,10 @@ export default function Sidebar() {
             </Navbar.Section>
             <Navbar.Section className={classes.navbarFooter}>
                 <Center>
-                    <Group direction="column" style={{ alignItems: "center" }}>
+                    <Group
+                        direction="column"
+                        className={classes.sidebarBottomGroup}
+                    >
                         <Tooltip
                             label="Invite bot to server"
                             position="right"

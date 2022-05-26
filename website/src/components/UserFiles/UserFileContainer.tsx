@@ -17,9 +17,10 @@ const useStyles = createStyles(
     (theme, { isSelected }: { isSelected: boolean }) => {
         return {
             button: {
+                width: "250px",
+                overflow: "hidden",
                 display: "flex",
                 alignItems: "center",
-                width: "100%",
                 transition:
                     "background-color 150ms ease, border-color 150ms ease",
                 border: `1px solid ${
@@ -32,7 +33,7 @@ const useStyles = createStyles(
                         : theme.colors.gray[3]
                 }`,
                 borderRadius: theme.radius.sm,
-                padding: theme.spacing.sm,
+                padding: 0,
                 backgroundColor: isSelected
                     ? theme.colorScheme === "dark"
                         ? theme.fn.rgba(
@@ -68,6 +69,13 @@ const useStyles = createStyles(
                 justifyContent: "center",
                 overflow: "hidden",
             },
+            unstyledButtonStyle: { width: "100%", height: "100%" },
+            textStyle: {
+                maxWidth: "150px",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+            },
         };
     }
 );
@@ -80,27 +88,17 @@ export default function UserFileContainer({
     const { classes } = useStyles({ isSelected: isSelected });
 
     return (
-        <Paper
-            withBorder
-            shadow="xs"
-            style={{ padding: "0", width: "250px", overflow: "hidden" }}
-            className={classes.button}
-        >
+        <Paper withBorder shadow="xs" className={classes.button}>
             <UnstyledButton
                 p="sm"
-                style={{ width: "100%", height: "100%" }}
+                className={classes.unstyledButtonStyle}
                 onClick={() => {
                     onClickCallback();
                 }}
             >
                 <Group spacing="sm">
                     <Text
-                        style={{
-                            maxWidth: "150px",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                        }}
+                        className={classes.textStyle}
                         title={file.display_name}
                     >
                         {file.display_name}

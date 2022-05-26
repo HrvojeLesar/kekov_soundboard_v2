@@ -123,7 +123,10 @@ pub async fn play_request(
 ) -> Result<HttpResponse, KekServerError> {
     let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
-    if !user_guilds.iter().any(|guild| guild.get_id() == &req_payload.guild_id) {
+    if !user_guilds
+        .iter()
+        .any(|guild| guild.get_id() == &req_payload.guild_id)
+    {
         return Err(KekServerError::NotInGuildError);
     }
 
@@ -143,7 +146,7 @@ pub async fn play_request(
             let control = ControlsServerMessage::new_play(payload.guild_id, payload.file_id);
             let resp = send_command(control, server_address, ws_channels).await?;
 
-            return Ok(HttpResponse::Ok().finish());
+            return Ok(HttpResponse::Ok().json(resp));
         }
         None => return Err(KekServerError::GuildFileDoesNotExistError),
     }
@@ -159,14 +162,17 @@ pub async fn stop_request(
 ) -> Result<HttpResponse, KekServerError> {
     let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
-    if !user_guilds.iter().any(|guild| guild.get_id() == &stop_payload.guild_id) {
+    if !user_guilds
+        .iter()
+        .any(|guild| guild.get_id() == &stop_payload.guild_id)
+    {
         return Err(KekServerError::NotInGuildError);
     }
 
     let control = ControlsServerMessage::new_stop(stop_payload.guild_id);
     let resp = send_command(control, server_address, ws_channels).await?;
 
-    return Ok(HttpResponse::Ok().finish());
+    return Ok(HttpResponse::Ok().json(resp));
 }
 
 #[post("skip")]
@@ -179,14 +185,17 @@ pub async fn skip_request(
 ) -> Result<HttpResponse, KekServerError> {
     let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
-    if !user_guilds.iter().any(|guild| guild.get_id() == &skip_payload.guild_id) {
+    if !user_guilds
+        .iter()
+        .any(|guild| guild.get_id() == &skip_payload.guild_id)
+    {
         return Err(KekServerError::NotInGuildError);
     }
 
     let control = ControlsServerMessage::new_skip(skip_payload.guild_id);
     let resp = send_command(control, server_address, ws_channels).await?;
 
-    return Ok(HttpResponse::Ok().finish());
+    return Ok(HttpResponse::Ok().json(resp));
 }
 
 #[post("queue")]
@@ -199,7 +208,10 @@ pub async fn queue_request(
 ) -> Result<HttpResponse, KekServerError> {
     let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
-    if !user_guilds.iter().any(|guild| guild.get_id() == &queue_payload.guild_id) {
+    if !user_guilds
+        .iter()
+        .any(|guild| guild.get_id() == &queue_payload.guild_id)
+    {
         return Err(KekServerError::NotInGuildError);
     }
 

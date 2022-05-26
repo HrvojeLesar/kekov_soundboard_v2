@@ -1,3 +1,4 @@
+use crate::utils::deserialize_string_to_number;
 use std::{convert::TryFrom, num::ParseIntError, str::FromStr};
 
 use serde::{Deserialize, Serialize};
@@ -7,8 +8,7 @@ pub trait Id {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
-#[serde(try_from = "String")]
-pub struct GuildId(pub u64);
+pub struct GuildId(#[serde(deserialize_with = "deserialize_string_to_number")] pub u64);
 
 impl Id for GuildId {
     fn get_id(&self) -> u64 {
@@ -42,8 +42,7 @@ impl Serialize for GuildId {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
-#[serde(try_from = "String")]
-pub struct UserId(pub u64);
+pub struct UserId(#[serde(deserialize_with = "deserialize_string_to_number")] pub u64);
 
 impl Id for UserId {
     fn get_id(&self) -> u64 {
@@ -77,8 +76,7 @@ impl Serialize for UserId {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
-#[serde(try_from = "String")]
-pub struct SoundFileId(pub u64);
+pub struct SoundFileId(#[serde(deserialize_with = "deserialize_string_to_number")] pub u64);
 
 impl Id for SoundFileId {
     fn get_id(&self) -> u64 {
@@ -112,8 +110,7 @@ impl Serialize for SoundFileId {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
-#[serde(try_from = "String")]
-pub struct ChannelId(pub u64);
+pub struct ChannelId(#[serde(deserialize_with = "deserialize_string_to_number")] pub u64);
 
 impl Id for ChannelId {
     fn get_id(&self) -> u64 {

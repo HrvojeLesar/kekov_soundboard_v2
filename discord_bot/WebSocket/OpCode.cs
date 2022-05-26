@@ -8,6 +8,7 @@ namespace KekovBot
         Skip,
         GetQueue,
         PlayResponse,
+        PlayResponseQueued,
         StopResponse,
         SkipResponse,
         GetQueueResponse,
@@ -17,14 +18,22 @@ namespace KekovBot
 
     public static class OpCodeConverter
     {
-        public static OpCode? ToResponse(OpCode opCode) => opCode switch
+        public static OpCode? ToResponse(OpCode opCode, bool isQueued = false)
         {
-            OpCode.Play => OpCode.PlayResponse,
-            OpCode.Stop => OpCode.StopResponse,
-            OpCode.Skip => OpCode.SkipResponse,
-            OpCode.GetQueue => OpCode.GetQueueResponse,
-            _ => null,
-        };
+            if (opCode == OpCode.Play && isQueued)
+            {
+                return OpCode.PlayResponseQueued;
+            }
+
+            return opCode switch
+            {
+                OpCode.Play => OpCode.PlayResponse,
+                OpCode.Stop => OpCode.StopResponse,
+                OpCode.Skip => OpCode.SkipResponse,
+                OpCode.GetQueue => OpCode.GetQueueResponse,
+                _ => null,
+            };
+        }
 
     }
 }

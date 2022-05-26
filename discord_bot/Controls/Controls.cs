@@ -28,7 +28,7 @@ namespace KekovBot
             return guild;
         }
 
-        private static async Task PlaySound(DiscordChannel channel, Sound sound)
+        private static async Task<bool> PlaySound(DiscordChannel channel, Sound sound)
         {
             if (!_lavalink.ConnectedNodes.Any())
             {
@@ -62,20 +62,23 @@ namespace KekovBot
                 if (playQueue.CurrentlyPlaying == null)
                 {
                     playQueue.UnconditionalStart(sound);
+                    return false;
                 }
                 else
                 {
                     playQueue.Queue.Enqueue(sound);
+                    return true;
                 }
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
                 await connection.Disconnect(guild);
+                return false;
             }
         }
 
-        public static async Task Play(ControlMessage msg)
+        public static async Task<bool> Play(ControlMessage msg)
         {
             DiscordGuild guild = GetGuild(msg);
 
@@ -118,7 +121,7 @@ namespace KekovBot
             }
 
             var sound = new Sound((ulong)msg.FileId);
-            await PlaySound(voiceChannel, sound);
+            return await PlaySound(voiceChannel, sound);
         }
 
         public static async Task Stop(ControlMessage msg)

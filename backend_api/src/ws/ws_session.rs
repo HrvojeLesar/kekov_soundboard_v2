@@ -72,7 +72,8 @@ impl ControlsSession {
             OpCode::PlayResponse
             | OpCode::StopResponse
             | OpCode::SkipResponse
-            | OpCode::GetQueueResponse => match sender.send(Ok(msg)) {
+            | OpCode::GetQueueResponse
+            | OpCode::PlayResponseQueued => match sender.send(Ok(msg)) {
                 Ok(_) => (),
                 Err(_) => return error!("WsSession sender failed!\nPossible receiver dropped!"),
             },
@@ -80,7 +81,7 @@ impl ControlsSession {
                 Ok(_) => (),
                 Err(_) => return error!("WsSession sender failed!\nPossible receiver dropped!"),
             },
-            _ => (),
+            _ => return error!("Invalid opcode received"),
         }
     }
 }

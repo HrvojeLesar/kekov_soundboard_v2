@@ -33,11 +33,12 @@ namespace KekovBot
             List<Sound>? queue = null;
             try
             {
+                bool addedToQueue = false;
                 switch (control?.OpCode)
                 {
                     case OpCode.Play:
                         {
-                            await Controls.Play(control);
+                            addedToQueue = await Controls.Play(control);
                             break;
                         }
                     case OpCode.Stop:
@@ -72,7 +73,7 @@ namespace KekovBot
                         }
                 }
 
-                var respOpCode = OpCodeConverter.ToResponse(control.OpCode);
+                var respOpCode = OpCodeConverter.ToResponse(control.OpCode, addedToQueue);
                 if (respOpCode != null)
                 {
                     var response = new ControlMessage((OpCode)respOpCode, queue, control);

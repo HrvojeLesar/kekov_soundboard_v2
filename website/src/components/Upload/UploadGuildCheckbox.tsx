@@ -85,7 +85,7 @@ export default function UploadGuildCheckbox({
                 onChange(!isChecked);
             }}
         >
-            <Group position="apart" className={classes.textStyle} noWrap>
+            <Group position="apart" className={classes.groupStyle} noWrap>
                 <Group>
                     {guild.icon ? (
                         <Image

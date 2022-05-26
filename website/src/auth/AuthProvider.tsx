@@ -84,9 +84,10 @@ function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const revokeAccess = () => {
-        removeCookie("access_token");
-        removeCookie("refresh_token");
-        removeCookie("expires");
+        const options = cookieOptions();
+        removeCookie("access_token", options);
+        removeCookie("refresh_token", options);
+        removeCookie("expires", options);
         setUser(undefined);
     };
 

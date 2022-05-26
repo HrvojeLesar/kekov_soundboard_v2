@@ -11,6 +11,6 @@ export const nameToInitials = (guildName: string): string => {
     return initials;
 };
 
-export const cookieOptions = (data: LoginResponse): CookieSetOptions => {
-    return { path: "/", maxAge: data.expires_in };
+export const cookieOptions = (data: LoginResponse | undefined = undefined): CookieSetOptions => {
+    return { path: "/", maxAge: data?.expires_in };
 };

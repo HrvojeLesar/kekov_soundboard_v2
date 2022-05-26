@@ -39,7 +39,7 @@ export const guildMaximumWindowHeight: CSSProperties = {
 
 let abortController: AbortController | undefined = undefined;
 
-export function Guild() {
+export default function Guild() {
     const { guilds } = useContext(AuthContext);
     const { guildId } = useParams();
     const [cookies] = useCookies(COOKIE_NAMES);

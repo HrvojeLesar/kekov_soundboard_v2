@@ -1,4 +1,3 @@
-use crate::utils::deserialize_string_to_number;
 use std::{convert::TryFrom, num::ParseIntError, str::FromStr};
 
 use serde::{Deserialize, Serialize};
@@ -8,7 +7,8 @@ pub trait Id {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
-pub struct GuildId(#[serde(deserialize_with = "deserialize_string_to_number")] pub u64);
+#[serde(try_from = "String")]
+pub struct GuildId(pub u64);
 
 impl Id for GuildId {
     fn get_id(&self) -> u64 {
@@ -42,7 +42,8 @@ impl Serialize for GuildId {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
-pub struct UserId(#[serde(deserialize_with = "deserialize_string_to_number")] pub u64);
+#[serde(try_from = "String")]
+pub struct UserId(pub u64);
 
 impl Id for UserId {
     fn get_id(&self) -> u64 {
@@ -76,7 +77,8 @@ impl Serialize for UserId {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
-pub struct SoundFileId(#[serde(deserialize_with = "deserialize_string_to_number")] pub u64);
+#[serde(try_from = "String")]
+pub struct SoundFileId(pub u64);
 
 impl Id for SoundFileId {
     fn get_id(&self) -> u64 {
@@ -110,7 +112,8 @@ impl Serialize for SoundFileId {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Hash)]
-pub struct ChannelId(#[serde(deserialize_with = "deserialize_string_to_number")] pub u64);
+#[serde(try_from = "String")]
+pub struct ChannelId(pub u64);
 
 impl Id for ChannelId {
     fn get_id(&self) -> u64 {
@@ -140,5 +143,43 @@ impl Serialize for ChannelId {
         S: serde::Serializer,
     {
         return serializer.serialize_str(&self.0.to_string());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{GuildId, UserId, SoundFileId, ChannelId};
+    const TESTNUM: u64 = 123;
+
+    #[test]
+    fn test_deserialize_guild_id() {
+        let id: GuildId = serde_json::from_str(r#""123""#).unwrap();
+        assert_eq!(id.0, TESTNUM);
+        let id: GuildId = serde_json::from_str(r#"123"#).unwrap();
+        assert_eq!(id.0, TESTNUM);
+    }
+
+    #[test]
+    fn test_deserialize_user_id() {
+        let id: UserId = serde_json::from_str(r#""123""#).unwrap();
+        assert_eq!(id.0, TESTNUM);
+        let id: UserId = serde_json::from_str(r#"123"#).unwrap();
+        assert_eq!(id.0, TESTNUM);
+    }
+
+    #[test]
+    fn test_deserialize_sound_file_id() {
+        let id: SoundFileId = serde_json::from_str(r#""123""#).unwrap();
+        assert_eq!(id.0, TESTNUM);
+        let id: SoundFileId = serde_json::from_str(r#"123"#).unwrap();
+        assert_eq!(id.0, TESTNUM);
+    }
+
+    #[test]
+    fn test_deserialize_channel_id() {
+        let id: ChannelId = serde_json::from_str(r#""123""#).unwrap();
+        assert_eq!(id.0, TESTNUM);
+        let id: ChannelId = serde_json::from_str(r#"123"#).unwrap();
+        assert_eq!(id.0, TESTNUM);
     }
 }

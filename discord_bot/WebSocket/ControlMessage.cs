@@ -12,12 +12,15 @@ namespace KekovBot
         public OpCode OpCode { get; set; }
 
         [JsonProperty("guild_id")]
+        [JsonConverter(typeof(ToStringConverter))]
         public ulong? GuildId { get; set; }
 
         [JsonProperty("file_id")]
+        [JsonConverter(typeof(ToStringConverter))]
         public ulong? FileId { get; set; }
 
         [JsonProperty("voice_channel_id")]
+        [JsonConverter(typeof(ToStringConverter))]
         public ulong? VoiceChannelId { get; set; }
 
         [JsonProperty("message_id")]

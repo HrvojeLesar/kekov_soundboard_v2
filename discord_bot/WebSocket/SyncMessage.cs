@@ -10,9 +10,11 @@ namespace KekovBot
         public SyncOpCode OpCode { get; set; }
 
         [JsonProperty("user_id")]
+        [JsonConverter(typeof(ToStringConverter))]
         public ulong? UserId { get; set; }
 
         [JsonProperty("guild_id")]
+        [JsonConverter(typeof(ToStringConverter))]
         public ulong? GuildId { get; set; }
 
         public SyncMessage() { }

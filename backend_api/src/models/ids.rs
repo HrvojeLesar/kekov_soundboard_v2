@@ -148,38 +148,39 @@ impl Serialize for ChannelId {
 
 #[cfg(test)]
 mod tests {
-    use super::{GuildId, UserId, SoundFileId, ChannelId};
+    use super::{ChannelId, GuildId, SoundFileId, UserId};
     const TESTNUM: u64 = 123;
 
     #[test]
     fn test_deserialize_guild_id() {
-        let id: GuildId = serde_json::from_str(r#""123""#).unwrap();
-        assert_eq!(id.0, TESTNUM);
-        let id: GuildId = serde_json::from_str(r#"123"#).unwrap();
-        assert_eq!(id.0, TESTNUM);
+        let id: Option<GuildId> = serde_json::from_str(r#""123""#).ok();
+        assert_eq!(id.unwrap().0, TESTNUM);
+        let id: Option<GuildId> = serde_json::from_str(r#"123"#).ok();
+        assert_eq!(id, None);
+
     }
 
     #[test]
     fn test_deserialize_user_id() {
-        let id: UserId = serde_json::from_str(r#""123""#).unwrap();
-        assert_eq!(id.0, TESTNUM);
-        let id: UserId = serde_json::from_str(r#"123"#).unwrap();
-        assert_eq!(id.0, TESTNUM);
+        let id: Option<UserId> = serde_json::from_str(r#""123""#).ok();
+        assert_eq!(id.unwrap().0, TESTNUM);
+        let id: Option<UserId> = serde_json::from_str(r#"123"#).ok();
+        assert_eq!(id, None);
     }
 
     #[test]
     fn test_deserialize_sound_file_id() {
-        let id: SoundFileId = serde_json::from_str(r#""123""#).unwrap();
-        assert_eq!(id.0, TESTNUM);
-        let id: SoundFileId = serde_json::from_str(r#"123"#).unwrap();
-        assert_eq!(id.0, TESTNUM);
+        let id: Option<SoundFileId> = serde_json::from_str(r#""123""#).ok();
+        assert_eq!(id.unwrap().0, TESTNUM);
+        let id: Option<SoundFileId> = serde_json::from_str(r#"123"#).ok();
+        assert_eq!(id, None);
     }
 
     #[test]
     fn test_deserialize_channel_id() {
-        let id: ChannelId = serde_json::from_str(r#""123""#).unwrap();
-        assert_eq!(id.0, TESTNUM);
-        let id: ChannelId = serde_json::from_str(r#"123"#).unwrap();
-        assert_eq!(id.0, TESTNUM);
+        let id: Option<ChannelId> = serde_json::from_str(r#""123""#).ok();
+        assert_eq!(id.unwrap().0, TESTNUM);
+        let id: Option<ChannelId> = serde_json::from_str(r#"123"#).ok();
+        assert_eq!(id, None);
     }
 }

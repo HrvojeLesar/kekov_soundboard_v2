@@ -75,3 +75,20 @@ impl User {
         return self.avatar.as_ref();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::models::ids::UserId;
+
+    use super::User;
+
+    impl User {
+        pub fn get_test_user() -> User {
+            return User {
+                id: UserId(1),
+                username: "user".to_owned(),
+                avatar: None,
+            };
+        }
+    }
+}

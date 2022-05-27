@@ -303,3 +303,73 @@ impl Handler<ControlsServerMessage> for ControlsServer {
         self.send_command(msg);
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use crate::{
+        models::ids::{GuildId, SoundFileId},
+        ws::ws_server::{Controls, OpCode},
+    };
+
+    use super::ControlsServerMessage;
+
+    const GUILD: GuildId = GuildId(1);
+    const FILE: SoundFileId = SoundFileId(1);
+
+    #[test]
+    fn test_csm_new_play() {
+        let play = ControlsServerMessage::new_play(GUILD, FILE);
+        let control = play.control.unwrap();
+        assert!(match play.op {
+            OpCode::Play => true,
+            _ => false,
+        });
+        assert!(match control {
+            Controls::Play(..) => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn test_csm_new_stop() {
+        let stop = ControlsServerMessage::new_stop(GUILD);
+        let control = stop.control.unwrap();
+        assert!(match stop.op {
+            OpCode::Stop => true,
+            _ => false,
+        });
+        assert!(match control {
+            Controls::Stop(..) => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn test_csm_new_skip() {
+        let skip = ControlsServerMessage::new_skip(GUILD);
+        let control = skip.control.unwrap();
+        assert!(match skip.op {
+            OpCode::Skip => true,
+            _ => false,
+        });
+        assert!(match control {
+            Controls::Skip(..) => true,
+            _ => false,
+        });
+    }
+
+    #[test]
+    fn test_csm_new_queue() {
+        let queue = ControlsServerMessage::new_queue(GUILD);
+        let control = queue.control.unwrap();
+        assert!(match queue.op {
+            OpCode::GetQueue => true,
+            _ => false,
+        });
+        assert!(match control {
+            Controls::GetQueue(..) => true,
+            _ => false,
+        });
+    }
+}

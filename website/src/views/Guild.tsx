@@ -21,6 +21,7 @@ import {
 } from "../api/ApiRoutes";
 import { AuthContext, COOKIE_NAMES } from "../auth/AuthProvider";
 import ControlsWindow from "../components/Guild/ControlsWindow";
+import ServerSoundsWindow from "../components/Guild/ServerSoundsWindow";
 import { PlayControl } from "../components/PlayControl";
 import { UserFile } from "./UserFiles";
 
@@ -129,34 +130,11 @@ export default function Guild() {
             ) : (
                 <Grid>
                     <Grid.Col xs={9}>
-                        <Paper
-                            withBorder
-                            shadow="sm"
-                            p="sm"
-                            className={classes.serverSoundsPaper}
-                        >
-                            <Title title="Server sounds" order={3} pb="xs">
-                                Server sounds
-                            </Title>
-                            <ScrollArea className={classes.scollAreaStyle}>
-                                <Group>
-                                    {guildId ? (
-                                        guildFiles.map((file) => {
-                                            return (
-                                                <PlayControl
-                                                    key={file.id}
-                                                    file={file}
-                                                    guildId={guildId}
-                                                />
-                                            );
-                                        })
-                                    ) : (
-                                        <div></div>
-                                    )}
-                                    {/*TODO: ^^^ Warning message or redirect*/}
-                                </Group>
-                            </ScrollArea>
-                        </Paper>
+                        <ServerSoundsWindow
+                            guildId={guildId}
+                            guildFiles={guildFiles}
+                            classes={classes}
+                        />
                     </Grid.Col>
                     <Grid.Col xs={3}>
                         <Group

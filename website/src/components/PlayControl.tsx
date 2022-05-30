@@ -67,7 +67,7 @@ export function PlayControl({ file, guildId }: PlayControlProps) {
     const [cookies] = useCookies(COOKIE_NAMES);
     const [isSendingReq, setIsSendingReq] = useState(false);
 
-    // TODO: move into play control
+    // TODO: Add separate messages for playing and adding to queue
     const playFunc = async (fileId: string) => {
         if (cookies.access_token && guildId) {
             try {

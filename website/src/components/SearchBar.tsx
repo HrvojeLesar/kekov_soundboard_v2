@@ -12,7 +12,7 @@ export default function SearchBar({ filterCallback }: SearchBarProps) {
     useEffect(() => {
         const filterDelay = setTimeout(() => {
             filterCallback(searchValue);
-        }, 350);
+        }, 200);
 
         return () => {
             clearTimeout(filterDelay);

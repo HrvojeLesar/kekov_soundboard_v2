@@ -1,4 +1,5 @@
 import {
+    Box,
     createStyles,
     Grid,
     Group,
@@ -12,6 +13,7 @@ import { CSSProperties, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { API_URL, UserRoute } from "../api/ApiRoutes";
 import { COOKIE_NAMES } from "../auth/AuthProvider";
+import SearchBar from "../components/SearchBar";
 import DeleteFile from "../components/UserFiles/DeleteFile";
 import ServerSelect from "../components/UserFiles/ServerSelect";
 import UserFileContainer from "../components/UserFiles/UserFileContainer";
@@ -75,6 +77,7 @@ export default function UserFiles() {
     const [selectedIndex, setSelectedIndex] = useState<number | undefined>(
         undefined
     );
+    const [filterTerm, setFilterTerm] = useState("");
     const { classes } = useStyle();
     useDocumentTitle("KSv2 - Your files");
 
@@ -132,6 +135,20 @@ export default function UserFiles() {
         });
     };
 
+    const filterFiles = () => {
+        if (filterTerm !== "") {
+            return files.filter((file) => {
+                if (file.display_name) {
+                    return file.display_name.indexOf(filterTerm) !== -1;
+                } else {
+                    return false;
+                }
+            });
+        } else {
+            return files;
+        }
+    };
+
     useEffect(() => {
         fetchFiles();
     }, []);
@@ -151,11 +168,18 @@ export default function UserFiles() {
                         <Title order={3} pb="xs">
                             Your files
                         </Title>
+                        <Box py="sm">
+                            <SearchBar
+                                filterCallback={(searchValue) => {
+                                    setSelectedIndex(undefined);
+                                    setFilterTerm(searchValue);
+                                }}
+                            />
+                        </Box>
                         <ScrollArea className={classes.scollAreaStyle}>
                             <Group>
                                 {!isFetching &&
-                                    files.length > 0 &&
-                                    files.map((file, index) => {
+                                    filterFiles().map((file, index) => {
                                         return (
                                             <UserFileContainer
                                                 key={file.id}

@@ -102,13 +102,24 @@ pub async fn get_user_guilds(
     let guilds = Guild::get_existing_guilds(&*user_guilds, &mut transaction).await?;
     transaction.commit().await?;
 
-    let guilds = guilds.into_iter().map(|mut guild| {
-        match user_guilds.iter().find(|g| g.get_id() == guild.get_id()) {
-            Some(g) => guild = g.clone(),
-            None => (),
-        }
-        return guild;
-    }).collect::<Vec<Guild>>();
+    let guilds = guilds
+        .into_iter()
+        .map(|mut guild| {
+            match user_guilds.iter().find(|g| g.get_id() == guild.get_id()) {
+                Some(g) => {
+                    guild = Guild {
+                        id: g.id.clone(),
+                        name: g.name.clone(),
+                        icon: g.icon.clone(),
+                        icon_hash: g.icon_hash.clone(),
+                        time_added: guild.time_added,
+                    }
+                }
+                None => (),
+            }
+            return guild;
+        })
+        .collect::<Vec<Guild>>();
 
     return Ok(HttpResponse::Ok().json(guilds));
 }

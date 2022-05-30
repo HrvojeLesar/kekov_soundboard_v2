@@ -92,10 +92,10 @@ mod tests {
     };
 
     use crate::{
-        models::{guild::Guild, ids::GuildId, user::User},
+        models::{ids::GuildId, user::User},
         utils::{
             auth::{AccessToken, AuthorizedUser},
-            cache::{AuthorizedUsersCache, UserGuildsCache},
+            cache::{AuthorizedUsersCache, DiscordGuild, UserGuildsCache},
         },
     };
 
@@ -113,19 +113,23 @@ mod tests {
         });
         let user_cache = AuthorizedUsersCache::new(1);
         let user_guilds_cache = UserGuildsCache::new(1);
-        user_cache.insert(
-            authorized_user.access_token.clone(),
-            authorized_user.clone()
-        ).await;
-        user_guilds_cache.insert(
-            authorized_user.discord_user.get_id().clone(),
-            Arc::new(vec![Guild {
-                id: GuildId(1),
-                name: "test_guild".to_owned(),
-                icon: None,
-                icon_hash: None,
-            }]),
-        ).await;
+        user_cache
+            .insert(
+                authorized_user.access_token.clone(),
+                authorized_user.clone(),
+            )
+            .await;
+        user_guilds_cache
+            .insert(
+                authorized_user.discord_user.get_id().clone(),
+                Arc::new(vec![DiscordGuild {
+                    id: GuildId(1),
+                    name: "test_guild".to_owned(),
+                    icon: None,
+                    icon_hash: None,
+                }]),
+            )
+            .await;
         let app = init_service(
             App::new()
                 .wrap(UserGuildsService)

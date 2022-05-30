@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::{Postgres, Transaction};
 
@@ -15,6 +16,7 @@ use super::{
 pub struct GuildFile {
     guild_id: GuildId,
     file_id: SoundFileId,
+    time_added: NaiveDateTime,
 }
 
 impl GuildFile {
@@ -107,6 +109,7 @@ impl GuildFile {
                 return Ok(Some(Self {
                     guild_id: GuildId(guild_file.guild_id as u64),
                     file_id: SoundFileId(guild_file.file_id as u64),
+                    time_added: guild_file.time_added,
                 }))
             }
             None => return Ok(None),
@@ -124,7 +127,17 @@ impl GuildFile {
             .collect::<Vec<i64>>();
         let records = sqlx::query!(
             "
-            SELECT * FROM guild_file
+            SELECT
+                guild_id,
+                file_id,
+                guild_file.time_added,
+                is_deleted,
+                guild.id,
+                guild.name,
+                guild.icon,
+                guild.icon_hash,
+                guild.time_added as guild_time_added 
+            FROM guild_file
             INNER JOIN guild ON id = ANY($1) AND guild_id = ANY($1) AND file_id = $2
             ",
             &guild_ids,
@@ -140,6 +153,7 @@ impl GuildFile {
                 name: r.name,
                 icon: r.icon,
                 icon_hash: r.icon_hash,
+                time_added: r.guild_time_added,
             })
             .collect();
         return Ok(guilds);

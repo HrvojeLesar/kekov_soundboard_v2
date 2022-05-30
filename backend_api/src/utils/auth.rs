@@ -8,7 +8,7 @@ use crate::{
     models::{guild::Guild, user::User},
 };
 
-use super::{make_discord_get_request, USERGUILDS};
+use super::{make_discord_get_request, USERGUILDS, cache::DiscordGuild};
 
 pub type AuthorizedUserServiceType = Arc<AuthorizedUser>;
 
@@ -35,7 +35,7 @@ impl AuthorizedUser {
         return &self.discord_user;
     }
 
-    pub async fn get_guilds(&self) -> Result<Vec<Guild>, KekServerError> {
+    pub async fn get_guilds(&self) -> Result<Vec<DiscordGuild>, KekServerError> {
         return Ok(make_discord_get_request(&self, USERGUILDS)
             .await?
             .json()

@@ -1,7 +1,8 @@
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::{Postgres, Transaction};
 
-use crate::error::errors::KekServerError;
+use crate::{error::errors::KekServerError, utils::cache::DiscordGuild};
 
 use super::ids::GuildId;
 
@@ -11,6 +12,7 @@ pub struct Guild {
     pub name: String,
     pub icon: Option<String>,
     pub icon_hash: Option<String>,
+    pub time_added: NaiveDateTime,
 }
 
 impl Guild {
@@ -34,6 +36,7 @@ impl Guild {
                     name: r.name,
                     icon: r.icon,
                     icon_hash: r.icon_hash,
+                    time_added: r.time_added,
                 }));
             }
             None => return Ok(None),
@@ -63,7 +66,7 @@ impl Guild {
     }
 
     pub async fn get_existing_guilds(
-        guild_ids: &Vec<Guild>,
+        guild_ids: &Vec<DiscordGuild>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Self>, KekServerError> {
         let ids = guild_ids
@@ -86,6 +89,7 @@ impl Guild {
                 name: r.name,
                 icon: r.icon,
                 icon_hash: r.icon_hash,
+                time_added: r.time_added,
             })
             .collect::<Vec<Self>>();
         return Ok(guilds);

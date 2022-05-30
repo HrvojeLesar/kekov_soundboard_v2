@@ -6,7 +6,13 @@ import {
     Paper,
     UnstyledButton,
 } from "@mantine/core";
-import { PlayerPlay } from "tabler-icons-react";
+import { showNotification } from "@mantine/notifications";
+import axios from "axios";
+import { useState } from "react";
+import { useCookies } from "react-cookie";
+import { PlayerPlay, X } from "tabler-icons-react";
+import { API_URL, ControlsRoute } from "../api/ApiRoutes";
+import { COOKIE_NAMES } from "../auth/AuthProvider";
 import { GuildFile } from "../views/Guild";
 
 const playButtonStyle = (theme: MantineTheme): CSSObject => ({
@@ -45,14 +51,58 @@ const useStyles = createStyles((theme) => ({
     },
 }));
 
-export function PlayControl({
-    file,
-    playFunc,
-}: {
+type PlayPayload = {
+    guild_id: string;
+    file_id: string;
+    channel_id?: string;
+};
+
+type PlayControlProps = {
     file: GuildFile;
-    playFunc: any;
-}) {
+    guildId: string;
+};
+
+export function PlayControl({ file, guildId }: PlayControlProps) {
     const { classes } = useStyles();
+    const [cookies] = useCookies(COOKIE_NAMES);
+    const [isSendingReq, setIsSendingReq] = useState(false);
+
+    // TODO: move into play control
+    const playFunc = async (fileId: string) => {
+        if (cookies.access_token && guildId) {
+            try {
+                setIsSendingReq(true);
+                let payload: PlayPayload = {
+                    guild_id: guildId,
+                    file_id: fileId,
+                };
+                await axios.post<PlayPayload>(
+                    `${API_URL}${ControlsRoute.postPlay}`,
+                    payload,
+                    { headers: { Authorization: `${cookies.access_token}` } }
+                );
+                showNotification({
+                    title: "Success",
+                    message: "File playing or added to queue",
+                    autoClose: 3000,
+                    color: "green",
+                });
+                setIsSendingReq(false);
+            } catch (e) {
+                // TODO: Handle
+                console.log(e);
+                showNotification({
+                    title: "Error",
+                    message: "Failed to play or add sound to queue!",
+                    autoClose: 5000,
+                    color: "red",
+                    icon: <X />,
+                });
+                setIsSendingReq(false);
+            }
+            console.log(fileId);
+        }
+    };
 
     return (
         <Paper
@@ -72,15 +122,19 @@ export function PlayControl({
             >
                 {file.display_name}
             </Text>
-            <UnstyledButton
-                mx="auto"
-                className={classes.playButtonStyle}
-                onClick={() => {
-                    playFunc(file.id);
-                }}
-            >
-                <PlayerPlay />
-            </UnstyledButton>
+            {isSendingReq ? (
+                <div>Please wait</div>
+            ) : (
+                <UnstyledButton
+                    mx="auto"
+                    className={classes.playButtonStyle}
+                    onClick={() => {
+                        playFunc(file.id);
+                    }}
+                >
+                    <PlayerPlay />
+                </UnstyledButton>
+            )}
         </Paper>
     );
 }

@@ -7,10 +7,12 @@ import {
     Title,
 } from "@mantine/core";
 import { useDocumentTitle } from "@mantine/hooks";
+import { showNotification } from "@mantine/notifications";
 import axios, { CanceledError } from "axios";
 import { CSSProperties, useContext, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { useParams } from "react-router-dom";
+import { X } from "tabler-icons-react";
 import {
     API_URL,
     ControlsRoute,
@@ -26,12 +28,6 @@ export type GuildFile = {
     id: string;
     display_name?: string;
     owner?: string;
-};
-
-type PlayPayload = {
-    guild_id: string;
-    file_id: string;
-    channel_id?: string;
 };
 
 export const guildMaximumWindowHeight: CSSProperties = {
@@ -120,27 +116,6 @@ export default function Guild() {
         }
     };
 
-    // TODO: move into play control
-    const playFunc = async (fileId: string) => {
-        if (cookies.access_token && guildId) {
-            try {
-                let payload: PlayPayload = {
-                    guild_id: guildId,
-                    file_id: fileId,
-                };
-                await axios.post<PlayPayload>(
-                    `${API_URL}${ControlsRoute.postPlay}`,
-                    payload,
-                    { headers: { Authorization: `${cookies.access_token}` } }
-                );
-            } catch (e) {
-                // TODO: Handle
-                console.log(e);
-            }
-            console.log(fileId);
-        }
-    };
-
     useEffect(() => {
         abortController?.abort();
         setIsUpdating(true);
@@ -165,15 +140,20 @@ export default function Guild() {
                             </Title>
                             <ScrollArea className={classes.scollAreaStyle}>
                                 <Group>
-                                    {guildFiles.map((file) => {
-                                        return (
-                                            <PlayControl
-                                                key={file.id}
-                                                file={file}
-                                                playFunc={playFunc}
-                                            />
-                                        );
-                                    })}
+                                    {guildId ? (
+                                        guildFiles.map((file) => {
+                                            return (
+                                                <PlayControl
+                                                    key={file.id}
+                                                    file={file}
+                                                    guildId={guildId}
+                                                />
+                                            );
+                                        })
+                                    ) : (
+                                        <div></div>
+                                    )}
+                                    {/*TODO: ^^^ Warning message or redirect*/}
                                 </Group>
                             </ScrollArea>
                         </Paper>

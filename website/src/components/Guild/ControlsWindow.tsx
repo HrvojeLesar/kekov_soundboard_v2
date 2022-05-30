@@ -14,6 +14,9 @@ const useStyles = createStyles((theme) => {
             overflow: "hidden",
             whiteSpace: "nowrap",
         },
+        buttonWidth: {
+            width: "120px",
+        },
     };
 });
 
@@ -93,13 +96,26 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                 Controls
             </Title>
             <Group position="center">
-                <Button title="Get Queue" onClick={() => handleGetQueue()}>
+                <Button
+                    title="Get Queue"
+                    onClick={() => handleGetQueue()}
+                    className={classes.buttonWidth}
+                >
                     Get Queue
                 </Button>
-                <Button title="Skip" onClick={() => handleSkip()}>
+                <Button
+                    title="Skip"
+                    onClick={() => handleSkip()}
+                    className={classes.buttonWidth}
+                >
                     Skip
                 </Button>
-                <Button title="Stop" onClick={() => handleStop()} color="red">
+                <Button
+                    title="Stop"
+                    onClick={() => handleStop()}
+                    color="red"
+                    className={classes.buttonWidth}
+                >
                     Stop
                 </Button>
             </Group>

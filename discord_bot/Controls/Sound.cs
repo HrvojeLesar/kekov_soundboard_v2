@@ -8,6 +8,7 @@ namespace KekovBot
         private static string _soundFileDir = DotEnv.Read()["SOUNDFILE_DIR"];
 
         [JsonProperty("id")]
+        [JsonConverter(typeof(ToStringConverter))]
         public ulong FileId;
 
         [JsonIgnore]

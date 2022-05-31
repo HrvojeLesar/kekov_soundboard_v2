@@ -33,7 +33,7 @@ export const userFilesMaximumWindowHeight: CSSProperties = {
     height: "calc(100vh - 34px)",
 };
 
-const useStyle = createStyles((_theme) => {
+const useStyle = createStyles((theme) => {
     return {
         paperStyle: {
             display: "flex",
@@ -46,6 +46,9 @@ const useStyle = createStyles((_theme) => {
         },
         userFilesGroupStyle: {
             width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: theme.spacing.sm,
             ...userFilesMaximumWindowHeight,
         },
         userFilesPaperStyle: {
@@ -198,10 +201,7 @@ export default function UserFiles() {
                     </Paper>
                 </Grid.Col>
                 <Grid.Col xs={3}>
-                    <Group
-                        direction="column"
-                        className={classes.userFilesGroupStyle}
-                    >
+                        <Box className={classes.userFilesGroupStyle}>
                         <Paper
                             withBorder
                             shadow="sm"
@@ -243,7 +243,7 @@ export default function UserFiles() {
                                 )}
                             </ScrollArea>
                         </Paper>
-                    </Group>
+                        </Box>
                 </Grid.Col>
             </Grid>
         </>

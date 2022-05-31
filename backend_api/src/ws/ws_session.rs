@@ -20,7 +20,7 @@ use super::ws_server::{
 };
 
 pub type WsSessionCommChannels =
-    RwLock<HashMap<u128, Sender<Result<ControlsServerMessage, ClientError>>>>;
+    RwLock<HashMap<u128, Sender<Result<ControlsServerMessage, ControlsServerMessage>>>>;
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(10);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(20);
@@ -77,7 +77,7 @@ impl ControlsSession {
                 Ok(_) => (),
                 Err(_) => return error!("WsSession sender failed!\nPossible receiver dropped!"),
             },
-            OpCode::Error => match sender.send(Err(msg.get_error())) {
+            OpCode::Error => match sender.send(Err(msg)) {
                 Ok(_) => (),
                 Err(_) => return error!("WsSession sender failed!\nPossible receiver dropped!"),
             },

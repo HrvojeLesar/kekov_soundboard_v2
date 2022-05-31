@@ -154,12 +154,12 @@ namespace KekovBot
             }
         }
 
-        public static async Task<List<Sound>> GetQueue(ControlMessage msg)
+        public static async Task<List<Sound>?> GetQueue(ControlMessage msg)
         {
             DiscordGuild guild = GetGuild(msg);
             PlayQueue? playQueue;
             PlayQueueDict.TryGetValue(guild, out playQueue);
-            List<Sound> queue = new List<Sound>();
+            List<Sound>? queue = null;
             if (playQueue != null)
             {
                 queue = await playQueue.GetQueueList();

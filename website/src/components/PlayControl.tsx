@@ -7,12 +7,17 @@ import {
     UnstyledButton,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import { useState } from "react";
 import { useCookies } from "react-cookie";
-import { PlayerPlay, X } from "tabler-icons-react";
+import { Check, PlayerPlay, X } from "tabler-icons-react";
 import { API_URL, ControlsRoute } from "../api/ApiRoutes";
 import { COOKIE_NAMES } from "../auth/AuthProvider";
+import {
+    ClientErrorEnum,
+    convertClientErrorToString,
+    PlayOpCodeEnum,
+} from "../utils/utils";
 import { GuildFile } from "../views/Guild";
 
 const playButtonStyle = (theme: MantineTheme): CSSObject => ({
@@ -62,6 +67,11 @@ type PlayControlProps = {
     guildId: string;
 };
 
+type PlayResponse = {
+    client_error?: ClientErrorEnum;
+    op: PlayOpCodeEnum;
+};
+
 export function PlayControl({ file, guildId }: PlayControlProps) {
     const { classes } = useStyles();
     const [cookies] = useCookies(COOKIE_NAMES);
@@ -76,17 +86,35 @@ export function PlayControl({ file, guildId }: PlayControlProps) {
                     guild_id: guildId,
                     file_id: fileId,
                 };
-                await axios.post<PlayPayload>(
-                    `${API_URL}${ControlsRoute.postPlay}`,
-                    payload,
-                    { headers: { Authorization: `${cookies.access_token}` } }
-                );
-                showNotification({
-                    title: "Success",
-                    message: "File playing or added to queue",
-                    autoClose: 3000,
-                    color: "green",
+                const resp = await axios.post<
+                    PlayPayload,
+                    AxiosResponse<PlayResponse>
+                >(`${API_URL}${ControlsRoute.postPlay}`, payload, {
+                    headers: { Authorization: `${cookies.access_token}` },
                 });
+                console.log(resp.data);
+                if (resp.data.op !== PlayOpCodeEnum.Error) {
+                    showNotification({
+                        title: "Success",
+                        message:
+                            resp.data.op === PlayOpCodeEnum.PlayResponse
+                                ? "Playing"
+                                : "Added to queue",
+                        autoClose: 1000,
+                        color: "green",
+                        icon: <Check />,
+                    });
+                } else {
+                    showNotification({
+                        title: "Error",
+                        message: resp.data.client_error
+                            ? convertClientErrorToString(resp.data.client_error)
+                            : "Unknown error occured",
+                        autoClose: 3000,
+                        color: "red",
+                        icon: <X />,
+                    });
+                }
                 setIsSendingReq(false);
             } catch (e) {
                 // TODO: Handle

@@ -155,9 +155,9 @@ pub struct ControlsServerMessage {
     message_id: u128,
     #[serde(flatten)]
     control: Option<Controls>,
-    #[serde(skip_serializing)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     client_error: Option<ClientError>,
-    #[serde(skip_serializing)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub queue: Option<Vec<SoundFile>>,
 }
 

@@ -8,10 +8,7 @@ type ServerSoundsWindowProps = {
     guildId: string | undefined;
     guildFiles: GuildFile[];
     classes: Record<
-        | "serverSoundsPaper"
-        | "scollAreaStyle"
-        | "groupStyle"
-        | "quickEnablePaper",
+        "serverSoundsPaper" | "scollAreaStyle" | "sideWindowsStyle",
         string
     >;
 };

@@ -78,6 +78,7 @@ namespace KekovBot
                 {
                     var response = new ControlMessage((OpCode)respOpCode, queue, control);
                     var json_response = JsonConvert.SerializeObject(response);
+                    Console.WriteLine(json_response);
                     _client.Send(json_response);
                 }
             }

@@ -71,7 +71,7 @@ async fn cleanup(id: &u128, ws_channels: &Data<WsSessionCommChannels>) {
 async fn create_channels(
     id: u128,
     ws_channels: &Data<WsSessionCommChannels>,
-) -> Receiver<Result<ControlsServerMessage, ClientError>> {
+) -> Receiver<Result<ControlsServerMessage, ControlsServerMessage>> {
     let (sender, receiver) = channel();
     {
         let mut lock = ws_channels.write().await;
@@ -82,14 +82,14 @@ async fn create_channels(
 
 async fn wait_for_ws_response(
     id: &u128,
-    receiver: Receiver<Result<ControlsServerMessage, ClientError>>,
+    receiver: Receiver<Result<ControlsServerMessage, ControlsServerMessage>>,
     ws_channels: Data<WsSessionCommChannels>,
 ) -> Result<ControlsServerMessage, KekServerError> {
     return match timeout(Duration::from_secs(10), receiver).await?? {
         Ok(o) => Ok(o),
         Err(e) => {
             cleanup(id, &ws_channels).await;
-            return Err(e.into());
+            return Ok(e);
         }
     };
 }

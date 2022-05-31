@@ -1,4 +1,5 @@
 import {
+    Box,
     createStyles,
     Grid,
     Group,
@@ -21,6 +22,9 @@ import {
 } from "../api/ApiRoutes";
 import { AuthContext, COOKIE_NAMES } from "../auth/AuthProvider";
 import ControlsWindow from "../components/Guild/ControlsWindow";
+import QuickEnableWindow, {
+    EnabledUserFile,
+} from "../components/Guild/QuickEnableWindow";
 import ServerSoundsWindow from "../components/Guild/ServerSoundsWindow";
 import { PlayControl } from "../components/PlayControl";
 import { UserFile } from "./UserFiles";
@@ -35,7 +39,7 @@ export const guildMaximumWindowHeight: CSSProperties = {
     height: "calc(100vh - 34px)",
 };
 
-const useStyles = createStyles((_theme) => {
+const useStyles = createStyles((theme) => {
     return {
         serverSoundsPaper: {
             display: "flex",
@@ -46,16 +50,11 @@ const useStyles = createStyles((_theme) => {
         scollAreaStyle: {
             height: "100%",
         },
-        groupStyle: {
-            width: "100%",
-            ...guildMaximumWindowHeight,
-        },
-        quickEnablePaper: {
-            flexGrow: 1,
-            width: "100%",
+        sideWindowsStyle: {
             display: "flex",
             flexDirection: "column",
-            overflow: "hidden",
+            gap: theme.spacing.sm,
+            ...guildMaximumWindowHeight,
         },
     };
 });
@@ -67,8 +66,7 @@ export default function Guild() {
     const { guildId } = useParams();
     const [cookies] = useCookies(COOKIE_NAMES);
     const [guildFiles, setGuildFiles] = useState<GuildFile[]>([]);
-    const [userFiles, setUserFiles] = useState<UserFile[]>([]);
-    const [isUpdating, setIsUpdating] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(true);
     const { classes } = useStyles();
     useDocumentTitle(`KSv2 - ${guilds.find((g) => g.id === guildId)?.name}`);
 
@@ -99,21 +97,18 @@ export default function Guild() {
         }
     };
 
-    const fetchUserFiles = async () => {
-        if (cookies.access_token) {
-            try {
-                const { data } = await axios.get<UserFile[]>(
-                    `${API_URL}${UserRoute.getFiles}`,
-                    {
-                        headers: { authorization: `${cookies.access_token}` },
-                    }
-                );
-                console.log("files: ", data);
-                setUserFiles(data);
-            } catch (e) {
-                // TODO: Handle
-                console.log(e);
-            }
+    const quickEnableFilesCallback = (file: EnabledUserFile) => {
+        const foundFile = guildFiles.find((f) => {
+            return f.id === file.sound_file.id;
+        });
+        if (foundFile) {
+            setGuildFiles([
+                ...guildFiles.filter((f) => {
+                    return f.id !== foundFile.id;
+                }),
+            ]);
+        } else {
+            setGuildFiles([...guildFiles, file.sound_file]);
         }
     };
 
@@ -137,29 +132,13 @@ export default function Guild() {
                         />
                     </Grid.Col>
                     <Grid.Col xs={3}>
-                        <Group
-                            direction="column"
-                            className={classes.groupStyle}
-                        >
+                        <Box className={classes.sideWindowsStyle}>
                             <ControlsWindow guildId={guildId} />
-                            <Paper
-                                withBorder
-                                shadow="sm"
-                                p="sm"
-                                className={classes.quickEnablePaper}
-                            >
-                                <Title
-                                    title="Quick enable files"
-                                    order={3}
-                                    pb="xs"
-                                >
-                                    Quick enable files
-                                </Title>
-                                <ScrollArea>
-                                    <Group></Group>
-                                </ScrollArea>
-                            </Paper>
-                        </Group>
+                            <QuickEnableWindow
+                                guildId={guildId}
+                                enableCallback={quickEnableFilesCallback}
+                            />
+                        </Box>
                     </Grid.Col>
                 </Grid>
             )}

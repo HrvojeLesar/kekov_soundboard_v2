@@ -24,7 +24,7 @@ export default function ServerSoundsWindow({
         if (filterTerm !== "") {
             return guildFiles.filter((file) => {
                 if (file.display_name) {
-                    return file.display_name.indexOf(filterTerm) !== -1;
+                    return file.display_name.toLowerCase().indexOf(filterTerm) !== -1;
                 } else {
                     return false;
                 }

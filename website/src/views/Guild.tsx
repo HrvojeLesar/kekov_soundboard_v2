@@ -67,6 +67,7 @@ export default function Guild() {
     const [cookies] = useCookies(COOKIE_NAMES);
     const [guildFiles, setGuildFiles] = useState<GuildFile[]>([]);
     const [isUpdating, setIsUpdating] = useState(true);
+    const [adminMode, setAdminMode] = useState(false);
     const { classes } = useStyles();
     useDocumentTitle(`KSv2 - ${guilds.find((g) => g.id === guildId)?.name}`);
 

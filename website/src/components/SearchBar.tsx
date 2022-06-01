@@ -11,7 +11,7 @@ export default function SearchBar({ filterCallback }: SearchBarProps) {
 
     useEffect(() => {
         const filterDelay = setTimeout(() => {
-            filterCallback(searchValue);
+            filterCallback(searchValue.toLowerCase());
         }, 200);
 
         return () => {

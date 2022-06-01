@@ -10,7 +10,7 @@ import { UserFile } from "../../views/UserFiles";
 type UserFileContainerProps = {
     isSelected: boolean;
     file: UserFile;
-    onClickCallback: () => void;
+    onClickCallback: (file: UserFile) => void;
 };
 
 const useStyles = createStyles(
@@ -93,7 +93,7 @@ export default function UserFileContainer({
                 p="sm"
                 className={classes.unstyledButtonStyle}
                 onClick={() => {
-                    onClickCallback();
+                    onClickCallback(file);
                 }}
             >
                 <Group spacing="sm">

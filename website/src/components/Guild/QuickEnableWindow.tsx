@@ -14,6 +14,7 @@ import { X } from "tabler-icons-react";
 import { API_URL, GuildRoute, UserRoute } from "../../api/ApiRoutes";
 import { COOKIE_NAMES } from "../../auth/AuthProvider";
 import { UserFile } from "../../views/UserFiles";
+import SearchBar from "../SearchBar";
 import QuickEnableCheckbox from "./QuickEnableCheckbox";
 
 const useStyle = createStyles((_theme) => {
@@ -48,6 +49,7 @@ export default function QuickEnableWindow({
     const [cookies] = useCookies(COOKIE_NAMES);
     const [userFiles, setUserFiles] = useState<EnabledUserFile[]>([]);
     const [isFetchingFiles, setIsFetchingFiles] = useState(true);
+    const [filterTerm, setFilterTerm] = useState("");
 
     const { classes } = useStyle();
 
@@ -121,6 +123,24 @@ export default function QuickEnableWindow({
         );
     };
 
+    const filterFiles = () => {
+        if (filterTerm !== "") {
+            return userFiles.filter((file) => {
+                if (file.sound_file.display_name) {
+                    return (
+                        file.sound_file.display_name
+                            .toLowerCase()
+                            .indexOf(filterTerm) !== -1
+                    );
+                } else {
+                    return false;
+                }
+            });
+        } else {
+            return userFiles;
+        }
+    };
+
     useEffect(() => {
         abortController?.abort();
         setIsFetchingFiles(true);
@@ -137,11 +157,16 @@ export default function QuickEnableWindow({
             <Title title="Quick enable files" order={3} pb="xs">
                 Quick enable files
             </Title>
+            <SearchBar
+                filterCallback={(searchValue) => {
+                    setFilterTerm(searchValue);
+                }}
+            />
             {isFetchingFiles ? (
                 <div>Loading...</div>
             ) : (
                 <ScrollArea>
-                    {userFiles.map((file) => {
+                    {filterFiles().map((file) => {
                         return (
                             <Box m="sm" key={file.sound_file.id}>
                                 <QuickEnableCheckbox

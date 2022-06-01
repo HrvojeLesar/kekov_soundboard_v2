@@ -77,7 +77,7 @@ export default function UserFiles() {
     const [cookies] = useCookies(COOKIE_NAMES);
     const [files, setFiles] = useState<UserFile[]>([]);
     const [isFetching, setIsFetching] = useState(true);
-    const [selectedIndex, setSelectedIndex] = useState<number | undefined>(
+    const [selectedFile, setSelectedFile] = useState<UserFile | undefined>(
         undefined
     );
     const [filterTerm, setFilterTerm] = useState("");
@@ -103,8 +103,8 @@ export default function UserFiles() {
     };
 
     const getEditTitle = () => {
-        return selectedIndex !== undefined
-            ? `Edit: ${files[selectedIndex].display_name}`
+        return selectedFile !== undefined
+            ? `Edit: ${selectedFile.display_name}`
             : "Edit";
     };
 
@@ -122,7 +122,7 @@ export default function UserFiles() {
                     )
                     .then(({ data }) => {
                         resolve();
-                        setSelectedIndex(undefined);
+                        setSelectedFile(undefined);
                         setFiles([
                             ...files.filter((file) => {
                                 return file.id !== data.id;
@@ -142,7 +142,7 @@ export default function UserFiles() {
         if (filterTerm !== "") {
             return files.filter((file) => {
                 if (file.display_name) {
-                    return file.display_name.indexOf(filterTerm) !== -1;
+                    return file.display_name.toLowerCase().indexOf(filterTerm) !== -1;
                 } else {
                     return false;
                 }
@@ -174,7 +174,7 @@ export default function UserFiles() {
                         <Box py="sm">
                             <SearchBar
                                 filterCallback={(searchValue) => {
-                                    setSelectedIndex(undefined);
+                                    setSelectedFile(undefined);
                                     setFilterTerm(searchValue);
                                 }}
                             />
@@ -182,16 +182,16 @@ export default function UserFiles() {
                         <ScrollArea className={classes.scollAreaStyle}>
                             <Group>
                                 {!isFetching &&
-                                    filterFiles().map((file, index) => {
+                                    filterFiles().map((file) => {
                                         return (
                                             <UserFileContainer
                                                 key={file.id}
                                                 file={file}
                                                 isSelected={
-                                                    selectedIndex === index
+                                                    selectedFile?.id === file.id
                                                 }
-                                                onClickCallback={() => {
-                                                    setSelectedIndex(index);
+                                                onClickCallback={(f) => {
+                                                    setSelectedFile(f);
                                                 }}
                                             />
                                         );
@@ -217,12 +217,12 @@ export default function UserFiles() {
                                 {getEditTitle()}
                             </Title>
                             {/*TODO: Add delete, toggle public, private*/}
-                            {selectedIndex !== undefined ? (
+                            {selectedFile !== undefined ? (
                                 <DeleteFile
                                     deleteCallback={() =>
-                                        deleteFile(files[selectedIndex])
+                                        deleteFile(selectedFile)
                                     }
-                                    file={files[selectedIndex]}
+                                    file={selectedFile}
                                 />
                             ) : (
                                 "No file selected"
@@ -238,8 +238,8 @@ export default function UserFiles() {
                                 Servers
                             </Title>
                             <ScrollArea>
-                                {selectedIndex !== undefined && (
-                                    <ServerSelect file={files[selectedIndex]} />
+                                {selectedFile !== undefined && (
+                                    <ServerSelect file={selectedFile} />
                                 )}
                             </ScrollArea>
                         </Paper>

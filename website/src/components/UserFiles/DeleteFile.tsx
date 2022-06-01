@@ -1,8 +1,7 @@
 import { ActionIcon, Modal } from "@mantine/core";
 import { useState } from "react";
 import { Trash } from "tabler-icons-react";
-import { GuildFile } from "../../views/Guild";
-import { UserFile } from "../../views/UserFiles";
+import { GuildFile, UserFile } from "../../utils/utils";
 import DeleteModalBody from "../DeleteModalBody";
 
 type DeleteFileProps = {

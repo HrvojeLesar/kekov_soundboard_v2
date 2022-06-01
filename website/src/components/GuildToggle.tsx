@@ -6,13 +6,10 @@ import {
     UnstyledButton,
     createStyles,
 } from "@mantine/core";
-import axios from "axios";
 import { useState } from "react";
 import { useCookies } from "react-cookie";
-import { API_URL, GuildRoute } from "../api/ApiRoutes";
 import { COOKIE_NAMES, Guild } from "../auth/AuthProvider";
-import { nameToInitials } from "../utils/utils";
-import { UserFile } from "../views/UserFiles";
+import { ApiRequest, nameToInitials, UserFile } from "../utils/utils";
 
 type GuildToggleProps = {
     guild: Guild;
@@ -111,18 +108,11 @@ export function GuildToggle({
     };
 
     const addToGuild = async () => {
-        await axios.post(
-            `${API_URL}${GuildRoute.postAddSound}${guild.id}/${file.id}`,
-            {},
-            { headers: { authorization: `${cookies.access_token}` } }
-        );
+        await ApiRequest.addFileToGuild(guild.id, file.id, cookies.access_token);
     };
 
     const removeFromGuild = async () => {
-        await axios.delete(
-            `${API_URL}${GuildRoute.postAddSound}${guild.id}/${file.id}`,
-            { headers: { authorization: `${cookies.access_token}` } }
-        );
+        await ApiRequest.removeFileFromGuild(guild.id, file.id, cookies.access_token);
     };
 
     return (

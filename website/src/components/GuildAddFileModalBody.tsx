@@ -1,9 +1,7 @@
-import axios from "axios";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
-import { API_URL, GuildRoute, UserRoute } from "../api/ApiRoutes";
-import { AuthContext, COOKIE_NAMES } from "../auth/AuthProvider";
-import { UserFile } from "../views/UserFiles";
+import { COOKIE_NAMES } from "../auth/AuthProvider";
+import { ApiRequest, UserFile } from "../utils/utils";
 import { FileToggle } from "./FileToggle";
 
 type GuildAddFileModalBodyPropsType = {
@@ -28,11 +26,10 @@ export default function GuildAddFileModalBody({
     const fetchFiles = async () => {
         if (cookies.access_token) {
             try {
-                const { data } = await axios.get<EnabledFile[]>(
-                    `${API_URL}${UserRoute.getEnabledFiles}${guildId}`,
-                    {
-                        headers: { authorization: `${cookies.access_token}` },
-                    }
+                const { data } = await ApiRequest.fetchEnabledUserFiles(
+                    guildId,
+                    undefined,
+                    cookies.access_token
                 );
                 console.log(data);
                 setFiles(data);
@@ -44,19 +41,16 @@ export default function GuildAddFileModalBody({
     };
 
     const addToGuild = async (file: UserFile) => {
-        await axios.post(
-            `${API_URL}${GuildRoute.postAddSound}${guildId}/${file.id}`,
-            {},
-            { headers: { authorization: `${cookies.access_token}` } }
-        );
+        await ApiRequest.addFileToGuild(guildId, file.id, cookies.access_token);
         addFileCallback(file);
         return;
     };
 
     const removeFromGuild = async (file: UserFile) => {
-        await axios.delete(
-            `${API_URL}${GuildRoute.postAddSound}${guildId}/${file.id}`,
-            { headers: { authorization: `${cookies.access_token}` } }
+        await ApiRequest.removeFileFromGuild(
+            guildId,
+            file.id,
+            cookies.access_token
         );
         removeFileCallback(file);
         return;

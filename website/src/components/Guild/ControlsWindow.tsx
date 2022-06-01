@@ -1,10 +1,8 @@
 import { Button, createStyles, Group, Paper, Title } from "@mantine/core";
-import axios from "axios";
-import { useContext } from "react";
 import { useCookies } from "react-cookie";
-import { API_URL, ControlsRoute } from "../../api/ApiRoutes";
-import { AuthContext, COOKIE_NAMES } from "../../auth/AuthProvider";
-const useStyles = createStyles((theme) => {
+import { COOKIE_NAMES } from "../../auth/AuthProvider";
+import { ApiRequest } from "../../utils/utils";
+const useStyles = createStyles((_theme) => {
     return {
         paperStyle: {
             width: "100%",
@@ -29,16 +27,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
     const { classes } = useStyles();
 
     const handleGetQueue = () => {
-        axios
-            .post(
-                `${API_URL}${ControlsRoute.postQueue}`,
-                { guild_id: guildId },
-                {
-                    headers: {
-                        Authorization: `${cookies.access_token}`,
-                    },
-                }
-            )
+        ApiRequest.controlsGetQueue(guildId, cookies.access_token)
             .then((resp) => {
                 console.log(resp);
             })
@@ -48,16 +37,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
     };
 
     const handleSkip = () => {
-        axios
-            .post(
-                `${API_URL}${ControlsRoute.postSkip}`,
-                { guild_id: guildId },
-                {
-                    headers: {
-                        Authorization: `${cookies.access_token}`,
-                    },
-                }
-            )
+        ApiRequest.controlsSkip(guildId, cookies.access_token)
             .then((resp) => {
                 console.log(resp);
             })
@@ -67,16 +47,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
     };
 
     const handleStop = () => {
-        axios
-            .post(
-                `${API_URL}${ControlsRoute.postStop}`,
-                { guild_id: guildId },
-                {
-                    headers: {
-                        Authorization: `${cookies.access_token}`,
-                    },
-                }
-            )
+        ApiRequest.controlsStop(guildId, cookies.access_token)
             .then((resp) => {
                 console.log(resp);
             })

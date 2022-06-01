@@ -5,11 +5,10 @@ import {
     Modal,
     Paper,
     ScrollArea,
-    TextInput,
     Title,
 } from "@mantine/core";
-import { useEffect, useState } from "react";
-import { GuildFile } from "../../views/Guild";
+import { useState } from "react";
+import { GuildFile } from "../../utils/utils";
 import DeleteModalBody from "../DeleteModalBody";
 import { PlayControl } from "../PlayControl";
 import SearchBar from "../SearchBar";
@@ -117,7 +116,7 @@ export default function ServerSoundsWindow({
                     <DeleteModalBody
                         file={lastClickedFile}
                         closeCallback={() => setIsModalOpen(false)}
-                        deleteCallback={() => new Promise<void>((resolve, reject) => {resolve();})}
+                        deleteCallback={() => new Promise<void>((resolve, _reject) => {resolve();})}
                     />
                 </Modal>
             ) : (

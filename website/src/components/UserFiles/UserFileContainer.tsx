@@ -5,7 +5,7 @@ import {
     UnstyledButton,
     createStyles,
 } from "@mantine/core";
-import { UserFile } from "../../views/UserFiles";
+import { UserFile } from "../../utils/utils";
 
 type UserFileContainerProps = {
     isSelected: boolean;

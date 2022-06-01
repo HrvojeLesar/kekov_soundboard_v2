@@ -1,16 +1,10 @@
 import { useContext, useEffect, useState } from "react";
 import { Box } from "@mantine/core";
-import axios, { CanceledError } from "axios";
-import { AuthContext, COOKIE_NAMES, Guild } from "../../auth/AuthProvider";
-import { UserFile } from "../../views/UserFiles";
-import { API_URL, UserRoute } from "../../api/ApiRoutes";
+import { CanceledError } from "axios";
+import { AuthContext, COOKIE_NAMES } from "../../auth/AuthProvider";
 import { GuildToggle } from "../GuildToggle";
 import { useCookies } from "react-cookie";
-
-type GuildsWithFile = {
-    guild: Guild;
-    has_file: boolean;
-};
+import { ApiRequest, GuildsWithFile, UserFile } from "../../utils/utils";
 
 type ServerSelectProps = {
     file: UserFile;
@@ -28,13 +22,7 @@ export default function ServerSelect({ file }: ServerSelectProps) {
         if (cookies.access_token) {
             try {
                 abortController = new AbortController();
-                const { data } = await axios.get<GuildsWithFile[]>(
-                    `${API_URL}${UserRoute.getGuildsWithFile}${file.id}`,
-                    {
-                        headers: { authorization: `${cookies.access_token}` },
-                        signal: abortController.signal,
-                    }
-                );
+                const { data } = await ApiRequest.fetchGuildsWithFile(file.id, abortController, cookies.access_token);
                 setGuilds(
                     data.map((guild) => {
                         const globalGuild = globalGuilds.find(

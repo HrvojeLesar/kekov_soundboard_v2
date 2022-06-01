@@ -4,7 +4,6 @@ import {
     UnstyledButton,
     Text,
     createStyles,
-    Box,
 } from "@mantine/core";
 import { EnabledUserFile } from "./QuickEnableWindow";
 

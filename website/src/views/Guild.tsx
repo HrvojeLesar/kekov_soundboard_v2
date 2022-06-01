@@ -3,38 +3,19 @@ import {
     Button,
     createStyles,
     Grid,
-    Group,
-    Paper,
-    ScrollArea,
-    Title,
 } from "@mantine/core";
 import { useDocumentTitle } from "@mantine/hooks";
-import { showNotification } from "@mantine/notifications";
-import axios, { CanceledError } from "axios";
+import { CanceledError } from "axios";
 import { CSSProperties, useContext, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { useParams } from "react-router-dom";
-import { X } from "tabler-icons-react";
-import {
-    API_URL,
-    ControlsRoute,
-    GuildRoute,
-    UserRoute,
-} from "../api/ApiRoutes";
 import { AuthContext, COOKIE_NAMES } from "../auth/AuthProvider";
 import ControlsWindow from "../components/Guild/ControlsWindow";
 import QuickEnableWindow, {
     EnabledUserFile,
 } from "../components/Guild/QuickEnableWindow";
 import ServerSoundsWindow from "../components/Guild/ServerSoundsWindow";
-import { PlayControl } from "../components/PlayControl";
-import { UserFile } from "./UserFiles";
-
-export type GuildFile = {
-    id: string;
-    display_name?: string;
-    owner?: string;
-};
+import { ApiRequest, GuildFile } from "../utils/utils";
 
 export const guildMaximumWindowHeight: CSSProperties = {
     height: "calc(100vh - 34px)",
@@ -74,17 +55,13 @@ export default function Guild() {
     useDocumentTitle(`KSv2 - ${guilds.find((g) => g.id === guildId)?.name}`);
 
     const fetchGuildFiles = async () => {
-        if (cookies?.access_token) {
+        if (cookies?.access_token && guildId) {
             try {
                 abortController = new AbortController();
-                const { data } = await axios.get<GuildFile[]>(
-                    `${API_URL}${GuildRoute.getGuildSounds}${guildId}`,
-                    {
-                        headers: {
-                            Authorization: `${cookies.access_token}`,
-                        },
-                        signal: abortController.signal,
-                    }
+                const { data } = await ApiRequest.fetchGuildFiles(
+                    guildId,
+                    abortController,
+                    cookies.access_token
                 );
                 setGuildFiles(data);
                 setIsUpdating(false);
@@ -123,9 +100,9 @@ export default function Guild() {
 
     return (
         <>
-        <Button onClick={() => setAdminMode(!adminMode)}>
-            Toggle admin mode
-        </Button>
+            <Button onClick={() => setAdminMode(!adminMode)}>
+                Toggle admin mode
+            </Button>
             {isUpdating ? (
                 <>Loading...</>
             ) : (

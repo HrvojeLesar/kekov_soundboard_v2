@@ -7,18 +7,17 @@ import {
     UnstyledButton,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
-import axios, { AxiosResponse } from "axios";
 import { useState } from "react";
 import { useCookies } from "react-cookie";
 import { Check, PlayerPlay, X } from "tabler-icons-react";
-import { API_URL, ControlsRoute } from "../api/ApiRoutes";
 import { COOKIE_NAMES } from "../auth/AuthProvider";
 import {
-    ClientErrorEnum,
+    ApiRequest,
     convertClientErrorToString,
+    GuildFile,
     PlayOpCodeEnum,
+    PlayPayload,
 } from "../utils/utils";
-import { GuildFile } from "../views/Guild";
 
 const playButtonStyle = (theme: MantineTheme): CSSObject => ({
     width: "50px",
@@ -56,20 +55,9 @@ const useStyles = createStyles((theme) => ({
     },
 }));
 
-type PlayPayload = {
-    guild_id: string;
-    file_id: string;
-    channel_id?: string;
-};
-
 type PlayControlProps = {
     file: GuildFile;
     guildId: string;
-};
-
-type PlayResponse = {
-    client_error?: ClientErrorEnum;
-    op: PlayOpCodeEnum;
 };
 
 export function PlayControl({ file, guildId }: PlayControlProps) {
@@ -85,12 +73,10 @@ export function PlayControl({ file, guildId }: PlayControlProps) {
                     guild_id: guildId,
                     file_id: fileId,
                 };
-                const resp = await axios.post<
-                    PlayPayload,
-                    AxiosResponse<PlayResponse>
-                >(`${API_URL}${ControlsRoute.postPlay}`, payload, {
-                    headers: { Authorization: `${cookies.access_token}` },
-                });
+                const resp = await ApiRequest.controlsPlay(
+                    payload,
+                    cookies.access_token
+                );
                 console.log(resp.data);
                 if (resp.data.op !== PlayOpCodeEnum.Error) {
                     showNotification({

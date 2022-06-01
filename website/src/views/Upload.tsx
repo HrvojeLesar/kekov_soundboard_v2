@@ -28,11 +28,8 @@ import {
     FileContainerRef,
 } from "../components/FileContainer";
 import { AuthContext, COOKIE_NAMES } from "../auth/AuthProvider";
-import axios from "axios";
-import { API_URL, FilesRoute, GuildRoute } from "../api/ApiRoutes";
 import { FileUpload, Icon, X } from "tabler-icons-react";
 import { v4 as uuidv4 } from "uuid";
-import { UserFile } from "./UserFiles";
 import { showNotification } from "@mantine/notifications";
 import {
     UploadGuildWindow,
@@ -40,6 +37,7 @@ import {
 } from "../components/Upload/UploadGuildWindow";
 import { useCookies } from "react-cookie";
 import { useDocumentTitle } from "@mantine/hooks";
+import { ApiRequest, UserFile } from "../utils/utils";
 
 const MAX_TOTAL_SIZE = 10_000_000;
 const ACCEPTED_MIMES = [
@@ -223,19 +221,7 @@ export default function Upload() {
             formData.append(fileName, file.file);
         });
         setIsUploading(true);
-        axios
-            .post<UserFile[]>(`${API_URL}${FilesRoute.postUpload}`, formData, {
-                headers: {
-                    Authorization: `${cookies.access_token}`,
-                    "Content-Type": "multipart/form-data",
-                },
-                onUploadProgress: (progress) => {
-                    const uploadPercent = Math.round(
-                        (progress.loaded / progress.total) * 100
-                    );
-                    setProgressValue(uploadPercent);
-                },
-            })
+        ApiRequest.upload(formData, cookies.access_token, setProgressValue)
             .then(async ({ data }) => {
                 const selectedGuildIds =
                     selectedGuildsRef.current.selectedGuildIds;
@@ -298,11 +284,7 @@ export default function Upload() {
             guilds: guilds,
             files: files.map((f) => f.id),
         };
-        return axios.post(`${API_URL}${GuildRoute.postBulkenable}`, bulk, {
-            headers: {
-                Authorization: `${cookies.access_token}`,
-            },
-        });
+        return ApiRequest.bulkEnable(bulk, cookies.access_token);
     };
 
     useEffect(() => {

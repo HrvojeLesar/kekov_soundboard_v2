@@ -8,20 +8,14 @@ import {
     Title,
 } from "@mantine/core";
 import { useDocumentTitle } from "@mantine/hooks";
-import axios from "axios";
 import { CSSProperties, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
-import { API_URL, UserRoute } from "../api/ApiRoutes";
 import { COOKIE_NAMES } from "../auth/AuthProvider";
 import SearchBar from "../components/SearchBar";
 import DeleteFile from "../components/UserFiles/DeleteFile";
 import ServerSelect from "../components/UserFiles/ServerSelect";
 import UserFileContainer from "../components/UserFiles/UserFileContainer";
-
-export type UserFile = {
-    id: string;
-    display_name: string;
-};
+import { ApiRequest, UserFile } from "../utils/utils";
 
 export enum UserFilesModalType {
     Add,
@@ -87,11 +81,8 @@ export default function UserFiles() {
     const fetchFiles = async () => {
         if (cookies.access_token) {
             try {
-                const { data } = await axios.get<UserFile[]>(
-                    `${API_URL}${UserRoute.getFiles}`,
-                    {
-                        headers: { authorization: `${cookies.access_token}` },
-                    }
+                const { data } = await ApiRequest.getUserFiles(
+                    cookies.access_token
                 );
                 setIsFetching(false);
                 setFiles(data);
@@ -111,15 +102,7 @@ export default function UserFiles() {
     const deleteFile = (file: UserFile): Promise<void> => {
         return new Promise((resolve, reject) => {
             if (cookies.access_token) {
-                axios
-                    .delete<UserFile>(
-                        `${API_URL}${UserRoute.deleteFile}${file.id}`,
-                        {
-                            headers: {
-                                authorization: `${cookies.access_token}`,
-                            },
-                        }
-                    )
+                ApiRequest.deleteUserFile(file.id, cookies.access_token)
                     .then(({ data }) => {
                         resolve();
                         setSelectedFile(undefined);

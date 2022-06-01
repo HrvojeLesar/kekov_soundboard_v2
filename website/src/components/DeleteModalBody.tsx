@@ -2,8 +2,7 @@ import { Button, Group, Stack, Text } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useState } from "react";
 import { Check, X } from "tabler-icons-react";
-import { GuildFile } from "../views/Guild";
-import { UserFile } from "../views/UserFiles";
+import { GuildFile, UserFile } from "../utils/utils";
 
 type DeleteModalBodyProps = {
     file: UserFile | GuildFile;

@@ -3,8 +3,8 @@ import { useEffect } from "react";
 import { useCookies } from "react-cookie";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { API_URL, AuthRoute } from "./api/ApiRoutes";
-import { COOKIE_NAMES, LoginResponse } from "./auth/AuthProvider";
-import { cookieOptions } from "./utils/utils";
+import { COOKIE_NAMES } from "./auth/AuthProvider";
+import { ApiRequest, cookieOptions } from "./utils/utils";
 
 function LoginCallback() {
     let [searchParams] = useSearchParams();
@@ -16,11 +16,7 @@ function LoginCallback() {
         const state = searchParams.get("state");
         const error = searchParams.get("error");
         if (!error && code && state) {
-            // TODO: change url
-            axios
-                .get<LoginResponse>(
-                    `${API_URL}${AuthRoute.getCallback}?code=${code}&state=${state}`
-                )
+            ApiRequest.loginCallback(code, state)
                 .then(({ data }) => {
                     const options = cookieOptions(data);
                     setCookie("access_token", data.access_token, options);

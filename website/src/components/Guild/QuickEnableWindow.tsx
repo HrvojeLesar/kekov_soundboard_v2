@@ -1,19 +1,17 @@
 import {
     Box,
     createStyles,
-    Group,
     Paper,
     ScrollArea,
     Title,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
-import axios, { CanceledError } from "axios";
+import { CanceledError } from "axios";
 import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { X } from "tabler-icons-react";
-import { API_URL, GuildRoute, UserRoute } from "../../api/ApiRoutes";
 import { COOKIE_NAMES } from "../../auth/AuthProvider";
-import { UserFile } from "../../views/UserFiles";
+import { ApiRequest, UserFile } from "../../utils/utils";
 import SearchBar from "../SearchBar";
 import QuickEnableCheckbox from "./QuickEnableCheckbox";
 
@@ -56,12 +54,10 @@ export default function QuickEnableWindow({
         if (cookies.access_token) {
             try {
                 abortController = new AbortController();
-                const { data } = await axios.get<EnabledUserFile[]>(
-                    `${API_URL}${UserRoute.getEnabledFiles}${guildId}`,
-                    {
-                        headers: { authorization: `${cookies.access_token}` },
-                        signal: abortController?.signal,
-                    }
+                const { data } = await ApiRequest.fetchEnabledUserFiles(
+                    guildId,
+                    abortController,
+                    cookies.access_token
                 );
                 setUserFiles(data);
                 setIsFetchingFiles(false);
@@ -107,17 +103,18 @@ export default function QuickEnableWindow({
     };
 
     const addToGuild = async (file: EnabledUserFile) => {
-        await axios.post(
-            `${API_URL}${GuildRoute.postAddSound}${guildId}/${file.sound_file.id}`,
-            {},
-            { headers: { authorization: `${cookies.access_token}` } }
+        await ApiRequest.addFileToGuild(
+            guildId,
+            file.sound_file.id,
+            cookies.access_token
         );
     };
 
     const removeFromGuild = async (file: EnabledUserFile) => {
-        await axios.delete(
-            `${API_URL}${GuildRoute.postAddSound}${guildId}/${file.sound_file.id}`,
-            { headers: { authorization: `${cookies.access_token}` } }
+        await ApiRequest.removeFileFromGuild(
+            guildId,
+            file.sound_file.id,
+            cookies.access_token
         );
     };
 

@@ -1,18 +1,15 @@
-import axios from "axios";
 import { createContext, useEffect, useState } from "react";
 import { ReactNode } from "react";
 import { useCookies } from "react-cookie";
-import qs from "qs";
-import { API_URL, AuthRoute, DiscordRoutes, UserRoute } from "../api/ApiRoutes";
 import { useNavigate } from "react-router-dom";
-import { cookieOptions } from "../utils/utils";
+import { ApiRequest, cookieOptions, LoginResponse } from "../utils/utils";
 
 enum TokenType {
     AccessToken = "access_token",
     RefreshToken = "refresh_token",
 }
 
-type User = {
+export type DiscordUser = {
     id: string;
     username: string;
     discriminator: string;
@@ -39,7 +36,7 @@ export type Guild = {
 };
 
 type AuthContextType = {
-    user: User | undefined;
+    user: DiscordUser | undefined;
     guilds: Guild[];
     login: (data: LoginResponse) => Promise<void>;
     logout: () => Promise<void>;
@@ -48,33 +45,19 @@ type AuthContextType = {
     isFetching: boolean;
 };
 
-export type LoginResponse = {
-    access_token: string;
-    expires_in: number;
-    guild?: Guild;
-    refresh_token: string;
-    scope: string;
-    token_type: string;
-};
-
 export const COOKIE_NAMES = ["access_token", "refresh_token", "expires"];
 
 export const AuthContext = createContext<AuthContextType>(null!);
 
 function AuthProvider({ children }: { children: ReactNode }) {
     const navigate = useNavigate();
-    const [user, setUser] = useState<User | undefined>();
+    const [user, setUser] = useState<DiscordUser | undefined>();
     const [guilds, setGuilds] = useState<Guild[]>([]);
     const [cookies, setCookie, removeCookie] = useCookies(COOKIE_NAMES);
     const [isFetching, setIsFetching] = useState(true);
 
     const fetchUserInfo = async (access_token: string) => {
-        await axios
-            .get<User>(DiscordRoutes.Me, {
-                headers: {
-                    Authorization: `Bearer ${access_token}`,
-                },
-            })
+        await ApiRequest.fetchDiscordUser(access_token)
             .then(({ data }) => {
                 setUser(data);
             })
@@ -102,15 +85,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
                     token: cookies.access_token,
                     token_type: TokenType.AccessToken,
                 };
-                await axios.post<RevokeAccessToken>(
-                    `${API_URL}${AuthRoute.postRevoke}`,
-                    qs.stringify(token),
-                    {
-                        headers: {
-                            ContentType: "application/x-www-form-urlencoded",
-                        },
-                    }
-                );
+                await ApiRequest.revokeToken(token);
                 revokeAccess();
                 navigate("/");
             } catch (e) {
@@ -129,10 +104,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const refreshToken = async () => {
-        return await axios
-            .post<LoginResponse>(`${API_URL}${AuthRoute.postRefresh}`, {
-                refresh_token: `${cookies.refresh_token}`,
-            })
+        return ApiRequest.refreshToken(cookies.refresh_token)
             .then(({ data }) => {
                 return refreshAccess(data);
             })
@@ -147,13 +119,8 @@ function AuthProvider({ children }: { children: ReactNode }) {
     const fetchGuilds = async () => {
         try {
             if (cookies.access_token) {
-                let { data } = await axios.get<Guild[]>(
-                    `${API_URL}${UserRoute.getGuilds}`,
-                    {
-                        headers: {
-                            Authorization: `${cookies.access_token}`,
-                        },
-                    }
+                let { data } = await ApiRequest.fetchGuilds(
+                    cookies.access_token
                 );
                 setGuilds(data);
             }

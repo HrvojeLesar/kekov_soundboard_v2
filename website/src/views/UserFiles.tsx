@@ -142,7 +142,10 @@ export default function UserFiles() {
         if (filterTerm !== "") {
             return files.filter((file) => {
                 if (file.display_name) {
-                    return file.display_name.toLowerCase().indexOf(filterTerm) !== -1;
+                    return (
+                        file.display_name.toLowerCase().indexOf(filterTerm) !==
+                        -1
+                    );
                 } else {
                     return false;
                 }
@@ -201,7 +204,7 @@ export default function UserFiles() {
                     </Paper>
                 </Grid.Col>
                 <Grid.Col xs={3}>
-                        <Box className={classes.userFilesGroupStyle}>
+                    <Box className={classes.userFilesGroupStyle}>
                         <Paper
                             withBorder
                             shadow="sm"
@@ -243,7 +246,7 @@ export default function UserFiles() {
                                 )}
                             </ScrollArea>
                         </Paper>
-                        </Box>
+                    </Box>
                 </Grid.Col>
             </Grid>
         </>

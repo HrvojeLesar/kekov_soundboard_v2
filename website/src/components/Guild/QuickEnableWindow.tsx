@@ -35,13 +35,12 @@ export type EnabledUserFile = {
 };
 
 type QuickEnableWindowProps = {
-    guildId: string | undefined;
+    guildId: string;
     enableCallback: (file: EnabledUserFile) => void;
 };
 
 let abortController: AbortController | undefined = undefined;
 
-// TODO: Add search
 export default function QuickEnableWindow({
     guildId,
     enableCallback,
@@ -90,7 +89,6 @@ export default function QuickEnableWindow({
                     await removeFromGuild(foundFile);
                 }
                 foundFile.enabled = state;
-                // TODO: Update actual server sounds display
                 setUserFiles([...userFiles]);
                 enableCallback(foundFile);
             } catch (e) {
@@ -157,11 +155,13 @@ export default function QuickEnableWindow({
             <Title title="Quick enable files" order={3} pb="xs">
                 Quick enable files
             </Title>
-            <SearchBar
-                filterCallback={(searchValue) => {
-                    setFilterTerm(searchValue);
-                }}
-            />
+            <Box py="sm">
+                <SearchBar
+                    filterCallback={(searchValue) => {
+                        setFilterTerm(searchValue);
+                    }}
+                />
+            </Box>
             {isFetchingFiles ? (
                 <div>Loading...</div>
             ) : (

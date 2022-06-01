@@ -1,7 +1,7 @@
 import { Button, Group, Stack, Text } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useState } from "react";
-import { X } from "tabler-icons-react";
+import { Check, X } from "tabler-icons-react";
 import { GuildFile } from "../views/Guild";
 import { UserFile } from "../views/UserFiles";
 
@@ -27,6 +27,7 @@ export default function DeleteModalBody({
                     message: "File has been successfully deleted!",
                     autoClose: 3000,
                     color: "green",
+                    icon: <Check />,
                 });
                 closeCallback();
             })

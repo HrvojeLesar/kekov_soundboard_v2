@@ -1,5 +1,6 @@
 import {
     Box,
+    Button,
     createStyles,
     Grid,
     Group,
@@ -67,6 +68,7 @@ export default function Guild() {
     const [cookies] = useCookies(COOKIE_NAMES);
     const [guildFiles, setGuildFiles] = useState<GuildFile[]>([]);
     const [isUpdating, setIsUpdating] = useState(true);
+    // TODO: admin
     const [adminMode, setAdminMode] = useState(false);
     const { classes } = useStyles();
     useDocumentTitle(`KSv2 - ${guilds.find((g) => g.id === guildId)?.name}`);
@@ -121,22 +123,26 @@ export default function Guild() {
 
     return (
         <>
+        <Button onClick={() => setAdminMode(!adminMode)}>
+            Toggle admin mode
+        </Button>
             {isUpdating ? (
                 <>Loading...</>
             ) : (
                 <Grid>
                     <Grid.Col xs={9}>
                         <ServerSoundsWindow
-                            guildId={guildId}
+                            adminMode={adminMode}
+                            guildId={guildId ?? "1"}
                             guildFiles={guildFiles}
                             classes={classes}
                         />
                     </Grid.Col>
                     <Grid.Col xs={3}>
                         <Box className={classes.sideWindowsStyle}>
-                            <ControlsWindow guildId={guildId} />
+                            <ControlsWindow guildId={guildId ?? "1"} />
                             <QuickEnableWindow
-                                guildId={guildId}
+                                guildId={guildId ?? "1"}
                                 enableCallback={quickEnableFilesCallback}
                             />
                         </Box>

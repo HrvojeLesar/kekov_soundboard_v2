@@ -21,7 +21,7 @@ const useStyles = createStyles((theme) => {
 });
 
 type ControlsWindowProps = {
-    guildId?: string;
+    guildId: string;
 };
 
 export default function ControlsWindow({ guildId }: ControlsWindowProps) {

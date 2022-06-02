@@ -113,9 +113,11 @@ export default function Guild() {
                             guildId={guildId ?? "1"}
                             guildFiles={guildFiles}
                             classes={classes}
+                            setGuildFiles={setGuildFiles}
                         />
                     </Grid.Col>
                     <Grid.Col xs={3}>
+                    {adminMode ? (<></>) : (
                         <Box className={classes.sideWindowsStyle}>
                             <ControlsWindow guildId={guildId ?? "1"} />
                             <QuickEnableWindow
@@ -123,6 +125,7 @@ export default function Guild() {
                                 enableCallback={quickEnableFilesCallback}
                             />
                         </Box>
+                    )}
                     </Grid.Col>
                 </Grid>
             )}

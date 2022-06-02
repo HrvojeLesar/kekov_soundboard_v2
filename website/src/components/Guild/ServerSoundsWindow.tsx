@@ -7,8 +7,10 @@ import {
     ScrollArea,
     Title,
 } from "@mantine/core";
-import { useState } from "react";
-import { GuildFile } from "../../utils/utils";
+import { Dispatch, SetStateAction, useState } from "react";
+import { useCookies } from "react-cookie";
+import { COOKIE_NAMES } from "../../auth/AuthProvider";
+import { ApiRequest, GuildFile } from "../../utils/utils";
 import DeleteModalBody from "../DeleteModalBody";
 import { PlayControl } from "../PlayControl";
 import SearchBar from "../SearchBar";
@@ -16,6 +18,7 @@ import SearchBar from "../SearchBar";
 type ServerSoundsWindowProps = {
     guildId: string;
     guildFiles: GuildFile[];
+    setGuildFiles: Dispatch<SetStateAction<GuildFile[]>>;
     classes: Record<
         "serverSoundsPaper" | "scollAreaStyle" | "sideWindowsStyle",
         string
@@ -28,12 +31,15 @@ export default function ServerSoundsWindow({
     guildFiles,
     classes,
     adminMode,
+    setGuildFiles,
 }: ServerSoundsWindowProps) {
     const [filterTerm, setFilterTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [lastClickedFile, setLastClickedFile] = useState<
         GuildFile | undefined
     >(undefined);
+
+    const [cookies] = useCookies(COOKIE_NAMES);
 
     const filterFiles = () => {
         if (filterTerm !== "") {
@@ -116,7 +122,29 @@ export default function ServerSoundsWindow({
                     <DeleteModalBody
                         file={lastClickedFile}
                         closeCallback={() => setIsModalOpen(false)}
-                        deleteCallback={() => new Promise<void>((resolve, _reject) => {resolve();})}
+                        deleteCallback={() => {
+                            return new Promise<void>((resolve, reject) => {
+                                ApiRequest.removeFileFromGuild(
+                                    guildId,
+                                    lastClickedFile.id,
+                                    cookies.access_token
+                                )
+                                    .then((_resp) => {
+                                        resolve();
+                                        setGuildFiles([
+                                            ...guildFiles.filter((file) => {
+                                                return (
+                                                    file.id !==
+                                                    lastClickedFile.id
+                                                );
+                                            }),
+                                        ]);
+                                    })
+                                    .catch((e) => {
+                                        reject(e);
+                                    });
+                            });
+                        }}
                     />
                 </Modal>
             ) : (

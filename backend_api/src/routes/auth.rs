@@ -193,7 +193,6 @@ pub async fn bot_invite(
     oauth_client: Data<OAuthClient>,
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
-    return Ok(HttpResponse::Forbidden().finish());
     let url_getter_fn = |pkce: PkceCodeChallenge| oauth_client.get_bot_url(pkce);
     return Ok(create_url(url_getter_fn, db_pool).await?);
 }

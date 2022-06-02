@@ -29,6 +29,9 @@ impl GuildFile {
             "
             INSERT INTO guild_file (guild_id, file_id)
             VALUES ($1, $2)
+            ON CONFLICT (guild_id, file_id)
+            DO UPDATE
+            SET is_deleted = false;
             ",
             guild_id.0 as i64,
             file_id.0 as i64
@@ -45,7 +48,8 @@ impl GuildFile {
     ) -> Result<(), KekServerError> {
         sqlx::query!(
             "
-            DELETE FROM guild_file
+            UPDATE guild_file
+            SET is_deleted = true
             WHERE guild_id = $1 AND file_id = $2
             ",
             guild_id.0 as i64,
@@ -65,6 +69,7 @@ impl GuildFile {
             SELECT files.* FROM files
             INNER JOIN guild_file ON guild_file.guild_id = $1
             AND files.id = guild_file.file_id
+            AND guild_file.is_deleted = false
             ",
             guild_id.0 as i64,
         )
@@ -82,6 +87,9 @@ impl GuildFile {
                     id: SoundFileId(r.id as u64),
                     owner,
                     display_name: r.display_name,
+                    time_added: Some(r.time_added),
+                    is_public: r.is_public.unwrap_or(false),
+                    is_deleted: r.is_deleted.unwrap_or(false)
                 }
             })
             .collect::<Vec<SoundFile>>();
@@ -98,6 +106,7 @@ impl GuildFile {
             "
             SELECT * FROM guild_file
             WHERE guild_id = $1 AND file_id = $2
+            AND is_deleted = false
             ",
             guild_id.0 as i64,
             file_id.0 as i64
@@ -138,7 +147,10 @@ impl GuildFile {
                 guild.icon_hash,
                 guild.time_added as guild_time_added 
             FROM guild_file
-            INNER JOIN guild ON id = ANY($1) AND guild_id = ANY($1) AND file_id = $2
+            INNER JOIN guild ON id = ANY($1)
+            AND guild_id = ANY($1)
+            AND file_id = $2
+            AND guild_file.is_deleted = false
             ",
             &guild_ids,
             file_id.0 as i64
@@ -153,7 +165,7 @@ impl GuildFile {
                 name: r.name,
                 icon: r.icon,
                 icon_hash: r.icon_hash,
-                time_added: r.guild_time_added,
+                time_added: Some(r.guild_time_added),
             })
             .collect();
         return Ok(guilds);
@@ -166,10 +178,18 @@ impl GuildFile {
     ) -> Result<HashSet<SoundFile>, KekServerError> {
         let records = sqlx::query!(
             "
-            SELECT id, display_name, owner FROM guild_file
+            SELECT 
+                id,
+                display_name,
+                owner,
+                files.time_added as file_time_added,
+                files.is_public as file_is_public,
+                files.is_deleted as file_is_deleted
+            FROM guild_file
             INNER JOIN files ON files.id = guild_file.file_id 
             AND owner = $1 
-            AND guild_id = $2;
+            AND guild_id = $2
+            AND guild_file.is_deleted = false
             ",
             user.0 as i64,
             guild.0 as i64
@@ -189,6 +209,9 @@ impl GuildFile {
                     id: SoundFileId(r.id as u64),
                     display_name: r.display_name,
                     owner,
+                    time_added: Some(r.file_time_added),
+                    is_public: r.file_is_public.unwrap_or(false),
+                    is_deleted: r.file_is_deleted.unwrap_or(false)
                 }
             })
             .collect();

@@ -39,7 +39,7 @@ async fn delete_file(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
     let full_file_path = format!(
         "{}{}",
         dotenv::var("SOUNDFILE_DIR")?,
-        sound_file.get_id().0.to_string()
+        sound_file.id.0.to_string()
     );
     return Ok(remove_file(full_file_path).await?);
 }
@@ -48,7 +48,7 @@ async fn validate_audio_mime(sound_file: Arc<SoundFile>) -> Result<(), KekServer
     let full_file_path = format!(
         "{}{}",
         dotenv::var("SOUNDFILE_DIR")?,
-        sound_file.get_id().0.to_string()
+        sound_file.id.0.to_string()
     );
     let mime = web::block(move || infer::get_from_path(full_file_path)).await??;
 
@@ -132,13 +132,14 @@ pub async fn upload_file(
             SoundFileId(id as u64),
             parse_display_name(&field),
             authorized_user.get_discord_user().get_id().clone(),
+            None
         ));
         files.push(Arc::clone(&sound_file));
 
         let full_file_path = format!(
             "{}{}",
             dotenv::var("SOUNDFILE_DIR")?,
-            sound_file.get_id().0.to_string()
+            sound_file.id.0.to_string()
         );
 
         let mut file_handle = File::create(full_file_path).await?;

@@ -12,7 +12,7 @@ pub struct Guild {
     pub name: String,
     pub icon: Option<String>,
     pub icon_hash: Option<String>,
-    pub time_added: NaiveDateTime,
+    pub time_added: Option<NaiveDateTime>,
 }
 
 impl Guild {
@@ -36,7 +36,7 @@ impl Guild {
                     name: r.name,
                     icon: r.icon,
                     icon_hash: r.icon_hash,
-                    time_added: r.time_added,
+                    time_added: Some(r.time_added),
                 }));
             }
             None => return Ok(None),
@@ -89,7 +89,7 @@ impl Guild {
                 name: r.name,
                 icon: r.icon,
                 icon_hash: r.icon_hash,
-                time_added: r.time_added,
+                time_added: Some(r.time_added),
             })
             .collect::<Vec<Self>>();
         return Ok(guilds);

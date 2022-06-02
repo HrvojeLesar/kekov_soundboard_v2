@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::{Postgres, Transaction};
 
@@ -13,46 +14,43 @@ pub struct SoundFile {
     pub display_name: Option<String>,
     #[serde(skip)]
     pub owner: Option<UserId>,
+    pub time_added: Option<NaiveDateTime>,
+    #[serde(skip)]
+    pub is_deleted: bool,
+    #[serde(skip)]
+    pub is_public: bool,
 }
 
 impl SoundFile {
-    pub fn new(id: SoundFileId, display_name: String, owner: UserId) -> Self {
+    pub fn new(id: SoundFileId, display_name: String, owner: UserId, is_public: Option<bool>) -> Self {
         return Self {
             id,
             display_name: Some(display_name),
             owner: Some(owner),
+            time_added: None,
+            is_deleted: false,
+            is_public: is_public.unwrap_or(false),
         };
-    }
-
-    pub fn get_id(&self) -> &SoundFileId {
-        return &self.id;
-    }
-
-    pub fn get_display_name(&self) -> Option<&String> {
-        return self.display_name.as_ref();
-    }
-
-    pub fn get_owner(&self) -> Option<&UserId> {
-        return self.owner.as_ref();
     }
 
     pub async fn insert(
         &self,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), KekServerError> {
-        let owner = match self.get_owner() {
+        let owner = match &self.owner {
             Some(o) => Some(o.0 as i64),
             None => None,
         };
 
         sqlx::query!(
             "
-            INSERT INTO files (id, display_name, owner)
-            VALUES ($1, $2, $3)
+            INSERT INTO files (id, display_name, owner, is_public)
+            VALUES ($1, $2, $3, $4)
             ",
-            self.get_id().0 as i64,
-            self.get_display_name(),
-            owner
+            self.id.0 as i64,
+            self.display_name,
+            owner,
+            self.is_public
         )
         .execute(transaction)
         .await?;
@@ -67,7 +65,7 @@ impl SoundFile {
         match sqlx::query!(
             "
             UPDATE files
-            SET is_deleted = TRUE
+            SET is_deleted = true
             WHERE id = $1 AND owner = $2
             RETURNING *
             ",
@@ -86,13 +84,16 @@ impl SoundFile {
                     id: SoundFileId(r.id as u64),
                     owner,
                     display_name: r.display_name,
+                    time_added: Some(r.time_added),
+                    is_public: r.is_public.unwrap_or(false),
+                    is_deleted: r.is_deleted.unwrap_or(false)
                 }));
             }
             None => return Ok(None),
         }
     }
 
-    pub async fn delete_multiple_static(
+    pub async fn delete_multiple(
         ids: &Vec<SoundFileId>,
         owner: &UserId,
         transaction: &mut Transaction<'_, Postgres>,
@@ -101,7 +102,7 @@ impl SoundFile {
         let records = sqlx::query!(
             "
             UPDATE files
-            SET is_deleted = TRUE
+            SET is_deleted = true
             WHERE id = ANY($1) AND owner = $2
             RETURNING *
             ",
@@ -121,6 +122,9 @@ impl SoundFile {
                     id: SoundFileId(r.id as u64),
                     owner,
                     display_name: r.display_name,
+                    time_added: Some(r.time_added),
+                    is_public: r.is_public.unwrap_or(false),
+                    is_deleted: r.is_deleted.unwrap_or(false)
                 }
             })
             .collect::<Vec<SoundFile>>();
@@ -150,6 +154,9 @@ impl SoundFile {
                     id: SoundFileId(r.id as u64),
                     owner,
                     display_name: r.display_name,
+                    time_added: Some(r.time_added),
+                    is_public: r.is_public.unwrap_or(false),
+                    is_deleted: r.is_deleted.unwrap_or(false)
                 }));
             }
             None => return Ok(None),
@@ -163,7 +170,7 @@ impl SoundFile {
         let records = sqlx::query!(
             "
             SELECT * FROM files
-            WHERE owner = $1 AND is_deleted = FALSE
+            WHERE owner = $1 AND is_deleted = false
             ",
             user.0 as i64
         )
@@ -180,6 +187,9 @@ impl SoundFile {
                     id: SoundFileId(r.id as u64),
                     owner,
                     display_name: r.display_name,
+                    time_added: Some(r.time_added),
+                    is_public: r.is_public.unwrap_or(false),
+                    is_deleted: r.is_deleted.unwrap_or(false)
                 }
             })
             .collect();

@@ -78,7 +78,7 @@ pub async fn delete_multiple_user_files(
 ) -> Result<HttpResponse, KekServerError> {
     let mut transaction = db_pool.begin().await?;
 
-    let deleted_files = SoundFile::delete_multiple_static(
+    let deleted_files = SoundFile::delete_multiple(
         &file_ids.files,
         user.get_discord_user().get_id(),
         &mut transaction,

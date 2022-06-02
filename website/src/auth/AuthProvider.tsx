@@ -81,13 +81,13 @@ function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async () => {
         if (cookies.access_token) {
             try {
+                revokeAccess();
+                navigate("/");
                 let token: RevokeAccessToken = {
                     token: cookies.access_token,
                     token_type: TokenType.AccessToken,
                 };
                 await ApiRequest.revokeToken(token);
-                revokeAccess();
-                navigate("/");
             } catch (e) {
                 // TODO: Handle
                 console.log(e);

@@ -13,6 +13,9 @@ import {
 import { DiscordUser, Guild } from "../auth/AuthProvider";
 import { EnabledUserFile } from "../components/Guild/QuickEnableWindow";
 
+export const LOADINGOVERLAY_ZINDEX = 100;
+export const MODAL_ZINDEX = 200;
+
 export const nameToInitials = (guildName: string): string => {
     let initials = "";
     guildName.split(" ").forEach((word) => {
@@ -129,6 +132,7 @@ export type GuildFile = {
     id: string;
     display_name?: string;
     owner?: string;
+    time_added: string;
 };
 
 export type BulkEnablePayload = {
@@ -139,6 +143,7 @@ export type BulkEnablePayload = {
 export type UserFile = {
     id: string;
     display_name: string;
+    time_added: string;
 };
 
 export const ApiRequest = {

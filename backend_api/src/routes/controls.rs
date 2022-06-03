@@ -23,7 +23,7 @@ use crate::{
         cache::{UserGuildsCache, UserGuildsCacheUtil},
     },
     ws::{
-        ws_server::{ClientError, ControlsServer, ControlsServerMessage},
+        ws_server::{ControlsServer, ControlsServerMessage},
         ws_session::WsSessionCommChannels,
     },
 };
@@ -139,11 +139,11 @@ pub async fn play_request(
     )
     .await?
     {
-        Some(_) => {
+        Some(guild_file) => {
             transaction.commit().await?;
 
             let payload = req_payload.into_inner();
-            let control = ControlsServerMessage::new_play(payload.guild_id, payload.file_id);
+            let control = ControlsServerMessage::new_play(guild_file, None);
             let resp = send_command(control, server_address, ws_channels).await?;
 
             return Ok(HttpResponse::Ok().json(resp));

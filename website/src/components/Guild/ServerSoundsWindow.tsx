@@ -2,6 +2,7 @@ import {
     Box,
     Button,
     Group,
+    LoadingOverlay,
     Modal,
     Paper,
     ScrollArea,
@@ -10,7 +11,7 @@ import {
 import { Dispatch, SetStateAction, useState } from "react";
 import { useCookies } from "react-cookie";
 import { COOKIE_NAMES } from "../../auth/AuthProvider";
-import { ApiRequest, GuildFile } from "../../utils/utils";
+import { ApiRequest, GuildFile, LOADINGOVERLAY_ZINDEX, MODAL_ZINDEX } from "../../utils/utils";
 import DeleteModalBody from "../DeleteModalBody";
 import { PlayControl } from "../PlayControl";
 import SearchBar from "../SearchBar";
@@ -24,6 +25,8 @@ type ServerSoundsWindowProps = {
         string
     >;
     adminMode: boolean;
+    toggleAdminMode: () => void;
+    isUpdating: boolean;
 };
 
 export default function ServerSoundsWindow({
@@ -32,6 +35,8 @@ export default function ServerSoundsWindow({
     classes,
     adminMode,
     setGuildFiles,
+    toggleAdminMode,
+    isUpdating,
 }: ServerSoundsWindowProps) {
     const [filterTerm, setFilterTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -66,9 +71,19 @@ export default function ServerSoundsWindow({
                 p="sm"
                 className={classes.serverSoundsPaper}
             >
-                <Title title="Server sounds" order={3} pb="xs">
-                    Server sounds
-                </Title>
+                <LoadingOverlay zIndex={LOADINGOVERLAY_ZINDEX} visible={isUpdating} />
+                <Group position="apart" direction="row">
+                    <Title title="Server sounds" order={3} pb="xs">
+                        Server sounds
+                    </Title>
+                    <Button
+                        onClick={() => {
+                            toggleAdminMode();
+                        }}
+                    >
+                        Toggle admin mode...
+                    </Button>
+                </Group>
                 <Box py="sm">
                     <SearchBar
                         filterCallback={(searchValue) => {
@@ -105,6 +120,7 @@ export default function ServerSoundsWindow({
             </Paper>
             {adminMode && lastClickedFile ? (
                 <Modal
+                    zIndex={MODAL_ZINDEX}
                     opened={isModalOpen}
                     withCloseButton={false}
                     closeOnClickOutside={false}

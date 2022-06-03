@@ -14,9 +14,12 @@ use super::{
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GuildFile {
-    guild_id: GuildId,
-    file_id: SoundFileId,
-    time_added: NaiveDateTime,
+    pub guild_id: GuildId,
+    pub file_id: SoundFileId,
+    pub time_added: NaiveDateTime,
+    #[serde(skip)]
+    pub is_deleted: bool,
+    pub sound_file: Option<SoundFile>
 }
 
 impl GuildFile {
@@ -104,9 +107,17 @@ impl GuildFile {
     ) -> Result<Option<Self>, KekServerError> {
         match sqlx::query!(
             "
-            SELECT * FROM guild_file
-            WHERE guild_id = $1 AND file_id = $2
-            AND is_deleted = false
+            SELECT
+            guild_file.guild_id,
+            guild_file.file_id,
+            guild_file.time_added,
+            guild_file.is_deleted,
+            files.display_name,
+            files.is_deleted as file_is_deleted
+            FROM guild_file
+            INNER JOIN files ON files.id = $2
+            WHERE guild_file.guild_id = $1 AND guild_file.file_id = $2
+            AND guild_file.is_deleted = false
             ",
             guild_id.0 as i64,
             file_id.0 as i64
@@ -114,11 +125,21 @@ impl GuildFile {
         .fetch_optional(&mut *transaction)
         .await?
         {
-            Some(guild_file) => {
+            Some(r) => {
                 return Ok(Some(Self {
-                    guild_id: GuildId(guild_file.guild_id as u64),
-                    file_id: SoundFileId(guild_file.file_id as u64),
-                    time_added: guild_file.time_added,
+                    guild_id: GuildId(r.guild_id as u64),
+                    file_id: SoundFileId(r.file_id as u64),
+                    time_added: r.time_added,
+                    is_deleted: r.is_deleted.unwrap_or(false),
+                    sound_file: Some(SoundFile {
+                        id: SoundFileId(r.file_id as u64),
+                        display_name: r.display_name,
+                        // we don't care about other fields
+                        owner: None,
+                        is_public: false,
+                        is_deleted: false,
+                        time_added: None,
+                    }),
                 }))
             }
             None => return Ok(None),

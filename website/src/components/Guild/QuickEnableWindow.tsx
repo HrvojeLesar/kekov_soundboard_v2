@@ -1,6 +1,7 @@
 import {
     Box,
     createStyles,
+    LoadingOverlay,
     Paper,
     ScrollArea,
     Title,
@@ -11,7 +12,7 @@ import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { X } from "tabler-icons-react";
 import { COOKIE_NAMES } from "../../auth/AuthProvider";
-import { ApiRequest, UserFile } from "../../utils/utils";
+import { ApiRequest, LOADINGOVERLAY_ZINDEX, UserFile } from "../../utils/utils";
 import SearchBar from "../SearchBar";
 import QuickEnableCheckbox from "./QuickEnableCheckbox";
 
@@ -23,6 +24,7 @@ const useStyle = createStyles((_theme) => {
             flexDirection: "column",
             overflow: "hidden",
             flexGrow: 1,
+            position: "relative",
         },
     };
 });
@@ -149,6 +151,7 @@ export default function QuickEnableWindow({
             p="sm"
             className={classes.quickEnablePaper}
         >
+            <LoadingOverlay zIndex={LOADINGOVERLAY_ZINDEX} visible={isFetchingFiles} />
             <Title title="Quick enable files" order={3} pb="xs">
                 Quick enable files
             </Title>
@@ -159,22 +162,18 @@ export default function QuickEnableWindow({
                     }}
                 />
             </Box>
-            {isFetchingFiles ? (
-                <div>Loading...</div>
-            ) : (
-                <ScrollArea>
-                    {filterFiles().map((file) => {
-                        return (
-                            <Box m="sm" key={file.sound_file.id}>
-                                <QuickEnableCheckbox
-                                    file={file}
-                                    onChange={handleToggle}
-                                />
-                            </Box>
-                        );
-                    })}
-                </ScrollArea>
-            )}
+            <ScrollArea>
+                {filterFiles().map((file) => {
+                    return (
+                        <Box m="sm" key={file.sound_file.id}>
+                            <QuickEnableCheckbox
+                                file={file}
+                                onChange={handleToggle}
+                            />
+                        </Box>
+                    );
+                })}
+            </ScrollArea>
         </Paper>
     );
 }

@@ -11,12 +11,16 @@ namespace KekovBot
         [JsonConverter(typeof(ToStringConverter))]
         public ulong FileId;
 
+        [JsonProperty("display_name")]
+        public string DisplayName;
+
         [JsonIgnore]
         public FileInfo FileInfo;
 
-        public Sound(ulong file_id)
+        public Sound(ulong fileId, string displayName)
         {
-            FileId = file_id;
+            FileId = fileId;
+            DisplayName = displayName;
             FileInfo = new FileInfo($"{_soundFileDir}{FileId}");
         }
     }

@@ -7,6 +7,7 @@ use thiserror::Error;
 use uuid::Uuid;
 
 use crate::models::{
+    guild_file::GuildFile,
     ids::{ChannelId, GuildId, SoundFileId},
     sound_file::SoundFile,
 };
@@ -32,17 +33,20 @@ pub struct PlayControl {
     guild_id: GuildId,
     file_id: SoundFileId,
     voice_channel_id: Option<ChannelId>,
+    display_name: String,
 }
 
 impl PlayControl {
-    pub fn new(
-        guild_id: GuildId,
-        file_id: SoundFileId,
-        voice_channel_id: Option<ChannelId>,
-    ) -> Self {
+    pub fn new(guild_file: GuildFile, voice_channel_id: Option<ChannelId>) -> Self {
+        // WARN: expects sound_file field in GuildFile to be Some
         return Self {
-            guild_id,
-            file_id,
+            guild_id: guild_file.guild_id,
+            file_id: guild_file.file_id,
+            display_name: guild_file
+                .sound_file
+                .unwrap()
+                .display_name
+                .unwrap_or("".to_string()),
             voice_channel_id,
         };
     }
@@ -187,11 +191,14 @@ impl ControlsServerMessage {
         };
     }
 
-    pub fn new_play(guild_id: GuildId, file_id: SoundFileId) -> Self {
+    pub fn new_play(guild_file: GuildFile, voice_channel_id: Option<ChannelId>) -> Self {
         return Self {
             op: OpCode::Play,
             message_id: Uuid::new_v4().as_u128(),
-            control: Some(Controls::Play(PlayControl::new(guild_id, file_id, None))),
+            control: Some(Controls::Play(PlayControl::new(
+                guild_file,
+                voice_channel_id,
+            ))),
             client_error: None,
             queue: None,
         };
@@ -307,8 +314,14 @@ impl Handler<ControlsServerMessage> for ControlsServer {
 #[cfg(test)]
 mod tests {
 
+    use chrono::{NaiveDate, NaiveDateTime};
+
     use crate::{
-        models::ids::{GuildId, SoundFileId},
+        models::{
+            guild_file::GuildFile,
+            ids::{GuildId, SoundFileId},
+            sound_file::SoundFile,
+        },
         ws::ws_server::{Controls, OpCode},
     };
 
@@ -319,7 +332,21 @@ mod tests {
 
     #[test]
     fn test_csm_new_play() {
-        let play = ControlsServerMessage::new_play(GUILD, FILE);
+        let guild_file: GuildFile = GuildFile {
+            guild_id: GUILD,
+            file_id: FILE,
+            time_added: NaiveDateTime::from_timestamp(0, 0),
+            is_deleted: false,
+            sound_file: Some(SoundFile {
+                id: FILE,
+                display_name: Some("TestFile".to_string()),
+                is_deleted: false,
+                time_added: Some(NaiveDateTime::from_timestamp(0, 0)),
+                is_public: false,
+                owner: None,
+            }),
+        };
+        let play = ControlsServerMessage::new_play(guild_file, None);
         let control = play.control.unwrap();
         assert!(match play.op {
             OpCode::Play => true,

@@ -3,6 +3,7 @@ import {
     createStyles,
     Grid,
     Group,
+    LoadingOverlay,
     Paper,
     ScrollArea,
     Title,
@@ -15,7 +16,7 @@ import SearchBar from "../components/SearchBar";
 import DeleteFile from "../components/UserFiles/DeleteFile";
 import ServerSelect from "../components/UserFiles/ServerSelect";
 import UserFileContainer from "../components/UserFiles/UserFileContainer";
-import { ApiRequest, UserFile } from "../utils/utils";
+import { ApiRequest, LOADINGOVERLAY_ZINDEX, UserFile } from "../utils/utils";
 
 export enum UserFilesModalType {
     Add,
@@ -33,6 +34,7 @@ const useStyle = createStyles((theme) => {
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
+            position: "relative",
             ...userFilesMaximumWindowHeight,
         },
         scollAreaStyle: {
@@ -56,13 +58,6 @@ const useStyle = createStyles((theme) => {
             textOverflow: "ellipsis",
             overflow: "hidden",
             whiteSpace: "nowrap",
-        },
-        quickServerEnableStyle: {
-            flexGrow: 1,
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
         },
     };
 });
@@ -165,9 +160,10 @@ export default function UserFiles() {
                                 }}
                             />
                         </Box>
+                        <LoadingOverlay zIndex={LOADINGOVERLAY_ZINDEX} visible={isFetching} />
                         <ScrollArea className={classes.scollAreaStyle}>
                             <Group>
-                                {!isFetching &&
+                            {!isFetching &&
                                     filterFiles().map((file) => {
                                         return (
                                             <UserFileContainer
@@ -214,21 +210,7 @@ export default function UserFiles() {
                                 "No file selected"
                             )}
                         </Paper>
-                        <Paper
-                            withBorder
-                            shadow="sm"
-                            p="sm"
-                            className={classes.quickServerEnableStyle}
-                        >
-                            <Title order={3} pb="xs">
-                                Servers
-                            </Title>
-                            <ScrollArea>
-                                {selectedFile !== undefined && (
-                                    <ServerSelect file={selectedFile} />
-                                )}
-                            </ScrollArea>
-                        </Paper>
+                            <ServerSelect file={selectedFile} />
                     </Box>
                 </Grid.Col>
             </Grid>

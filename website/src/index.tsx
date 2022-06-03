@@ -5,7 +5,7 @@ import LoginCallback from "./LoginCallback";
 import AuthProvider from "./auth/AuthProvider";
 import ProtectedRoutes from "./auth/ProtectedRoutes";
 import { Login } from "./Login";
-import { AppShell, MantineProvider } from "@mantine/core";
+import { AppShell, LoadingOverlay, MantineProvider } from "@mantine/core";
 import { NotificationsProvider } from "@mantine/notifications";
 import NotFound from "./views/NotFound";
 import { CookiesProvider } from "react-cookie";
@@ -24,7 +24,7 @@ const root = ReactDOM.createRoot(
 root.render(
     <React.StrictMode>
         <BrowserRouter>
-            <React.Suspense fallback={<div>Loading...</div>}>
+            <React.Suspense fallback={<LoadingOverlay visible={true} />}>
                 <CookiesProvider>
                     <Routes>
                         <Route path="/*" element={<NotFound />} />

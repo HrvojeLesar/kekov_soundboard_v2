@@ -1,14 +1,39 @@
 import { useContext, useEffect, useState } from "react";
-import { Box } from "@mantine/core";
+import {
+    Box,
+    createStyles,
+    LoadingOverlay,
+    Paper,
+    ScrollArea,
+    Title,
+} from "@mantine/core";
 import { CanceledError } from "axios";
 import { AuthContext, COOKIE_NAMES } from "../../auth/AuthProvider";
 import { GuildToggle } from "../GuildToggle";
 import { useCookies } from "react-cookie";
-import { ApiRequest, GuildsWithFile, UserFile } from "../../utils/utils";
+import {
+    ApiRequest,
+    GuildsWithFile,
+    LOADINGOVERLAY_ZINDEX,
+    UserFile,
+} from "../../utils/utils";
 
 type ServerSelectProps = {
-    file: UserFile;
+    file?: UserFile;
 };
+
+const useStyle = createStyles((_theme) => {
+    return {
+        quickServerEnableStyle: {
+            flexGrow: 1,
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            position: "relative",
+        },
+    };
+});
 
 let abortController: AbortController | undefined = undefined;
 
@@ -18,11 +43,17 @@ export default function ServerSelect({ file }: ServerSelectProps) {
     const [guilds, setGuilds] = useState<GuildsWithFile[]>([]);
     const [isFetchingGuilds, setIsFetchingGuilds] = useState(false);
 
+    const { classes } = useStyle();
+
     const fetchGuilds = async () => {
-        if (cookies.access_token) {
+        if (cookies.access_token && file) {
             try {
                 abortController = new AbortController();
-                const { data } = await ApiRequest.fetchGuildsWithFile(file.id, abortController, cookies.access_token);
+                const { data } = await ApiRequest.fetchGuildsWithFile(
+                    file.id,
+                    abortController,
+                    cookies.access_token
+                );
                 setGuilds(
                     data.map((guild) => {
                         const globalGuild = globalGuilds.find(
@@ -43,7 +74,6 @@ export default function ServerSelect({ file }: ServerSelectProps) {
                 } else {
                     setIsFetchingGuilds(false);
                 }
-
             }
         }
     };
@@ -55,30 +85,44 @@ export default function ServerSelect({ file }: ServerSelectProps) {
     };
 
     useEffect(() => {
-        handleFetch();
+        if (file) {
+            handleFetch();
+        }
     }, [file]);
 
     return (
-        <>
-            {isFetchingGuilds ? (
-                <>Loading...</>
-            ) : (
-                guilds.map(({ guild, has_file }, index) => {
-                    return (
-                        <Box m="sm" key={guild.id}>
-                            <GuildToggle
-                                toggleCallback={(state) => {
-                                    guilds[index].has_file = state;
-                                    setGuilds([...guilds]);
-                                }}
-                                file={file}
-                                guild={guild}
-                                hasFile={has_file}
-                            />
-                        </Box>
-                    );
-                })
+        <Paper
+            withBorder
+            shadow="sm"
+            p="sm"
+            className={classes.quickServerEnableStyle}
+        >
+            <Title order={3} pb="xs">
+                Servers
+            </Title>
+            <LoadingOverlay
+                zIndex={LOADINGOVERLAY_ZINDEX}
+                visible={isFetchingGuilds}
+            />
+            {file !== undefined && (
+                <ScrollArea>
+                    {guilds.map(({ guild, has_file }, index) => {
+                        return (
+                            <Box m="sm" key={guild.id}>
+                                <GuildToggle
+                                    toggleCallback={(state) => {
+                                        guilds[index].has_file = state;
+                                        setGuilds([...guilds]);
+                                    }}
+                                    file={file}
+                                    guild={guild}
+                                    hasFile={has_file}
+                                />
+                            </Box>
+                        );
+                    })}
+                </ScrollArea>
             )}
-        </>
+        </Paper>
     );
 }

@@ -57,8 +57,6 @@ impl ControlsSession {
     }
 
     async fn handle_message(msg: ControlsServerMessage, channels: Data<WsSessionCommChannels>) {
-        // TODO: make sender actually usefull info ?
-        // TODO: handle proper cleanup of stale channels
         let sender;
         {
             let mut lock = channels.write().await;

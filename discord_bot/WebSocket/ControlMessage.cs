@@ -33,6 +33,9 @@ namespace KekovBot
         [JsonProperty("queue")]
         public List<Sound>? Queue { get; set; }
 
+        [JsonProperty("display_name")]
+        public string? DisplayName { get; set; }
+
         public ControlMessage() { }
 
         public ControlMessage(OpCode code, List<Sound>? queue, ControlMessage other)
@@ -43,6 +46,7 @@ namespace KekovBot
             VoiceChannelId = other.VoiceChannelId;
             MessageId = other.MessageId;
             Queue = queue;
+            DisplayName = other.DisplayName;
         }
 
         public ControlMessage(ClientError error, ControlMessage other) : this(OpCode.Error, null, other)

@@ -34,7 +34,7 @@ const playButtonStyle = (theme: MantineTheme): CSSObject => ({
         backgroundColor: theme.colors.blue[7],
     },
 
-    ":active": {
+    "&:active": {
         transform: "translateY(1px)",
     },
 });

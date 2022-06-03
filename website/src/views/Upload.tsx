@@ -139,6 +139,7 @@ export const uploadMaximumWindowHeight: CSSProperties = {
     height: "calc(100vh - 255px)",
 };
 
+// TODO: Make progressbar cover whole screen
 export default function Upload() {
     const { guilds } = useContext(AuthContext);
     const [cookies] = useCookies(COOKIE_NAMES);

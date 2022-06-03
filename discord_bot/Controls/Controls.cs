@@ -115,12 +115,12 @@ namespace KekovBot
                 throw new ChannelNotFoundException();
             }
 
-            if (msg.FileId == null)
+            if (msg.FileId == null || msg.DisplayName == null)
             {
                 throw new InvalidFileIdException();
             }
 
-            var sound = new Sound((ulong)msg.FileId);
+            var sound = new Sound((ulong)msg.FileId, msg.DisplayName);
             return await PlaySound(voiceChannel, sound);
         }
 

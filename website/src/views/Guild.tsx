@@ -1,9 +1,4 @@
-import {
-    Box,
-    Button,
-    createStyles,
-    Grid,
-} from "@mantine/core";
+import { Box, Button, createStyles, Grid } from "@mantine/core";
 import { useDocumentTitle } from "@mantine/hooks";
 import { CanceledError } from "axios";
 import { CSSProperties, useContext, useEffect, useState } from "react";
@@ -27,6 +22,7 @@ const useStyles = createStyles((theme) => {
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
+            position: "relative",
             ...guildMaximumWindowHeight,
         },
         scollAreaStyle: {
@@ -63,6 +59,9 @@ export default function Guild() {
                     abortController,
                     cookies.access_token
                 );
+                data.sort((a, b) => {
+                    return Date.parse(a.time_added) - Date.parse(b.time_added);
+                });
                 setGuildFiles(data);
                 setIsUpdating(false);
             } catch (e) {
@@ -92,6 +91,10 @@ export default function Guild() {
         }
     };
 
+    const toggleAdminMode = () => {
+        setAdminMode(!adminMode);
+    };
+
     useEffect(() => {
         abortController?.abort();
         setIsUpdating(true);
@@ -100,24 +103,22 @@ export default function Guild() {
 
     return (
         <>
-            <Button onClick={() => setAdminMode(!adminMode)}>
-                Toggle admin mode
-            </Button>
-            {isUpdating ? (
-                <>Loading...</>
-            ) : (
-                <Grid>
-                    <Grid.Col xs={9}>
-                        <ServerSoundsWindow
-                            adminMode={adminMode}
-                            guildId={guildId ?? "1"}
-                            guildFiles={guildFiles}
-                            classes={classes}
-                            setGuildFiles={setGuildFiles}
-                        />
-                    </Grid.Col>
-                    <Grid.Col xs={3}>
-                    {adminMode ? (<></>) : (
+            <Grid>
+                <Grid.Col xs={9}>
+                    <ServerSoundsWindow
+                        isUpdating={isUpdating}
+                        adminMode={adminMode}
+                        toggleAdminMode={toggleAdminMode}
+                        guildId={guildId ?? "1"}
+                        guildFiles={guildFiles}
+                        classes={classes}
+                        setGuildFiles={setGuildFiles}
+                    />
+                </Grid.Col>
+                <Grid.Col xs={3}>
+                    {adminMode ? (
+                        <></>
+                    ) : (
                         <Box className={classes.sideWindowsStyle}>
                             <ControlsWindow guildId={guildId ?? "1"} />
                             <QuickEnableWindow
@@ -126,9 +127,8 @@ export default function Guild() {
                             />
                         </Box>
                     )}
-                    </Grid.Col>
-                </Grid>
-            )}
+                </Grid.Col>
+            </Grid>
         </>
     );
 }

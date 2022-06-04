@@ -22,7 +22,7 @@ const useStyles = createStyles((theme) => ({
         padding: theme.spacing.xs,
         borderBottom: `3px solid ${
             theme.colorScheme === "dark"
-                ? theme.colors.dark[4]
+                ? theme.colors.dark[5]
                 : theme.colors.gray[3]
         }`,
     },
@@ -31,7 +31,7 @@ const useStyles = createStyles((theme) => ({
         padding: theme.spacing.xs,
         borderTop: `3px solid ${
             theme.colorScheme === "dark"
-                ? theme.colors.dark[4]
+                ? theme.colors.dark[5]
                 : theme.colors.gray[3]
         }`,
     },
@@ -54,7 +54,7 @@ const useStyles = createStyles((theme) => ({
         width: "25px",
 
         "&:hover": {
-            backgroundColor: theme.colors.red[6],
+            backgroundColor: theme.colors.red[8],
             borderRadius: "40%",
             transition: ".2s",
         },
@@ -123,6 +123,7 @@ export default function Sidebar() {
                 mx="-xs"
             >
                 <Group direction="column" align="center" spacing="xs">
+                    {/*TODO: Handle a situation when there is no guilds to show*/}
                     {guilds.length > 0 ? renderGuilds() : spawnSkeletons()}
                 </Group>
             </Navbar.Section>

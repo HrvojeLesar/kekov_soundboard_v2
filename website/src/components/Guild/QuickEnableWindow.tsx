@@ -41,6 +41,7 @@ type QuickEnableWindowProps = {
 
 let abortController: AbortController | undefined = undefined;
 
+// TODO: add loading display for slow connections
 export default function QuickEnableWindow({
     guildId,
     enableCallback,

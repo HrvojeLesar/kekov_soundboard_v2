@@ -5,29 +5,32 @@ import {
     Text,
     createStyles,
 } from "@mantine/core";
+import { primaryShade } from "../../utils/utils";
 import { EnabledUserFile } from "./QuickEnableWindow";
 
 const useStyles = createStyles((theme, { checked }: { checked: boolean }) => {
+    const shade = primaryShade(theme);
     return {
         button: {
             alignItems: "center",
             width: "100%",
             transition: "background-color 150ms ease, border-color 150ms ease",
+            position: "relative",
             border: `1px solid ${
                 checked
                     ? theme.colors[theme.primaryColor][
-                          theme.colorScheme === "dark" ? 9 : 6
+                          shade
                       ]
                     : theme.colorScheme === "dark"
-                    ? theme.colors.dark[8]
-                    : theme.colors.gray[3]
+                    ? theme.colors.dark[shade]
+                    : theme.colors.gray[shade]
             }`,
             borderRadius: theme.radius.sm,
             padding: theme.spacing.sm,
             backgroundColor: checked
                 ? theme.colorScheme === "dark"
-                    ? theme.fn.rgba(theme.colors[theme.primaryColor][8], 0.3)
-                    : theme.colors[theme.primaryColor][0]
+                    ? theme.fn.rgba(theme.colors[theme.primaryColor][shade], 0.3)
+                    : theme.colors[theme.primaryColor][shade]
                 : theme.colorScheme === "dark"
                 ? theme.colors.dark[8]
                 : theme.white,

@@ -1,3 +1,4 @@
+import { MantineTheme } from "@mantine/core";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import qs from "qs";
 import { Dispatch, SetStateAction } from "react";
@@ -325,3 +326,12 @@ export const ApiRequest = {
         );
     },
 };
+
+export const primaryShade = (theme: MantineTheme): number => {
+    return typeof theme.primaryShade === "number"
+        ? theme.primaryShade
+        : theme.colorScheme === "dark"
+        ? theme.primaryShade.dark
+        : theme.primaryShade.light;
+};
+

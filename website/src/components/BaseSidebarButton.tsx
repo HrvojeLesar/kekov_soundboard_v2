@@ -1,4 +1,5 @@
 import {
+    Box,
     createStyles,
     CSSObject,
     MantineTheme,
@@ -7,41 +8,47 @@ import {
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { Link, useMatch } from "react-router-dom";
+import { primaryShade } from "../utils/utils";
 
-export const baseSidebarButtonStyle = (theme: MantineTheme): CSSObject => ({
-    height: "48px",
-    width: "48px",
-    color: theme.colors.gray[0],
-    backgroundColor: theme.colors.blue[6],
-    borderRadius: "50%",
-    overflow: "hidden",
-    display: "flex",
-    textAlign: "center",
-    alignItems: "center",
-    justifyContent: "center",
-    transition: ".2s",
-
-    "&:hover": {
-        backgroundColor: theme.colors.blue[7],
-        borderRadius: "40%",
+export const baseSidebarButtonStyle = (theme: MantineTheme): CSSObject => {
+    const shade = primaryShade(theme);
+    return {
+        height: "48px",
+        width: "48px",
+        color: theme.colors.gray[0],
+        backgroundColor: theme.colors[theme.primaryColor][shade],
+        borderRadius: "50%",
+        overflow: "hidden",
+        display: "flex",
+        textAlign: "center",
+        alignItems: "center",
+        justifyContent: "center",
         transition: ".2s",
-    },
 
-    ":active": {
-        transform: "translateY(1px)",
-    },
-});
+        "&:hover": {
+            backgroundColor:
+                theme.colors[theme.primaryColor][(shade + 1) % 9],
+            borderRadius: "40%",
+            transition: ".2s",
+        },
 
-export const baseSidebarButtonStyles = createStyles((theme) => ({
+        "&:active": {
+            transform: "translateY(1px)",
+        },
+    };
+};
+
+export const baseSidebarButtonStyles = createStyles((theme) => {
+    const shade = primaryShade(theme);
+    return {
     baseLinkButton: baseSidebarButtonStyle(theme),
     baseLinkButtonActive: {
         ...baseSidebarButtonStyle(theme),
 
-        backgroundColor: theme.colors.blue[7],
         borderRadius: "40%",
         transition: ".2s",
     },
-}));
+}});
 
 type Props = {
     children: JSX.Element;

@@ -5,11 +5,12 @@ import {
     Image,
     UnstyledButton,
     createStyles,
+    LoadingOverlay,
 } from "@mantine/core";
 import { useState } from "react";
 import { useCookies } from "react-cookie";
 import { COOKIE_NAMES, Guild } from "../auth/AuthProvider";
-import { ApiRequest, nameToInitials, UserFile } from "../utils/utils";
+import { ApiRequest, nameToInitials, primaryShade, UserFile } from "../utils/utils";
 
 type GuildToggleProps = {
     guild: Guild;
@@ -19,27 +20,30 @@ type GuildToggleProps = {
 };
 
 const useStyles = createStyles((theme, { checked }: { checked: boolean }) => {
+    const shade = primaryShade(theme);
     return {
         button: {
             display: "flex",
+            position: "relative",
             alignItems: "center",
             width: "100%",
             transition: "background-color 150ms ease, border-color 150ms ease",
             border: `1px solid ${
                 checked
-                    ? theme.colors[theme.primaryColor][
-                          theme.colorScheme === "dark" ? 9 : 6
-                      ]
+                    ? theme.colors[theme.primaryColor][shade]
                     : theme.colorScheme === "dark"
-                    ? theme.colors.dark[8]
-                    : theme.colors.gray[3]
+                    ? theme.colors.dark[shade]
+                    : theme.colors.gray[shade]
             }`,
             borderRadius: theme.radius.sm,
             padding: theme.spacing.sm,
             backgroundColor: checked
                 ? theme.colorScheme === "dark"
-                    ? theme.fn.rgba(theme.colors[theme.primaryColor][8], 0.3)
-                    : theme.colors[theme.primaryColor][0]
+                    ? theme.fn.rgba(
+                          theme.colors[theme.primaryColor][shade],
+                          0.3
+                      )
+                    : theme.colors[theme.primaryColor][shade]
                 : theme.colorScheme === "dark"
                 ? theme.colors.dark[8]
                 : theme.white,
@@ -48,12 +52,10 @@ const useStyles = createStyles((theme, { checked }: { checked: boolean }) => {
         image: {
             border: `1px solid ${
                 checked
-                    ? theme.colors[theme.primaryColor][
-                          theme.colorScheme === "dark" ? 9 : 6
-                      ]
+                    ? theme.colors[theme.primaryColor][shade]
                     : theme.colorScheme === "dark"
-                    ? theme.colors.dark[8]
-                    : theme.colors.gray[3]
+                    ? theme.colors.gray[shade]
+                    : theme.colors.dark[shade]
             }`,
             borderRadius: "50%",
             width: "42px",
@@ -108,22 +110,29 @@ export function GuildToggle({
     };
 
     const addToGuild = async () => {
-        await ApiRequest.addFileToGuild(guild.id, file.id, cookies.access_token);
+        await ApiRequest.addFileToGuild(
+            guild.id,
+            file.id,
+            cookies.access_token
+        );
     };
 
     const removeFromGuild = async () => {
-        await ApiRequest.removeFileFromGuild(guild.id, file.id, cookies.access_token);
+        await ApiRequest.removeFileFromGuild(
+            guild.id,
+            file.id,
+            cookies.access_token
+        );
     };
 
     return (
         <UnstyledButton
             className={classes.button}
             onClick={() => {
-                if (!isUpdating) {
-                    handleToggle(!hasFile);
-                }
+                handleToggle(!hasFile);
             }}
         >
+            <LoadingOverlay visible={isUpdating} />
             <Group position="apart" className={classes.groupStyle} noWrap>
                 <Group>
                     {guild.icon ? (
@@ -146,7 +155,6 @@ export function GuildToggle({
                     </Text>
                 </Group>
                 <Switch
-                    disabled={isUpdating}
                     checked={hasFile}
                     size="lg"
                     onLabel="ON"

@@ -5,6 +5,8 @@ import {
     MantineTheme,
     Paper,
     UnstyledButton,
+    LoadingOverlay,
+    useMantineTheme,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useState } from "react";
@@ -15,8 +17,10 @@ import {
     ApiRequest,
     convertClientErrorToString,
     GuildFile,
+    LOADINGOVERLAY_ZINDEX,
     PlayOpCodeEnum,
     PlayPayload,
+    primaryShade,
 } from "../utils/utils";
 
 const playButtonStyle = (theme: MantineTheme): CSSObject => ({
@@ -39,21 +43,57 @@ const playButtonStyle = (theme: MantineTheme): CSSObject => ({
     },
 });
 
-const useStyles = createStyles((theme) => ({
-    playButtonStyle: {
-        ...playButtonStyle(theme),
-    },
+const useStyles = createStyles((theme) => {
+    const shade = primaryShade(theme);
+    return {
+        container: {
+            width: "200px",
+            height: "150px",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            cursor: "pointer",
+            position: "relative",
+            overflow: "hidden",
+            backgroundColor:
+                theme.colorScheme === "dark"
+                    ? theme.colors.dark[8]
+                    : theme.white,
 
-    container: {
-        width: "200px",
-        overflow: "hidden",
+            "&:hover": {
+                backgroundColor:
+                    theme.colorScheme === "dark"
+                        ? theme.fn.rgba(
+                              theme.colors[theme.primaryColor][shade],
+                              0.3
+                          )
+                        : theme.colors[theme.primaryColor][shade],
+                transition: ".2s",
+            },
 
-        "&:hover": {
-            backgroundColor: theme.colors.gray[0],
-            transition: ".2s",
+            "&:active": {
+                transform: "translateY(1px)",
+            },
         },
-    },
-}));
+        textStyle: {
+            textOverflow: "ellipsis",
+            overflow: "hidden",
+            userSelect: "none",
+        },
+        playerPlayIconStyle: {
+            strokeWidth: "1",
+            position: "absolute",
+            opacity: "0.05",
+            width: "100%",
+            height: "100%",
+        },
+        buttonStyle: {
+            position: "absolute",
+            width: "100%",
+            height: "100%",
+        },
+    };
+});
 
 type PlayControlProps = {
     file: GuildFile;
@@ -125,29 +165,26 @@ export function PlayControl({ file, guildId }: PlayControlProps) {
             p="sm"
             className={classes.container}
         >
+            <LoadingOverlay
+                zIndex={LOADINGOVERLAY_ZINDEX}
+                visible={isSendingReq}
+            />
             <Text
                 title={file.display_name}
-                lineClamp={1}
                 weight="bold"
                 align="center"
-                mb="sm"
                 mx="xl"
+                className={classes.textStyle}
             >
                 {file.display_name}
             </Text>
-            {isSendingReq ? (
-                <div>Please wait</div>
-            ) : (
-                <UnstyledButton
-                    mx="auto"
-                    className={classes.playButtonStyle}
-                    onClick={() => {
-                        playFunc(file.id);
-                    }}
-                >
-                    <PlayerPlay />
-                </UnstyledButton>
-            )}
+            <PlayerPlay className={classes.playerPlayIconStyle} />
+            <UnstyledButton
+                className={classes.buttonStyle}
+                onClick={() => {
+                    playFunc(file.id);
+                }}
+            />
         </Paper>
     );
 }

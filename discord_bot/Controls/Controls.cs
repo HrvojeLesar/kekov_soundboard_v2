@@ -9,6 +9,8 @@ namespace KekovBot
         private static DiscordBot _client = DiscordBot.Instance;
         private static LavalinkExtension _lavalink = _client.DiscordClient.GetLavalink();
         public static Dictionary<DiscordGuild, PlayQueue> PlayQueueDict = new Dictionary<DiscordGuild, PlayQueue>();
+        public static Dictionary<DiscordGuild, CancellationTokenSource> CancelationTokenDict = new Dictionary<DiscordGuild, CancellationTokenSource>();
+        public static HashSet<DiscordGuild> AwaitingDisconnectDict = new HashSet<DiscordGuild>();
 
         private static DiscordGuild GetGuild(ControlMessage msg)
         {
@@ -52,12 +54,19 @@ namespace KekovBot
                 connection = await node.ConnectAsync(channel);
                 var playQueue = new PlayQueue(connection);
                 PlayQueueDict.Add(guild, playQueue);
+                CancelationTokenDict.Add(guild, new CancellationTokenSource());
                 connection.RegisterConnectionHandlers(playQueue);
             }
 
             try
             {
                 var playQueue = PlayQueueDict[guild];
+                if (AwaitingDisconnectDict.Contains(guild))
+                {
+                    var cancelToken = CancelationTokenDict[guild];
+                    cancelToken.Cancel();
+                    CancelationTokenDict[guild] = new CancellationTokenSource();
+                }
 
                 if (playQueue.CurrentlyPlaying == null)
                 {
@@ -131,7 +140,7 @@ namespace KekovBot
             PlayQueueDict.TryGetValue(guild, out playQueue);
             if (playQueue != null)
             {
-                await playQueue.GuildConnection.Disconnect(guild);
+                await playQueue.GuildConnection.Disconnect(guild, true);
             }
             else
             {

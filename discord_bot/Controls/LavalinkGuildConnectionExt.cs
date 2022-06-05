@@ -6,6 +6,8 @@ namespace KekovBot
     public static class LavalinkGuildConnectionExt
     {
         private static Dictionary<DiscordGuild, PlayQueue> PlayQueueDict = Controls.PlayQueueDict;
+        private static Dictionary<DiscordGuild, CancellationTokenSource> CancelationTokenDict = Controls.CancelationTokenDict;
+        private static HashSet<DiscordGuild> AwaitingDisconnectDict = Controls.AwaitingDisconnectDict;
 
         public static async Task<LavalinkTrack> GetTrack(this LavalinkGuildConnection conn, FileInfo file)
         {
@@ -32,7 +34,11 @@ namespace KekovBot
             {
                 if (!await playQueue.PlayNext())
                 {
-                    await conn.Disconnect(guild);
+                    try
+                    {
+                        await conn.Disconnect(guild);
+                    }
+                    catch {}
                 }
             };
 
@@ -40,7 +46,11 @@ namespace KekovBot
             {
                 if (!await playQueue.PlayNext())
                 {
-                    await conn.Disconnect(guild);
+                    try
+                    {
+                        await conn.Disconnect(guild);
+                    }
+                    catch {}
                 }
                 Console.WriteLine("Track exception");
             };
@@ -49,17 +59,51 @@ namespace KekovBot
             {
                 if (!await playQueue.PlayNext())
                 {
-                    await conn.Disconnect(guild);
+                    try
+                    {
+                        await conn.Disconnect(guild);
+                    }
+                    catch {}
                 }
                 Console.WriteLine("Track stuck");
             };
         }
 
-        public static async Task Disconnect(this LavalinkGuildConnection conn, DiscordGuild guild)
+        public static async Task Disconnect(this LavalinkGuildConnection conn, DiscordGuild guild, bool isStopCommand = false)
         {
-            Console.WriteLine("Disconnect");
+            if (isStopCommand)
+            {
+                DisconnectCleanup(guild);
+                await conn.DisconnectAsync();
+                return;
+            }
+
+            var cancelToken = CancelationTokenDict[guild];
+            if (cancelToken == null)
+            {
+                Console.WriteLine("Cancel token is null!");
+                return;
+            }
+
+            var task = Task.Run(async () =>
+            {
+                AwaitingDisconnectDict.Add(guild);
+                await Task.Delay(5000, cancelToken.Token);
+                if (cancelToken.IsCancellationRequested)
+                {
+                    return;
+                }
+                DisconnectCleanup(guild);
+                await conn.DisconnectAsync();
+            }, cancelToken.Token);
+            await task;
+        }
+
+        public static void DisconnectCleanup(DiscordGuild guild)
+        {
             PlayQueueDict.Remove(guild);
-            await conn.DisconnectAsync();
+            CancelationTokenDict.Remove(guild);
+            AwaitingDisconnectDict.Remove(guild);
         }
     }
 }

@@ -33,6 +33,7 @@ namespace KekovBot
                 await GuildConnection.PlayAsync(track);
                 return true;
             }
+            CurrentlyPlaying = null;
             return false;
         }
 

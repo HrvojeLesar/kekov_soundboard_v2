@@ -1,15 +1,18 @@
 import {
     Center,
     createStyles,
+    Divider,
     Group,
+    Menu,
     Navbar,
     ScrollArea,
     Skeleton,
     Tooltip,
     UnstyledButton,
+    useMantineColorScheme,
 } from "@mantine/core";
 import { useContext, useEffect } from "react";
-import { Logout, Upload } from "tabler-icons-react";
+import { Divide, Logout, MoonStars, Sun, Upload } from "tabler-icons-react";
 import { Icon } from "@iconify/react";
 import discordIcon from "@iconify/icons-simple-icons/discord";
 import { API_URL, AuthRoute, DISCORD_CND_USER_AVATAR } from "../api/ApiRoutes";
@@ -72,6 +75,7 @@ const useStyles = createStyles((theme) => ({
 
 export default function Sidebar() {
     const { user, guilds, fetchGuilds, logout } = useContext(AuthContext);
+    const { colorScheme, toggleColorScheme } = useMantineColorScheme();
     const { classes } = useStyles();
 
     const spawnSkeletons = () => {
@@ -88,6 +92,10 @@ export default function Sidebar() {
         });
     };
 
+    const isColorSchemeDark = () => {
+        return colorScheme === "dark";
+    };
+
     useEffect(() => {
         fetchGuilds();
     }, []);
@@ -96,7 +104,7 @@ export default function Sidebar() {
         <Navbar height="100vh" width={{ base: 80 }} p="sm">
             <Navbar.Section className={classes.navbarHeader}>
                 <Center>
-                    <Group direction="column">
+                    <Group direction="column" spacing="xs">
                         <BaseSidebarButton label="User files" route="/user">
                             <img
                                 className={classes.userImg}
@@ -131,6 +139,7 @@ export default function Sidebar() {
                 <Center>
                     <Group
                         direction="column"
+                        spacing="xs"
                         className={classes.sidebarBottomGroup}
                     >
                         <Tooltip
@@ -146,13 +155,32 @@ export default function Sidebar() {
                                 <Icon width="70%" icon={discordIcon} />
                             </UnstyledButton>
                         </Tooltip>
-                        <Tooltip label="Logout" position="right" withArrow>
-                            <UnstyledButton
-                                onClick={() => logout()}
-                                className={classes.logoutButton}
-                            >
-                                <Logout />
-                            </UnstyledButton>
+                        <Tooltip label="Options" position="right" withArrow>
+                            <Menu>
+                                <Menu.Label>Options</Menu.Label>
+                                <Menu.Item
+                                    icon={
+                                        isColorSchemeDark() ? (
+                                            <Sun size={14} color="yellow" />
+                                        ) : (
+                                            <MoonStars size={14} color="teal" />
+                                        )
+                                    }
+                                    onClick={() => toggleColorScheme()}
+                                >
+                                    {isColorSchemeDark()
+                                        ? "Switch to light mode"
+                                        : "Switch to dark mode"}
+                                </Menu.Item>
+                                <Divider />
+                                <Menu.Item
+                                    color="red"
+                                    icon={<Logout size={14} />}
+                                    onClick={() => logout()}
+                                >
+                                    Logout
+                                </Menu.Item>
+                            </Menu>
                         </Tooltip>
                     </Group>
                 </Center>

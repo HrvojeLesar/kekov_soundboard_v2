@@ -39,7 +39,10 @@ const useStyles = createStyles(
                               theme.colors[theme.primaryColor][shade],
                               0.3
                           )
-                        : theme.colors[theme.primaryColor][shade]
+                        : theme.fn.rgba(
+                              theme.colors[theme.primaryColor][shade],
+                              0.3
+                          )
                     : theme.colorScheme === "dark"
                     ? theme.colors.dark[8]
                     : theme.white,
@@ -52,9 +55,10 @@ const useStyles = createStyles(
                                   theme.colors[theme.primaryColor][shade],
                                   0.3
                               )
-                            : theme.colors[theme.primaryColor][shade]
-                            ? theme.colors.dark[8]
-                            : theme.white,
+                            : theme.fn.rgba(
+                                  theme.colors[theme.primaryColor][shade],
+                                  0.3
+                              ),
                 },
             },
             unstyledButtonStyle: { width: "100%", height: "100%" },

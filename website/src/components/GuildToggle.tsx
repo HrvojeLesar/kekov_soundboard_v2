@@ -10,7 +10,12 @@ import {
 import { useState } from "react";
 import { useCookies } from "react-cookie";
 import { COOKIE_NAMES, Guild } from "../auth/AuthProvider";
-import { ApiRequest, nameToInitials, primaryShade, UserFile } from "../utils/utils";
+import {
+    ApiRequest,
+    nameToInitials,
+    primaryShade,
+    UserFile,
+} from "../utils/utils";
 
 type GuildToggleProps = {
     guild: Guild;
@@ -43,7 +48,10 @@ const useStyles = createStyles((theme, { checked }: { checked: boolean }) => {
                           theme.colors[theme.primaryColor][shade],
                           0.3
                       )
-                    : theme.colors[theme.primaryColor][shade]
+                    : theme.fn.rgba(
+                          theme.colors[theme.primaryColor][shade],
+                          0.3
+                      )
                 : theme.colorScheme === "dark"
                 ? theme.colors.dark[8]
                 : theme.white,
@@ -98,10 +106,6 @@ export function GuildToggle({
             }
             toggleCallback(state);
         } catch (e) {
-            // WARN: can desync state
-            // post or delete gets applied on server
-            // but client returns connection error
-            // before server sends back the response
             console.log(e);
             toggleCallback(!state);
         } finally {

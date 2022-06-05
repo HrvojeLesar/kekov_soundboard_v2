@@ -137,8 +137,6 @@ export default function UserFiles() {
         fetchFiles();
     }, []);
 
-    // WARN: Make performant
-    // TODO: Make performant
     return (
         <>
             <Grid>
@@ -160,10 +158,13 @@ export default function UserFiles() {
                                 }}
                             />
                         </Box>
-                        <LoadingOverlay zIndex={LOADINGOVERLAY_ZINDEX} visible={isFetching} />
+                        <LoadingOverlay
+                            zIndex={LOADINGOVERLAY_ZINDEX}
+                            visible={isFetching}
+                        />
                         <ScrollArea className={classes.scollAreaStyle}>
                             <Group>
-                            {!isFetching &&
+                                {!isFetching &&
                                     filterFiles().map((file) => {
                                         return (
                                             <UserFileContainer
@@ -210,7 +211,7 @@ export default function UserFiles() {
                                 "No file selected"
                             )}
                         </Paper>
-                            <ServerSelect file={selectedFile} />
+                        <ServerSelect file={selectedFile} />
                     </Box>
                 </Grid.Col>
             </Grid>

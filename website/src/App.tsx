@@ -23,10 +23,10 @@ const Sidebar = React.lazy(() => import("./components/Sidebar"));
 
 export default function App() {
     const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
-            key: "color-scheme",
-            defaultValue: "dark",
-            getInitialValueInEffect: true,
-        });
+        key: "color-scheme",
+        defaultValue: "dark",
+        getInitialValueInEffect: true,
+    });
     useDocumentTitle("Kekov Soundboard v2. Beta.");
 
     const toggleColorScheme = (value?: ColorScheme) => {

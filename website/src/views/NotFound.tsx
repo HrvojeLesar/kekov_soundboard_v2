@@ -1,10 +1,4 @@
-import {
-    createStyles,
-    Title,
-    Button,
-    Container,
-    Group,
-} from "@mantine/core";
+import { createStyles, Title, Button, Container, Group } from "@mantine/core";
 import { useDocumentTitle } from "@mantine/hooks";
 import { Link } from "react-router-dom";
 
@@ -47,6 +41,14 @@ const useStyles = createStyles((theme) => ({
         marginTop: theme.spacing.xl,
         marginBottom: theme.spacing.xl * 1.5,
     },
+    background: {
+        backgroundColor:
+            theme.colorScheme === "dark"
+                ? theme.colors.dark[6]
+                : theme.colors.gray[0],
+        height: "100vh",
+        width: "100vw",
+    },
 }));
 
 export default function NotFound() {
@@ -54,19 +56,16 @@ export default function NotFound() {
     useDocumentTitle("Not found");
 
     return (
-        <Container className={classes.root}>
-            <div className={classes.label}>404</div>
-            <Title className={classes.title}>Page not found</Title>
-            <Group mt="xl" position="center">
-                <Button
-                    component={Link}
-                    to="/"
-                    variant="subtle"
-                    size="md"
-                >
-                    Take me back to home page
-                </Button>
-            </Group>
-        </Container>
+        <div className={classes.background}>
+            <Container className={classes.root}>
+                <div className={classes.label}>404</div>
+                <Title className={classes.title}>Page not found</Title>
+                <Group mt="xl" position="center">
+                    <Button component={Link} to="/" variant="subtle" size="md">
+                        Take me back to home page
+                    </Button>
+                </Group>
+            </Container>
+        </div>
     );
 }

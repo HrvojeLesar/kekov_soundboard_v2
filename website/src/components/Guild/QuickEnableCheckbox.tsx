@@ -18,9 +18,7 @@ const useStyles = createStyles((theme, { checked }: { checked: boolean }) => {
             position: "relative",
             border: `1px solid ${
                 checked
-                    ? theme.colors[theme.primaryColor][
-                          shade
-                      ]
+                    ? theme.colors[theme.primaryColor][shade]
                     : theme.colorScheme === "dark"
                     ? theme.colors.dark[shade]
                     : theme.colors.gray[shade]
@@ -28,9 +26,7 @@ const useStyles = createStyles((theme, { checked }: { checked: boolean }) => {
             borderRadius: theme.radius.sm,
             padding: theme.spacing.sm,
             backgroundColor: checked
-                ? theme.colorScheme === "dark"
-                    ? theme.fn.rgba(theme.colors[theme.primaryColor][shade], 0.3)
-                    : theme.colors[theme.primaryColor][shade]
+                ? theme.fn.rgba(theme.colors[theme.primaryColor][shade], 0.3)
                 : theme.colorScheme === "dark"
                 ? theme.colors.dark[8]
                 : theme.white,

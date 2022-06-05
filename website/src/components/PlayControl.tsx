@@ -61,13 +61,10 @@ const useStyles = createStyles((theme) => {
                     : theme.white,
 
             "&:hover": {
-                backgroundColor:
-                    theme.colorScheme === "dark"
-                        ? theme.fn.rgba(
-                              theme.colors[theme.primaryColor][shade],
-                              0.3
-                          )
-                        : theme.colors[theme.primaryColor][shade],
+                backgroundColor: theme.fn.rgba(
+                    theme.colors[theme.primaryColor][shade],
+                    0.3
+                ),
                 transition: ".2s",
             },
 

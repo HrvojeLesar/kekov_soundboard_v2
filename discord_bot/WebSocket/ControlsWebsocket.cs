@@ -1,5 +1,6 @@
 using System.Reactive.Linq;
 using Newtonsoft.Json;
+using Serilog;
 using Websocket.Client;
 
 namespace KekovBot
@@ -17,18 +18,18 @@ namespace KekovBot
         {
             _client.DisconnectionHappened.Subscribe(info =>
             {
-                Console.WriteLine($"Websocket disconnection happaned, type: {info.Type}");
+                Log.Warning($"Websocket disconnection happaned, type: {info.Type}");
             });
             _client.ReconnectionHappened.Subscribe(info =>
             {
-                Console.WriteLine($"Websocket reconnection happaned, type: {info.Type}");
+                Log.Warning($"Websocket reconnection happaned, type: {info.Type}");
             });
             _client.MessageReceived.Subscribe(async msg => await HandleMessage(msg));
         }
 
         private async Task HandleMessage(ResponseMessage msg)
         {
-            Console.WriteLine($"Message: {msg}");
+            Log.Debug($"Message: {msg}");
             ControlMessage? control = JsonConvert.DeserializeObject<ControlMessage>(msg.Text);
             List<Sound>? queue = null;
             try
@@ -67,7 +68,7 @@ namespace KekovBot
                     default:
                         {
                             for (var i = 0; i < 10; i++)
-                                Console.WriteLine("IMPLEMENT MISSING OP CODES!");
+                                Log.Error("IMPLEMENT MISSING OP CODES!");
                             System.Environment.Exit(1);
                             break;
                         }
@@ -78,13 +79,12 @@ namespace KekovBot
                 {
                     var response = new ControlMessage((OpCode)respOpCode, queue, control);
                     var json_response = JsonConvert.SerializeObject(response);
-                    Console.WriteLine(json_response);
                     _client.Send(json_response);
                 }
             }
             catch (WebSocketException e)
             {
-                Console.WriteLine(e);
+                Log.Error(e.ToString());
                 if (control != null)
                 {
                     var respOpCode = ClientErrorConverter.ToClientError(e);
@@ -95,7 +95,7 @@ namespace KekovBot
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Log.Error(e.ToString());
             }
         }
     }

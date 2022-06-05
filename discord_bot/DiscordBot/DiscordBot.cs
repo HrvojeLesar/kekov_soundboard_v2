@@ -2,6 +2,8 @@ using dotenv.net;
 using DSharpPlus;
 using DSharpPlus.Net;
 using DSharpPlus.Lavalink;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
 namespace KekovBot
 {
@@ -26,8 +28,16 @@ namespace KekovBot
             ControlsWebsocket = new ControlsWebsocket(env["WS_CONTROLS_URL"]);
             SyncWebsocket = new SyncWebsocket(env["WS_SYNC_URL"]);
 
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.Console()
+                .CreateLogger();
+
+            var loggerFactory = new LoggerFactory().AddSerilog();
+
             DiscordClient = new DiscordClient(new DiscordConfiguration()
             {
+                LoggerFactory = loggerFactory,
                 Token = env["DISCORD_BOT_TOKEN"],
                 TokenType = TokenType.Bot,
                 Intents = DiscordIntents.GuildMembers
@@ -38,7 +48,7 @@ namespace KekovBot
             DiscordClient.ConnectAsync().Wait();
             InitLavalink(); // Should always be initialized after client connection
         }
-        
+
         private void RegisterEventHandlers()
         {
             DiscordClient.GuildMemberAdded += GuildMemberAddedEvent;

@@ -1,6 +1,7 @@
 using DSharpPlus;
 using DSharpPlus.EventArgs;
 using Newtonsoft.Json;
+using Serilog;
 
 namespace KekovBot
 {
@@ -24,7 +25,7 @@ namespace KekovBot
 
         private Task BotJoinedGuildEvent(DiscordClient c, GuildCreateEventArgs args)
         {
-            Console.WriteLine($"Bot joined guild: {args.Guild.Id}");
+            Log.Warning($"Bot joined guild: {args.Guild.Id}");
             var response = new SyncMessage(SyncOpCode.InvalidateGuildsCache, null, args.Guild.Id);
             var response_json = JsonConvert.SerializeObject(response);
             SyncWebsocket.Client.Send(response_json);
@@ -33,7 +34,7 @@ namespace KekovBot
 
         private Task BotLeftGuildEvent(DiscordClient c, GuildDeleteEventArgs args)
         {
-            Console.WriteLine($"Bot left guild: {args.Guild.Id}");
+            Log.Warning($"Bot left guild: {args.Guild.Id}");
             var response = new SyncMessage(SyncOpCode.InvalidateGuildsCache, null, args.Guild.Id);
             var response_json = JsonConvert.SerializeObject(response);
             SyncWebsocket.Client.Send(response_json);

@@ -1,13 +1,14 @@
 using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
+using Serilog;
 
 namespace KekovBot
 {
     public static class LavalinkGuildConnectionExt
     {
-        private static Dictionary<DiscordGuild, PlayQueue> PlayQueueDict = Controls.PlayQueueDict;
-        private static Dictionary<DiscordGuild, CancellationTokenSource> CancelationTokenDict = Controls.CancelationTokenDict;
-        private static HashSet<DiscordGuild> AwaitingDisconnectDict = Controls.AwaitingDisconnectDict;
+        private static Dictionary<DiscordGuild, PlayQueue> _playQueueDict = Controls.PlayQueueDict;
+        private static Dictionary<DiscordGuild, CancellationTokenSource> _cancelationTokenDict = Controls.CancelationTokenDict;
+        private static HashSet<DiscordGuild> _awaitingDisconnectDict = Controls.AwaitingDisconnectDict;
 
         public static async Task<LavalinkTrack> GetTrack(this LavalinkGuildConnection conn, FileInfo file)
         {
@@ -25,8 +26,8 @@ namespace KekovBot
 
             conn.DiscordWebSocketClosed += (gc, args) =>
             {
-                PlayQueueDict.Remove(guild);
-                Console.WriteLine("Websocket closed");
+                _playQueueDict.Remove(guild);
+                Log.Warning("Websocket closed");
                 return Task.CompletedTask;
             };
 
@@ -52,7 +53,7 @@ namespace KekovBot
                     }
                     catch {}
                 }
-                Console.WriteLine("Track exception");
+                Log.Error("Track exception");
             };
 
             conn.TrackStuck += async (gc, args) =>
@@ -65,7 +66,7 @@ namespace KekovBot
                     }
                     catch {}
                 }
-                Console.WriteLine("Track stuck");
+                Log.Error("Track stuck");
             };
         }
 
@@ -78,16 +79,16 @@ namespace KekovBot
                 return;
             }
 
-            var cancelToken = CancelationTokenDict[guild];
+            var cancelToken = _cancelationTokenDict[guild];
             if (cancelToken == null)
             {
-                Console.WriteLine("Cancel token is null!");
+                Log.Warning("Cancel token is null!");
                 return;
             }
 
             var task = Task.Run(async () =>
             {
-                AwaitingDisconnectDict.Add(guild);
+                _awaitingDisconnectDict.Add(guild);
                 await Task.Delay(5000, cancelToken.Token);
                 if (cancelToken.IsCancellationRequested)
                 {
@@ -101,9 +102,9 @@ namespace KekovBot
 
         public static void DisconnectCleanup(DiscordGuild guild)
         {
-            PlayQueueDict.Remove(guild);
-            CancelationTokenDict.Remove(guild);
-            AwaitingDisconnectDict.Remove(guild);
+            _playQueueDict.Remove(guild);
+            _cancelationTokenDict.Remove(guild);
+            _awaitingDisconnectDict.Remove(guild);
         }
     }
 }

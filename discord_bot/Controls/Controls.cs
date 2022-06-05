@@ -1,6 +1,7 @@
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
+using Serilog;
 
 namespace KekovBot
 {
@@ -81,7 +82,7 @@ namespace KekovBot
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Log.Error(e.ToString());
                 await connection.Disconnect(guild);
                 return false;
             }

@@ -1,4 +1,5 @@
 using System.Reactive.Linq;
+using Serilog;
 
 namespace KekovBot
 {
@@ -15,11 +16,11 @@ namespace KekovBot
         {
             _client.DisconnectionHappened.Subscribe(info =>
             {
-                Console.WriteLine($"Websocket disconnection happaned, type: {info.Type}");
+                Log.Warning($"Websocket disconnection happaned, type: {info.Type}");
             });
             _client.ReconnectionHappened.Subscribe(info =>
             {
-                Console.WriteLine($"Websocket reconnection happaned, type: {info.Type}");
+                Log.Warning($"Websocket reconnection happaned, type: {info.Type}");
             });
         }
     }

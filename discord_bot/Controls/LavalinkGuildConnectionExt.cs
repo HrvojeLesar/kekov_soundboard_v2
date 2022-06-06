@@ -37,9 +37,9 @@ namespace KekovBot
                 {
                     try
                     {
-                        await conn.Disconnect(guild);
+                        await conn.DelayedDisconnect();
                     }
-                    catch {}
+                    catch { }
                 }
             };
 
@@ -49,9 +49,9 @@ namespace KekovBot
                 {
                     try
                     {
-                        await conn.Disconnect(guild);
+                        await conn.DelayedDisconnect();
                     }
-                    catch {}
+                    catch { }
                 }
                 Log.Error("Track exception");
             };
@@ -62,23 +62,17 @@ namespace KekovBot
                 {
                     try
                     {
-                        await conn.Disconnect(guild);
+                        await conn.DelayedDisconnect();
                     }
-                    catch {}
+                    catch { }
                 }
                 Log.Error("Track stuck");
             };
         }
 
-        public static async Task Disconnect(this LavalinkGuildConnection conn, DiscordGuild guild, bool isStopCommand = false)
+        public static async Task DelayedDisconnect(this LavalinkGuildConnection conn)
         {
-            if (isStopCommand)
-            {
-                DisconnectCleanup(guild);
-                await conn.DisconnectAsync();
-                return;
-            }
-
+            var guild = conn.Guild;
             var cancelToken = _cancelationTokenDict[guild];
             if (cancelToken == null)
             {
@@ -100,7 +94,15 @@ namespace KekovBot
             await task;
         }
 
-        public static void DisconnectCleanup(DiscordGuild guild)
+        public static async Task Disconnect(this LavalinkGuildConnection conn)
+        {
+            var guild = conn.Guild;
+            DisconnectCleanup(guild);
+            await conn.DisconnectAsync();
+            return;
+        }
+
+        private static void DisconnectCleanup(DiscordGuild guild)
         {
             _playQueueDict.Remove(guild);
             _cancelationTokenDict.Remove(guild);

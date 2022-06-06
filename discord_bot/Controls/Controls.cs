@@ -66,6 +66,7 @@ namespace KekovBot
                 {
                     var cancelToken = CancelationTokenDict[guild];
                     cancelToken.Cancel();
+                    cancelToken.Dispose();
                     CancelationTokenDict[guild] = new CancellationTokenSource();
                 }
 
@@ -83,7 +84,7 @@ namespace KekovBot
             catch (Exception e)
             {
                 Log.Error(e.ToString());
-                await connection.Disconnect(guild);
+                await connection.Disconnect();
                 return false;
             }
         }
@@ -141,7 +142,7 @@ namespace KekovBot
             PlayQueueDict.TryGetValue(guild, out playQueue);
             if (playQueue != null)
             {
-                await playQueue.GuildConnection.Disconnect(guild, true);
+                await playQueue.GuildConnection.Disconnect();
             }
             else
             {
@@ -154,7 +155,7 @@ namespace KekovBot
             DiscordGuild guild = GetGuild(msg);
             PlayQueue? playQueue;
             PlayQueueDict.TryGetValue(guild, out playQueue);
-            if (playQueue != null)
+            if (playQueue != null && playQueue.CurrentlyPlaying != null)
             {
                 await playQueue.GuildConnection.StopAsync();
             }

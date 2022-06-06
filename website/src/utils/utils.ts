@@ -136,6 +136,11 @@ export type GuildFile = {
     time_added: string;
 };
 
+export type QueueReponse = {
+    id: string;
+    display_name: string;
+};
+
 export type BulkEnablePayload = {
     guilds: string[];
     files: string[];
@@ -198,7 +203,7 @@ export const ApiRequest = {
     controlsGetQueue: (
         guildId: string,
         accessToken: string
-    ): Promise<AxiosResponse> => {
+    ): Promise<AxiosResponse<QueueReponse[]>> => {
         return axiosInstance.post(
             ControlsRoute.postQueue,
             {

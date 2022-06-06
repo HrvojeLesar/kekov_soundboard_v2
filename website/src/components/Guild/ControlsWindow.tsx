@@ -1,4 +1,4 @@
-import { Button, createStyles, Group, Paper, Title } from "@mantine/core";
+import { Button, createStyles, Group, Paper, Title, Text } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useState } from "react";
 import { useCookies } from "react-cookie";
@@ -42,13 +42,45 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
     const [isStopLoading, setIsStopLoading] = useState(false);
     const { classes } = useStyles();
 
+    // WARN: A longer queue can overflow out of element
     const handleGetQueue = () => {
         setIsQueueLoading(true);
         ApiRequest.controlsGetQueue(guildId, cookies.access_token)
-            .then((resp) => {
-                console.log(resp);
+            .then(({ data }) => {
+                showNotification({
+                    title: "Queue",
+                    message:
+                        data.length === 0
+                            ? "Queue is empty!"
+                            : data.map((q, index) => {
+                                  return index === 0 ? (
+                                      <>
+                                          <Text weight="bold">
+                                              Currently playing:
+                                              <Text
+                                                  weight={500}
+                                                  component="span"
+                                              >{` ${q.display_name}`}</Text>
+                                          </Text>
+                                      </>
+                                  ) : (
+                                      <Text>{`${index + 1}. ${
+                                          q.display_name
+                                      }`}</Text>
+                                  );
+                              }),
+                    autoClose: 5000,
+                    color: "green",
+                });
             })
             .catch((e) => {
+                showNotification({
+                    title: "Error",
+                    message: "Failed to fetch queue!",
+                    autoClose: 3000,
+                    color: "red",
+                    icon: <X />,
+                });
                 console.log(e);
             })
             .finally(() => {
@@ -138,7 +170,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                     leftIcon={<ClearAll />}
                     loading={isQueueLoading}
                 >
-                    Get Queue
+                    Queue
                 </Button>
                 <Button
                     title="Skip"

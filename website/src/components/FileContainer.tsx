@@ -107,7 +107,7 @@ export const FileUploadContainer = forwardRef<
 
     const calculateCharCount = () => {
         const percent = Math.ceil((value.length / MAXLEN) * 100);
-        let set = { value: percent, color: "blue" };
+        let set = { value: percent, color: "violet" };
         if (MAXLEN - value.length <= 20) {
             set.color = "orange";
         }

@@ -339,7 +339,7 @@ export default function Upload() {
                             sections={[
                                 {
                                     value: limitPercentage,
-                                    color: isLimitExceeded ? "red" : "blue",
+                                    color: isLimitExceeded ? "red" : "violet",
                                 },
                             ]}
                             label={

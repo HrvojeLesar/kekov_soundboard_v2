@@ -64,7 +64,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                                           </Text>
                                       </>
                                   ) : (
-                                      <Text>{`${index + 1}. ${
+                                      <Text>{`${index}. ${
                                           q.display_name
                                       }`}</Text>
                                   );

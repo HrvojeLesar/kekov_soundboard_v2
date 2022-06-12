@@ -4,9 +4,11 @@ import { useCookies } from "react-cookie";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { API_URL, AuthRoute } from "./api/ApiRoutes";
 import { COOKIE_NAMES } from "./auth/AuthProvider";
+import { loginContainerUseStyle } from "./Login";
 import { ApiRequest, cookieOptions } from "./utils/utils";
 
 function LoginCallback() {
+    const { classes } = loginContainerUseStyle();
     let [searchParams] = useSearchParams();
     let [_cookies, setCookie] = useCookies(COOKIE_NAMES);
     let navigate = useNavigate();
@@ -39,7 +41,7 @@ function LoginCallback() {
         }
     }, []);
 
-    return <>Logging you in...</>;
+    return <div className={classes.loginContainer}>Logging you in...</div>;
 }
 
 export default LoginCallback;

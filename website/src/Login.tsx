@@ -4,7 +4,7 @@ import { Navigate } from "react-router-dom";
 import { COOKIE_NAMES } from "./auth/AuthProvider";
 import LoginWithDiscordButton from "./components/LoginWithDiscordButton";
 
-const useStyle = createStyles((theme) => {
+export const loginContainerUseStyle = createStyles((theme) => {
     return {
         loginContainer: {
             width: "100vw",
@@ -12,17 +12,18 @@ const useStyle = createStyles((theme) => {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-
             backgroundColor:
                 theme.colorScheme === "dark"
                     ? theme.colors.dark[6]
                     : theme.colors.gray[0],
+
+            color: theme.colors.gray[0],
         },
     };
 });
 
 export function Login() {
-    const { classes } = useStyle();
+    const { classes } = loginContainerUseStyle();
     const [cookies] = useCookies(COOKIE_NAMES);
 
     if (cookies.access_token && cookies.refresh_token && cookies.expires) {

@@ -28,7 +28,7 @@ import {
     FileContainerRef,
 } from "../components/FileContainer";
 import { AuthContext, COOKIE_NAMES } from "../auth/AuthProvider";
-import { FileUpload, Icon, X } from "tabler-icons-react";
+import { TbFileUpload, TbX } from "react-icons/tb";
 import { v4 as uuidv4 } from "uuid";
 import { showNotification } from "@mantine/notifications";
 import {
@@ -38,6 +38,7 @@ import {
 import { useCookies } from "react-cookie";
 import { useDocumentTitle } from "@mantine/hooks";
 import { ApiRequest, UserFile } from "../utils/utils";
+import { IconType } from "react-icons";
 
 const MAX_TOTAL_SIZE = 10_000_000;
 const ACCEPTED_MIMES = [
@@ -72,12 +73,12 @@ const getIconColor = (status: DropzoneStatus, theme: MantineTheme) => {
 const UploadIcon = ({
     status,
     ...props
-}: ComponentProps<Icon> & { status: DropzoneStatus }) => {
+}: ComponentProps<IconType> & { status: DropzoneStatus }) => {
     if (status.rejected) {
-        return <X {...props} />;
+        return <TbX {...props} />;
     }
 
-    return <FileUpload {...props} />;
+    return <TbFileUpload {...props} />;
 };
 
 const useStyles = createStyles((theme) => {
@@ -259,7 +260,10 @@ export default function Upload() {
                         hasFailedFiles || hasQuickEnableFailed
                             ? "red"
                             : "green",
-                    icon: hasFailedFiles || hasQuickEnableFailed ? <X /> : null,
+                    icon:
+                        hasFailedFiles || hasQuickEnableFailed ? (
+                            <TbX size={24} />
+                        ) : null,
                 });
 
                 setFiles(failedFiles);
@@ -272,7 +276,7 @@ export default function Upload() {
                     message: "File upload failed!",
                     autoClose: false,
                     color: "red",
-                    icon: <X />,
+                    icon: <TbX size={24} />,
                 });
             });
     };

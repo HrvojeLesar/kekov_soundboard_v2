@@ -10,7 +10,7 @@ import { showNotification } from "@mantine/notifications";
 import { CanceledError } from "axios";
 import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
-import { X } from "tabler-icons-react";
+import { TbX } from "react-icons/tb";
 import { COOKIE_NAMES } from "../../auth/AuthProvider";
 import { ApiRequest, LOADINGOVERLAY_ZINDEX, UserFile } from "../../utils/utils";
 import SearchBar from "../SearchBar";
@@ -100,7 +100,7 @@ export default function QuickEnableWindow({
                     "An error occured while trying to toggle. Try refreshing!",
                 autoClose: false,
                 color: "red",
-                icon: <X />,
+                icon: <TbX size={24} />,
             });
         }
     };
@@ -152,7 +152,10 @@ export default function QuickEnableWindow({
             p="sm"
             className={classes.quickEnablePaper}
         >
-            <LoadingOverlay zIndex={LOADINGOVERLAY_ZINDEX} visible={isFetchingFiles} />
+            <LoadingOverlay
+                zIndex={LOADINGOVERLAY_ZINDEX}
+                visible={isFetchingFiles}
+            />
             <Title title="Quick enable files" order={3} pb="xs">
                 Quick enable files
             </Title>

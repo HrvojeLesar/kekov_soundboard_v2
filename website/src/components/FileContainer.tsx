@@ -9,7 +9,7 @@ import {
     createStyles,
 } from "@mantine/core";
 import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
-import { Trash } from "tabler-icons-react";
+import { TbTrash } from "react-icons/tb";
 
 const MAXLEN = 50;
 
@@ -166,7 +166,7 @@ export const FileUploadContainer = forwardRef<
                     variant="outline"
                     onClick={() => deleteCallback(file, isNameLenghtExceeded)}
                 >
-                    <Trash />
+                    <TbTrash size={24} />
                 </ActionIcon>
             </Group>
             <TextInput

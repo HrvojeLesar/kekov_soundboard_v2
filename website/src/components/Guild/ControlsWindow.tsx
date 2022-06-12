@@ -3,12 +3,12 @@ import { showNotification } from "@mantine/notifications";
 import { useState } from "react";
 import { useCookies } from "react-cookie";
 import {
-    Check,
-    ClearAll,
-    PlayerSkipForward,
-    PlayerStop,
-    X,
-} from "tabler-icons-react";
+    TbCheck,
+    TbClearAll,
+    TbPlayerSkipForward,
+    TbPlayerStop,
+    TbX,
+} from "react-icons/tb";
 import { COOKIE_NAMES } from "../../auth/AuthProvider";
 import {
     ApiRequest,
@@ -64,9 +64,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                                           </Text>
                                       </>
                                   ) : (
-                                      <Text>{`${index}. ${
-                                          q.display_name
-                                      }`}</Text>
+                                      <Text>{`${index}. ${q.display_name}`}</Text>
                                   );
                               }),
                     autoClose: 5000,
@@ -79,7 +77,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                     message: "Failed to fetch queue!",
                     autoClose: 3000,
                     color: "red",
-                    icon: <X />,
+                    icon: <TbX size={24} />,
                 });
                 console.log(e);
             })
@@ -98,7 +96,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                         message: "Skipped",
                         autoClose: 1000,
                         color: "green",
-                        icon: <Check />,
+                        icon: <TbCheck size={24} />,
                     });
                 } else {
                     showNotification({
@@ -108,7 +106,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                             : "Unknown error occured",
                         autoClose: 3000,
                         color: "red",
-                        icon: <X />,
+                        icon: <TbX size={24} />,
                     });
                 }
             })
@@ -130,7 +128,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                         message: "Stopped",
                         autoClose: 1000,
                         color: "green",
-                        icon: <Check />,
+                        icon: <TbCheck size={24} />,
                     });
                 } else {
                     showNotification({
@@ -140,7 +138,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                             : "Unknown error occured",
                         autoClose: 3000,
                         color: "red",
-                        icon: <X />,
+                        icon: <TbX size={24} />,
                     });
                 }
             })
@@ -167,7 +165,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                     title="Get Queue"
                     onClick={() => handleGetQueue()}
                     className={classes.buttonWidth}
-                    leftIcon={<ClearAll />}
+                    leftIcon={<TbClearAll size={24} />}
                     loading={isQueueLoading}
                 >
                     Queue
@@ -176,7 +174,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                     title="Skip"
                     onClick={() => handleSkip()}
                     className={classes.buttonWidth}
-                    leftIcon={<PlayerSkipForward />}
+                    leftIcon={<TbPlayerSkipForward size={24} />}
                     loading={isSkipLoading}
                 >
                     Skip
@@ -186,7 +184,7 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                     onClick={() => handleStop()}
                     color="red"
                     className={classes.buttonWidth}
-                    leftIcon={<PlayerStop />}
+                    leftIcon={<TbPlayerStop size={24} />}
                     loading={isStopLoading}
                 >
                     Stop

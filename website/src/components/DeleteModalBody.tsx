@@ -1,7 +1,7 @@
 import { Button, Group, Stack, Text } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useState } from "react";
-import { Check, X } from "tabler-icons-react";
+import { TbCheck, TbX } from "react-icons/tb";
 import { GuildFile, UserFile } from "../utils/utils";
 
 type DeleteModalBodyProps = {
@@ -26,7 +26,7 @@ export default function DeleteModalBody({
                     message: "File has been successfully deleted!",
                     autoClose: 3000,
                     color: "green",
-                    icon: <Check />,
+                    icon: <TbCheck size={24} />,
                 });
                 closeCallback();
             })
@@ -37,7 +37,7 @@ export default function DeleteModalBody({
                     message: "Failed to delete selected file",
                     autoClose: 5000,
                     color: "red",
-                    icon: <X />,
+                    icon: <TbX size={24} />,
                 });
             })
             .finally(() => {

@@ -1,6 +1,6 @@
 import { TextInput } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { Search } from "tabler-icons-react";
+import { TbSearch } from "react-icons/tb";
 
 type SearchBarProps = {
     filterCallback: (searchValue: string) => void;
@@ -26,7 +26,7 @@ export default function SearchBar({ filterCallback }: SearchBarProps) {
                 setSearchValue(e.target.value);
             }}
             placeholder="Search"
-            rightSection={<Search />}
+            rightSection={<TbSearch size={24} />}
         />
     );
 }

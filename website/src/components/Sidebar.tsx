@@ -12,9 +12,8 @@ import {
     useMantineColorScheme,
 } from "@mantine/core";
 import { useContext, useEffect } from "react";
-import { Divide, Logout, MoonStars, Sun, Upload } from "tabler-icons-react";
-import { Icon } from "@iconify/react";
-import discordIcon from "@iconify/icons-simple-icons/discord";
+import { FaSignOutAlt, FaDiscord } from "react-icons/fa";
+import { TbMoonStars, TbSun, TbUpload } from "react-icons/tb";
 import { API_URL, AuthRoute, DISCORD_CND_USER_AVATAR } from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
 import BaseSidebarButton, { baseSidebarButtonStyle } from "./BaseSidebarButton";
@@ -117,7 +116,7 @@ export default function Sidebar() {
                             />
                         </BaseSidebarButton>
                         <BaseSidebarButton label="Upload" route="/upload">
-                            <Upload />
+                            <TbUpload size={24} />
                         </BaseSidebarButton>
                     </Group>
                 </Center>
@@ -152,7 +151,7 @@ export default function Sidebar() {
                                 component={"a"}
                                 href={`${API_URL}${AuthRoute.getBotInvite}`}
                             >
-                                <Icon width="70%" icon={discordIcon} />
+                                <FaDiscord size={32} />
                             </UnstyledButton>
                         </Tooltip>
                         <Tooltip label="Options" position="right" withArrow>
@@ -161,9 +160,12 @@ export default function Sidebar() {
                                 <Menu.Item
                                     icon={
                                         isColorSchemeDark() ? (
-                                            <Sun size={14} color="yellow" />
+                                            <TbSun size={14} color="yellow" />
                                         ) : (
-                                            <MoonStars size={14} color="teal" />
+                                            <TbMoonStars
+                                                size={14}
+                                                color="teal"
+                                            />
                                         )
                                     }
                                     onClick={() => toggleColorScheme()}
@@ -175,7 +177,7 @@ export default function Sidebar() {
                                 <Divider />
                                 <Menu.Item
                                     color="red"
-                                    icon={<Logout size={14} />}
+                                    icon={<FaSignOutAlt size={14} />}
                                     onClick={() => logout()}
                                 >
                                     Logout

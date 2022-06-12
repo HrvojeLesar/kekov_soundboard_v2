@@ -1,6 +1,6 @@
 import { ActionIcon, Modal } from "@mantine/core";
 import { useState } from "react";
-import { Trash } from "tabler-icons-react";
+import { TbTrash } from "react-icons/tb";
 import { GuildFile, MODAL_ZINDEX, UserFile } from "../../utils/utils";
 import DeleteModalBody from "../DeleteModalBody";
 
@@ -37,7 +37,7 @@ export default function DeleteFile({ file, deleteCallback }: DeleteFileProps) {
                 />
             </Modal>
             <ActionIcon onClick={() => setIsModalOpen(true)} color="red">
-                <Trash />
+                <TbTrash size={24} />
             </ActionIcon>
         </>
     );

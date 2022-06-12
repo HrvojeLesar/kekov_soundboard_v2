@@ -4,6 +4,7 @@ import {
     ColorSchemeProvider,
     LoadingOverlay,
     MantineProvider,
+    Paper,
 } from "@mantine/core";
 import { useDocumentTitle, useLocalStorage } from "@mantine/hooks";
 import { NotificationsProvider } from "@mantine/notifications";
@@ -86,7 +87,7 @@ export default function App() {
                                     >
                                         <Route
                                             path="/"
-                                            element={<div>Lading page</div>}
+                                            element={<Paper>Landing page</Paper>}
                                         />
                                         {/* TODO: check if route is valid, guild exists, user is in guild... */}
                                         <Route

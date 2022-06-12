@@ -11,7 +11,7 @@ import {
 import { showNotification } from "@mantine/notifications";
 import { useState } from "react";
 import { useCookies } from "react-cookie";
-import { Check, PlayerPlay, X } from "tabler-icons-react";
+import { TbCheck, TbPlayerPlay, TbX } from "react-icons/tb";
 import { COOKIE_NAMES } from "../auth/AuthProvider";
 import {
     ApiRequest,
@@ -124,7 +124,7 @@ export function PlayControl({ file, guildId }: PlayControlProps) {
                                 : "Added to queue",
                         autoClose: 1000,
                         color: "green",
-                        icon: <Check />,
+                        icon: <TbCheck size={24} />,
                     });
                 } else {
                     showNotification({
@@ -134,7 +134,7 @@ export function PlayControl({ file, guildId }: PlayControlProps) {
                             : "Unknown error occured",
                         autoClose: 3000,
                         color: "red",
-                        icon: <X />,
+                        icon: <TbX size={24} />,
                     });
                 }
                 setIsSendingReq(false);
@@ -146,7 +146,7 @@ export function PlayControl({ file, guildId }: PlayControlProps) {
                     message: "Failed to play or add sound to queue!",
                     autoClose: 5000,
                     color: "red",
-                    icon: <X />,
+                    icon: <TbX />,
                 });
                 setIsSendingReq(false);
             }
@@ -175,7 +175,7 @@ export function PlayControl({ file, guildId }: PlayControlProps) {
             >
                 {file.display_name}
             </Text>
-            <PlayerPlay className={classes.playerPlayIconStyle} />
+            <TbPlayerPlay className={classes.playerPlayIconStyle} />
             <UnstyledButton
                 className={classes.buttonStyle}
                 onClick={() => {

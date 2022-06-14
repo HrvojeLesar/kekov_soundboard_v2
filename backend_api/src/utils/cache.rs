@@ -22,29 +22,11 @@ pub struct DiscordGuild {
     pub icon_hash: Option<String>,
 }
 
-impl DiscordGuild {
-    pub fn get_id(&self) -> &GuildId {
-        return &self.id;
-    }
-
-    pub fn get_name(&self) -> &String {
-        return &self.name;
-    }
-
-    pub fn get_icon(&self) -> Option<&String> {
-        return self.icon.as_ref();
-    }
-
-    pub fn get_icon_hash(&self) -> Option<&String> {
-        return self.icon_hash.as_ref();
-    }
-}
-
 pub fn create_user_guilds_cache() -> UserGuildsCache {
     return Cache::builder()
         .max_capacity(1000)
         .initial_capacity(100)
-        .time_to_live(Duration::from_secs(60 * 5))
+        .time_to_live(Duration::from_secs(60 * 60))
         .build();
 }
 

@@ -71,7 +71,7 @@ impl Guild {
     ) -> Result<Vec<Self>, KekServerError> {
         let ids = guild_ids
             .iter()
-            .map(|guild| guild.get_id().0 as i64)
+            .map(|guild| guild.id.0 as i64)
             .collect::<Vec<i64>>();
         let records = sqlx::query!(
             "

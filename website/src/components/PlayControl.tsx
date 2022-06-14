@@ -161,13 +161,13 @@ export function PlayControl({ file, guildId }: PlayControlProps) {
             shadow="sm"
             p="sm"
             className={classes.container}
+            title={file.display_name}
         >
             <LoadingOverlay
                 zIndex={LOADINGOVERLAY_ZINDEX}
                 visible={isSendingReq}
             />
             <Text
-                title={file.display_name}
                 weight="bold"
                 align="center"
                 mx="xl"

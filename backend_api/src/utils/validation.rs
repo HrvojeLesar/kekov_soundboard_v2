@@ -24,7 +24,7 @@ impl Validation {
             Some(guilds) => {
                 guilds
                     .iter()
-                    .find(|guild| guild.get_id() == guild_id)
+                    .find(|guild| &guild.id == guild_id)
                     .ok_or(KekServerError::NotInGuildError)?;
             }
             None => return Err(KekServerError::UserNotInCacheError),
@@ -41,7 +41,7 @@ impl Validation {
         match user_guilds_cache.get(authorized_user.get_discord_user().get_id()) {
             Some(guilds) => {
                 for id in guild_ids {
-                    if !guilds.iter().any(|guild| guild.get_id() == id) {
+                    if !guilds.iter().any(|guild| &guild.id == id) {
                         return Err(KekServerError::NotInGuildError);
                     }
                 }

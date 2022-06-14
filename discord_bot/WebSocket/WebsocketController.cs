@@ -1,3 +1,5 @@
+using System.Net.WebSockets;
+using dotenv.net;
 using Websocket.Client;
 
 namespace KekovBot
@@ -9,7 +11,14 @@ namespace KekovBot
 
         protected WebsocketController(String uri)
         {
-            _client = new WebsocketClient(new Uri(uri));
+            var factory = new Func<ClientWebSocket>(() =>
+            {
+                var env = DotEnv.Read();
+                var client = new ClientWebSocket();
+                client.Options.SetRequestHeader("X-Ws-Token", env["WS_TOKEN"]);
+                return client;
+            });
+            _client = new WebsocketClient(new Uri(uri), factory);
             _client.ReconnectTimeout = null;
             _client.ErrorReconnectTimeout = TimeSpan.FromSeconds(5);
         }

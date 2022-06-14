@@ -105,7 +105,7 @@ pub async fn get_user_guilds(
     let guilds = guilds
         .into_iter()
         .map(|mut guild| {
-            match user_guilds.iter().find(|g| g.get_id() == guild.get_id()) {
+            match user_guilds.iter().find(|g| &g.id == &guild.id) {
                 Some(g) => {
                     guild = Guild {
                         id: g.id.clone(),
@@ -172,7 +172,7 @@ pub async fn get_enabled_user_files(
     let guild_id = guild_id.into_inner();
     let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
-    if !user_guilds.iter().any(|guild| guild.get_id() == &guild_id) {
+    if !user_guilds.iter().any(|guild| &guild.id == &guild_id) {
         return Err(KekServerError::NotInGuildError);
     }
 

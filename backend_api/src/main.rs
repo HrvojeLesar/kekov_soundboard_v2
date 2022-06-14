@@ -26,6 +26,7 @@ mod routes;
 mod utils;
 mod ws;
 
+// WARN: HARDCODED LIMITS
 pub static ALLOWED_USERS: [u64; 7] = [
     132286945031094272, // jo
     344472419085582347, // fejbijan
@@ -36,6 +37,7 @@ pub static ALLOWED_USERS: [u64; 7] = [
     252114544485335051, // Metajđoš
 ];
 
+// WARN: HARDCODED LIMITS
 pub static ALLOWED_GUILDS: [u64; 1] = [173766075484340234];
 
 
@@ -47,7 +49,7 @@ async fn main() -> std::io::Result<()> {
 
     let bind_address = format!(
         "localhost:{}",
-        std::env::var("PORT").unwrap_or("8080".to_string())
+        dotenv::var("PORT").unwrap_or("8080".to_string())
     );
 
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));

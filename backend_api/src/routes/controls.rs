@@ -143,7 +143,7 @@ pub async fn play_request(
             transaction.commit().await?;
 
             let payload = req_payload.into_inner();
-            let control = ControlsServerMessage::new_play(guild_file, None);
+            let control = ControlsServerMessage::new_play(guild_file, payload.channel_id);
             let resp = send_command(control, server_address, ws_channels).await?;
 
             return Ok(HttpResponse::Ok().json(resp));

@@ -169,7 +169,7 @@ export default function QuickEnableWindow({
             <ScrollArea>
                 {filterFiles().map((file) => {
                     return (
-                        <Box m="sm" key={file.sound_file.id}>
+                        <Box my="sm" key={file.sound_file.id}>
                             <QuickEnableCheckbox
                                 file={file}
                                 onChange={handleToggle}

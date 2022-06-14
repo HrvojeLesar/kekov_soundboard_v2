@@ -1,6 +1,7 @@
 use actix::Addr;
 use actix_web::{
-    get, guard,
+    get,
+    guard::{self, Guard, GuardContext},
     web::{scope, Data, Payload, ServiceConfig},
     HttpRequest, HttpResponse,
 };
@@ -24,16 +25,15 @@ lazy_static! {
     static ref TOKEN: String = dotenv::var("WS_TOKEN").unwrap();
 }
 
-pub fn config(cfg: &mut ServiceConfig) {
-    cfg.service(
-        scope("/ws")
-            .guard(guard::Header("X-Ws-Token", &TOKEN))
-            .service(controls_ws)
-            .service(sync_ws),
-    );
+fn websocket_token_guard(ctx: &GuardContext) -> bool {
+    return guard::Header("X-Ws-Token", &TOKEN).check(ctx);
 }
 
-#[get("controls")]
+pub fn config(cfg: &mut ServiceConfig) {
+    cfg.service(scope("/ws").service(controls_ws).service(sync_ws));
+}
+
+#[get("controls", guard = "websocket_token_guard")]
 pub async fn controls_ws(
     request: HttpRequest,
     stream: Payload,
@@ -49,7 +49,7 @@ pub async fn controls_ws(
     )?);
 }
 
-#[get("sync")]
+#[get("sync", guard = "websocket_token_guard")]
 pub async fn sync_ws(
     request: HttpRequest,
     stream: Payload,

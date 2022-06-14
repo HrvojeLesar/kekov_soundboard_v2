@@ -6,4 +6,5 @@ pub fn check_required_env_variables() {
     dotenv::var("SOUNDFILE_DIR").expect("SOUNDFILE_DIR env variable missing!");
     #[cfg(target_os = "linux")]
     dotenv::var("SOUNDFILE_DIR").expect("SOUNDFILE_DIR env variable missing!");
+    dotenv::var("WS_TOKEN").expect("WS_TOKEN env variable missing!");
 }

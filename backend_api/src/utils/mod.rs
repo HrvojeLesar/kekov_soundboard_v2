@@ -69,6 +69,9 @@ pub async fn make_discord_get_request(
         if let Some(after) = resp.headers().get("retry-after") {
             let after = after.to_str()?.parse()?;
             let sleep_dur = Duration::from_secs_f64(after);
+            if sleep_dur > Duration::from_secs(10) {
+                return Err(KekServerError::AuthorizationTimeExpiredError);
+            }
             sleep(sleep_dur).await;
         } else {
             return Err(KekServerError::DiscordRequestError);

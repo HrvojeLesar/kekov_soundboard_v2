@@ -1,6 +1,6 @@
 use actix::Addr;
 use actix_web::{
-    get,
+    get, guard,
     web::{scope, Data, Payload, ServiceConfig},
     HttpRequest, HttpResponse,
 };
@@ -18,10 +18,16 @@ use crate::{
     },
 };
 
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref TOKEN: String = dotenv::var("WS_TOKEN").unwrap();
+}
+
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/ws")
-            // .wrap(AuthService)
+            .guard(guard::Header("X-Ws-Token", &TOKEN))
             .service(controls_ws)
             .service(sync_ws),
     );

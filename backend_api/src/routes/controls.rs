@@ -125,7 +125,7 @@ pub async fn play_request(
 
     if !user_guilds
         .iter()
-        .any(|guild| guild.get_id() == &req_payload.guild_id)
+        .any(|guild| &guild.id == &req_payload.guild_id)
     {
         return Err(KekServerError::NotInGuildError);
     }
@@ -164,7 +164,7 @@ pub async fn stop_request(
 
     if !user_guilds
         .iter()
-        .any(|guild| guild.get_id() == &stop_payload.guild_id)
+        .any(|guild| &guild.id == &stop_payload.guild_id)
     {
         return Err(KekServerError::NotInGuildError);
     }
@@ -187,7 +187,7 @@ pub async fn skip_request(
 
     if !user_guilds
         .iter()
-        .any(|guild| guild.get_id() == &skip_payload.guild_id)
+        .any(|guild| &guild.id == &skip_payload.guild_id)
     {
         return Err(KekServerError::NotInGuildError);
     }
@@ -210,7 +210,7 @@ pub async fn queue_request(
 
     if !user_guilds
         .iter()
-        .any(|guild| guild.get_id() == &queue_payload.guild_id)
+        .any(|guild| &guild.id == &queue_payload.guild_id)
     {
         return Err(KekServerError::NotInGuildError);
     }

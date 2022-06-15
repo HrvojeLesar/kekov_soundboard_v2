@@ -7,7 +7,7 @@ use std::{
 use actix_cors::Cors;
 use actix_web::{web::Data, App, HttpServer};
 use env::check_required_env_variables;
-use routes::{not_found::not_found, routes_config};
+use routes::{not_found::not_found, routes_config, status::Status};
 
 use dotenv::dotenv;
 use snowflake::SnowflakeIdGenerator;
@@ -25,6 +25,7 @@ mod oauth_client;
 mod routes;
 mod utils;
 mod ws;
+mod scheduler;
 
 // WARN: HARDCODED LIMITS
 pub static ALLOWED_USERS: [u64; 7] = [
@@ -72,6 +73,22 @@ async fn main() -> std::io::Result<()> {
     let ws_channels: Data<WsSessionCommChannels> = Data::new(RwLock::new(HashMap::new()));
     let users_guild_cache = Data::new(create_user_guilds_cache());
     let authorized_users_cache = Data::new(create_authorized_user_cache());
+    let status = Data::new(RwLock::new(Status::new()));
+
+    let mut scheduler = scheduler::Scheduler::new();
+
+    let status_ref = status.clone();
+    let ws_channels_ref = ws_channels.clone();
+    scheduler.run(std::time::Duration::from_secs(1), move || {
+        let ws_channels_ref = ws_channels_ref.clone();
+        let status_ref = status_ref.clone();
+        async move {
+            let mut status = status_ref.write().await;
+            status.ws_channel_num = ws_channels_ref.read().await.len();
+
+        }
+    });
+
 
     return HttpServer::new(move || {
         // Per thread snowflake generator
@@ -102,6 +119,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(ws_channels.clone())
             .app_data(users_guild_cache.clone())
             .app_data(authorized_users_cache.clone())
+            .app_data(status.clone())
             .app_data(snowflakes)
             .configure(routes_config)
             .default_service(actix_web::web::to(not_found))

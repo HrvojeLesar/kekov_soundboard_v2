@@ -132,7 +132,7 @@ Routes are protected with a token that should match on the backend and bots webs
 - Receiving and responding to commands from controls routes.
 
 ### Sync websocket
-**GET** `/ws/syn`
+**GET** `/ws/sync`
 - Used for bot application to communicate with backend.
 - Tries to sync bot being added/kicked/banned from various Discord servers.
 - Updates guilds cache for users leaving guilds.

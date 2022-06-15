@@ -8,6 +8,7 @@ mod user;
 mod ws;
 
 pub mod not_found;
+pub mod status;
 
 pub fn routes_config(cfg: &mut ServiceConfig) {
     cfg.service(
@@ -17,6 +18,7 @@ pub fn routes_config(cfg: &mut ServiceConfig) {
             .configure(user::config)
             .configure(guild::config)
             .configure(ws::config)
-            .configure(controls::config),
+            .configure(controls::config)
+            .configure(status::config),
     );
 }

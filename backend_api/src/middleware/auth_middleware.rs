@@ -1,7 +1,7 @@
 use std::{
     future::{ready, Ready},
     rc::Rc,
-    sync::Arc,
+    sync::{Arc, Mutex},
 };
 
 use actix_web::{
@@ -9,6 +9,8 @@ use actix_web::{
     web::Data,
     Error, HttpMessage,
 };
+use log::warn;
+use tokio::sync::Notify;
 
 use crate::{
     error::errors::KekServerError,
@@ -17,7 +19,7 @@ use crate::{
             get_access_token, get_discord_user_from_token, AuthorizedUser,
             AuthorizedUserServiceType,
         },
-        cache::AuthorizedUsersCache,
+        cache::{AuthMiddlewareQueueCache, AuthorizedUsersCache},
     },
 };
 
@@ -63,18 +65,54 @@ where
                 None => panic!("Authorized user cache should always be present"),
             };
 
+            let queue_cache = match req.app_data::<Data<Mutex<AuthMiddlewareQueueCache>>>() {
+                Some(c) => c.clone(),
+                None => panic!("Queue cache should always be present!"),
+            };
+
             let access_token = Arc::new(get_access_token(&req).await?);
             let authorized_user;
             if !cache.contains_key(&access_token) {
-                let user = get_discord_user_from_token(&access_token).await?;
-                authorized_user = Arc::new(AuthorizedUser {
-                    access_token: Arc::clone(&access_token),
-                    discord_user: user,
-                });
+                let lock = queue_cache.lock().unwrap();
+                let notify;
+                if let Some(n) = lock.0.get(&access_token) {
+                    drop(lock);
+                    notify = n;
+                    // wait
+                    notify.notified().await;
+                } else {
+                    notify = Arc::new(Notify::new());
+                    lock.0.insert(access_token.clone(), notify.clone()).await;
+                    drop(lock);
+                }
 
-                cache
-                    .insert(access_token, Arc::clone(&authorized_user))
-                    .await;
+                if !cache.contains_key(&access_token) {
+                    debug!("Auth");
+                    let user = match get_discord_user_from_token(&access_token).await {
+                        Ok(u) => u,
+                        Err(e) => {
+                            notify.notify_one();
+                            return Err(e.into());
+                        }
+                    };
+                    authorized_user = Arc::new(AuthorizedUser {
+                        access_token: Arc::clone(&access_token),
+                        discord_user: user,
+                    });
+
+                    cache
+                        .insert(access_token.clone(), Arc::clone(&authorized_user))
+                        .await;
+                    notify.notify_waiters();
+                    let lock = queue_cache.lock().unwrap();
+                    lock.0.invalidate(&access_token).await;
+                } else {
+                    authorized_user = match cache.get(&access_token) {
+                        Some(au) => au,
+                        None => return Err(KekServerError::UserNotInCacheError.into()),
+                    };
+                    debug!("Skip auth");
+                }
             } else {
                 authorized_user = match cache.get(&access_token) {
                     Some(au) => au,

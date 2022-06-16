@@ -115,7 +115,7 @@ pub async fn bulk_enable(
     let mut transaction = db_pool.begin().await?;
     {
         let files = SoundFile::get_user_files(
-            &authorized_user.get_discord_user().get_id(),
+            &authorized_user.discord_user.id,
             &mut transaction,
         )
         .await?;

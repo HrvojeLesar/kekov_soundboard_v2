@@ -12,9 +12,9 @@ use super::ids::UserId;
 pub struct User {
     #[serde(deserialize_with = "deserialize_string_to_number")]
     #[serde(serialize_with = "serialize_id_to_string")]
-    id: UserId,
-    username: String,
-    avatar: Option<String>,
+    pub id: UserId,
+    pub username: String,
+    pub avatar: Option<String>,
 }
 
 impl User {
@@ -61,18 +61,6 @@ impl User {
         .execute(&mut *transaction)
         .await?;
         return Ok(());
-    }
-
-    pub fn get_id(&self) -> &UserId {
-        return &self.id;
-    }
-
-    pub fn get_username(&self) -> &String {
-        return &self.username;
-    }
-
-    pub fn get_avatar(&self) -> Option<&String> {
-        return self.avatar.as_ref();
     }
 }
 

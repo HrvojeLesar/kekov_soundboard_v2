@@ -52,7 +52,7 @@ async fn get_request(
         .get(format!("https://discord.com/api/v9{}", url))
         .append_header((
             AUTHORIZATION,
-            format!("Bearer {}", autorized_user.get_access_token().0),
+            format!("Bearer {}", &autorized_user.access_token.0),
         ))
         .send()
         .await;

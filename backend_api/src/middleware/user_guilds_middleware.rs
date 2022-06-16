@@ -1,7 +1,7 @@
 use std::{
     future::{ready, Ready},
     rc::Rc,
-    sync::Arc,
+    sync::{Arc, Mutex},
 };
 
 use actix_web::{
@@ -10,10 +10,11 @@ use actix_web::{
     Error, HttpMessage,
 };
 use log::warn;
+use tokio::sync::Notify;
 
 use crate::{
     error::errors::KekServerError,
-    utils::{auth::AuthorizedUserServiceType, cache::UserGuildsCache},
+    utils::{auth::AuthorizedUserServiceType, cache::{UserGuildsCache, UserGuildsMiddlwareQueueCache}},
 };
 
 pub struct UserGuildsService;
@@ -67,10 +68,43 @@ where
                     None => panic!("Guild cache should always be present!"),
                 };
 
-                let user_id = authorized_user.get_discord_user().get_id();
+                let queue_cache = match req.app_data::<Data<Mutex<UserGuildsMiddlwareQueueCache>>>() {
+                    Some(c) => c.clone(),
+                    None => panic!("Queue cache should always be present!"),
+                };
+
+                let user_id = &authorized_user.discord_user.id;
                 if !cache.contains_key(user_id) {
-                    let user_guilds = Arc::new(authorized_user.get_guilds().await?);
-                    cache.insert(user_id.clone(), user_guilds).await;
+                    let lock = queue_cache.lock().unwrap();
+                    let notify;
+                    if let Some(n) = lock.0.get(&authorized_user.access_token) {
+                        drop(lock);
+                        notify = n;
+                        // wait
+                        notify.notified().await;
+                    } else {
+                        let token = authorized_user.access_token.clone();
+                        notify = Arc::new(Notify::new());
+                        lock.0.insert(token, notify.clone()).await;
+                        drop(lock);
+                    }
+                    if !cache.contains_key(user_id) {
+                        debug!("Getting guilds");
+                        let user_guilds = match authorized_user.get_guilds().await {
+                            Ok(g) => Arc::new(g),
+                            Err(e) => {
+                                notify.notify_one();
+                                return Err(e.into());
+                            }
+                        };
+                        // let user_guilds = Arc::new(authorized_user.get_guilds().await?);
+                        cache.insert(user_id.clone(), user_guilds).await;
+                        notify.notify_waiters();
+                        let lock = queue_cache.lock().unwrap();
+                        lock.0.invalidate(&authorized_user.access_token).await;
+                    } else {
+                        debug!("Skip guilds");
+                    }
                 }
             }
 
@@ -121,7 +155,7 @@ mod tests {
             .await;
         user_guilds_cache
             .insert(
-                authorized_user.discord_user.get_id().clone(),
+                authorized_user.discord_user.id.clone(),
                 Arc::new(vec![DiscordGuild {
                     id: GuildId(1),
                     name: "test_guild".to_owned(),

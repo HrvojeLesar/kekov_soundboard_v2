@@ -20,7 +20,7 @@ impl Validation {
         guild_id: &GuildId,
         user_guilds_cache: &Data<UserGuildsCache>,
     ) -> Result<(), KekServerError> {
-        match user_guilds_cache.get(authorized_user.get_discord_user().get_id()) {
+        match user_guilds_cache.get(&authorized_user.discord_user.id) {
             Some(guilds) => {
                 guilds
                     .iter()
@@ -38,7 +38,7 @@ impl Validation {
         guild_ids: &Vec<GuildId>,
         user_guilds_cache: &Data<UserGuildsCache>,
     ) -> Result<(), KekServerError> {
-        match user_guilds_cache.get(authorized_user.get_discord_user().get_id()) {
+        match user_guilds_cache.get(&authorized_user.discord_user.id) {
             Some(guilds) => {
                 for id in guild_ids {
                     if !guilds.iter().any(|guild| &guild.id == id) {

@@ -36,19 +36,19 @@ pub fn config(cfg: &mut ServiceConfig) {
 
 #[get("/files")]
 pub async fn get_user_files(
-    AuthorizedUserExt(user): AuthorizedUserExt,
+    AuthorizedUserExt(authorized_user): AuthorizedUserExt,
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
     let mut transaction = db_pool.begin().await?;
     let files =
-        SoundFile::get_user_files(user.get_discord_user().get_id(), &mut transaction).await?;
+        SoundFile::get_user_files(&authorized_user.discord_user.id, &mut transaction).await?;
     transaction.commit().await?;
     return Ok(HttpResponse::Ok().json(files));
 }
 
 #[delete("/files/{file_id}")]
 pub async fn delete_user_file(
-    AuthorizedUserExt(user): AuthorizedUserExt,
+    AuthorizedUserExt(authorized_user): AuthorizedUserExt,
     db_pool: Data<PgPool>,
     file_id: Path<SoundFileId>,
 ) -> Result<HttpResponse, KekServerError> {
@@ -56,7 +56,7 @@ pub async fn delete_user_file(
 
     let deleted_file = SoundFile::delete(
         &file_id.into_inner(),
-        user.get_discord_user().get_id(),
+        &authorized_user.discord_user.id,
         &mut transaction,
     )
     .await?;
@@ -72,7 +72,7 @@ pub struct FilesToDelete {
 
 #[delete("/files")]
 pub async fn delete_multiple_user_files(
-    AuthorizedUserExt(user): AuthorizedUserExt,
+    AuthorizedUserExt(authorized_user): AuthorizedUserExt,
     db_pool: Data<PgPool>,
     file_ids: Json<FilesToDelete>,
 ) -> Result<HttpResponse, KekServerError> {
@@ -80,7 +80,7 @@ pub async fn delete_multiple_user_files(
 
     let deleted_files = SoundFile::delete_multiple(
         &file_ids.files,
-        user.get_discord_user().get_id(),
+        &authorized_user.discord_user.id,
         &mut transaction,
     )
     .await?;
@@ -178,12 +178,12 @@ pub async fn get_enabled_user_files(
 
     let mut transaction = db_pool.begin().await?;
     let files = SoundFile::get_user_files(
-        authorized_user.get_discord_user().get_id(),
+        &authorized_user.discord_user.id,
         &mut transaction,
     )
     .await?;
     let enabled_files = GuildFile::get_users_enabled_files_for_guild(
-        authorized_user.get_discord_user().get_id(),
+        &authorized_user.discord_user.id,
         &guild_id,
         &mut transaction,
     )

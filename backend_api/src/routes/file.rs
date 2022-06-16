@@ -131,7 +131,7 @@ pub async fn upload_file(
         let sound_file = Arc::new(SoundFile::new(
             SoundFileId(id as u64),
             parse_display_name(&field),
-            authorized_user.get_discord_user().get_id().clone(),
+            authorized_user.discord_user.id.clone(),
             None
         ));
         files.push(Arc::clone(&sound_file));

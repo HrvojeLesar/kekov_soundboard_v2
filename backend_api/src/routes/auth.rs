@@ -228,15 +228,15 @@ pub async fn auth_callback(
             .await?;
 
             // WARN: HARDCODED BETA LIMIT
-            if !ALLOWED_USERS.contains(&user.get_id().0) {
+            if !ALLOWED_USERS.contains(&user.id.0) {
                 return Ok(HttpResponse::Forbidden().finish());
             }
 
-            if let None = User::get_with_id(user.get_id(), &mut transaction).await? {
+            if let None = User::get_with_id(&user.id, &mut transaction).await? {
                 User::insert_user(
-                    user.get_id(),
-                    user.get_username(),
-                    user.get_avatar(),
+                    &user.id,
+                    &user.username,
+                    user.avatar.as_ref(),
                     &mut transaction,
                 )
                 .await?;

@@ -13,7 +13,7 @@ use routes::{not_found::not_found, routes_config, status::Status};
 use dotenv::dotenv;
 use snowflake::SnowflakeIdGenerator;
 use tokio::sync::RwLock;
-use utils::cache::{create_authorized_user_cache, create_user_guilds_cache};
+use utils::cache::{create_authorized_user_cache, create_user_guilds_cache, create_user_guilds_middlware_queue_cache, create_auth_middlware_queue_cache};
 use ws::{ws_server::{ControlsServer, self}, ws_session::WsSessionCommChannels};
 
 mod database;
@@ -75,6 +75,8 @@ async fn main() -> std::io::Result<()> {
     let users_guild_cache = Data::new(create_user_guilds_cache());
     let authorized_users_cache = Data::new(create_authorized_user_cache());
     let status = Data::new(RwLock::new(Status::new()));
+    let user_guilds_middlware_queue = Data::new(Mutex::new(create_user_guilds_middlware_queue_cache()));
+    let auth_middlware_queue = Data::new(Mutex::new(create_auth_middlware_queue_cache()));
 
     let mut scheduler = scheduler::Scheduler::new();
 
@@ -128,6 +130,8 @@ async fn main() -> std::io::Result<()> {
             .app_data(users_guild_cache.clone())
             .app_data(authorized_users_cache.clone())
             .app_data(status.clone())
+            .app_data(user_guilds_middlware_queue.clone())
+            .app_data(auth_middlware_queue.clone())
             .app_data(snowflakes)
             .configure(routes_config)
             .default_service(actix_web::web::to(not_found))

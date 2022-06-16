@@ -45,7 +45,7 @@ impl User {
 
     pub async fn insert_user(
         id: &UserId,
-        username: &String,
+        username: &str,
         avatar: Option<&String>,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), KekServerError> {

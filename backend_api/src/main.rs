@@ -13,8 +13,14 @@ use routes::{not_found::not_found, routes_config, status::Status};
 use dotenv::dotenv;
 use snowflake::SnowflakeIdGenerator;
 use tokio::sync::RwLock;
-use utils::cache::{create_authorized_user_cache, create_user_guilds_cache, create_user_guilds_middlware_queue_cache, create_auth_middlware_queue_cache};
-use ws::{ws_server::{ControlsServer, self}, ws_session::WsSessionCommChannels};
+use utils::cache::{
+    create_auth_middlware_queue_cache, create_authorized_user_cache, create_user_guilds_cache,
+    create_user_guilds_middlware_queue_cache,
+};
+use ws::{
+    ws_server::{self, ControlsServer},
+    ws_session::WsSessionCommChannels,
+};
 
 mod database;
 mod discord_client_config;
@@ -24,9 +30,9 @@ mod middleware;
 mod models;
 mod oauth_client;
 mod routes;
+mod scheduler;
 mod utils;
 mod ws;
-mod scheduler;
 
 // WARN: HARDCODED LIMITS
 pub static ALLOWED_USERS: [u64; 7] = [
@@ -42,7 +48,6 @@ pub static ALLOWED_USERS: [u64; 7] = [
 // WARN: HARDCODED LIMITS
 pub static ALLOWED_GUILDS: [u64; 1] = [173766075484340234];
 
-
 // #[cfg(debug_assertions)]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -51,7 +56,7 @@ async fn main() -> std::io::Result<()> {
 
     let bind_address = format!(
         "localhost:{}",
-        dotenv::var("PORT").unwrap_or("8080".to_string())
+        dotenv::var("PORT").unwrap_or_else(|_| "8080".to_string())
     );
 
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
@@ -75,7 +80,8 @@ async fn main() -> std::io::Result<()> {
     let users_guild_cache = Data::new(create_user_guilds_cache());
     let authorized_users_cache = Data::new(create_authorized_user_cache());
     let status = Data::new(RwLock::new(Status::new()));
-    let user_guilds_middlware_queue = Data::new(Mutex::new(create_user_guilds_middlware_queue_cache()));
+    let user_guilds_middlware_queue =
+        Data::new(Mutex::new(create_user_guilds_middlware_queue_cache()));
     let auth_middlware_queue = Data::new(Mutex::new(create_auth_middlware_queue_cache()));
 
     let mut scheduler = scheduler::Scheduler::new();
@@ -83,22 +89,32 @@ async fn main() -> std::io::Result<()> {
     let status_ref = status.clone();
     let ws_channels_ref = ws_channels.clone();
     let controls_server_ref = controls_server.clone();
+    let ugmq_ref = user_guilds_middlware_queue.clone();
+    let amq_ref = auth_middlware_queue.clone();
     scheduler.run(std::time::Duration::from_secs(1), move || {
         let ws_channels_ref = ws_channels_ref.clone();
         let status_ref = status_ref.clone();
         let controls_server_ref = controls_server_ref.clone();
+        let ugmq_ref = ugmq_ref.clone();
+        let amq_ref = amq_ref.clone();
         async move {
             let mut status = status_ref.write().await;
             status.ws_channel_num = ws_channels_ref.read().await.len();
-            match controls_server_ref.send(ws_server::Status{}).await {
+            match controls_server_ref.send(ws_server::Status {}).await {
                 Ok(n) => status.ws_clients_num = n,
                 Err(e) => {
-                    warn!("Failed to fetch control server websocket status! Error: {}", e);
+                    warn!(
+                        "Failed to fetch control server websocket status! Error: {}",
+                        e
+                    );
                 }
+            }
+            {
+                status.auth_queue_cache = ugmq_ref.lock().unwrap().0.entry_count() as usize;
+                status.guilds_queue_cache = amq_ref.lock().unwrap().0.entry_count() as usize;
             }
         }
     });
-
 
     return HttpServer::new(move || {
         // Per thread snowflake generator

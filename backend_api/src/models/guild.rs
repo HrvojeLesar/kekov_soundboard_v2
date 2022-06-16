@@ -45,7 +45,7 @@ impl Guild {
 
     pub async fn insert_guild(
         id: &GuildId,
-        name: &String,
+        name: &str,
         icon: Option<&String>,
         icon_hash: Option<&String>,
         transaction: &mut Transaction<'_, Postgres>,
@@ -66,7 +66,7 @@ impl Guild {
     }
 
     pub async fn get_existing_guilds(
-        guild_ids: &Vec<DiscordGuild>,
+        guild_ids: &[DiscordGuild],
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Self>, KekServerError> {
         let ids = guild_ids

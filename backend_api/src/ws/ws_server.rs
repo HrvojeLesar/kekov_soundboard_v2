@@ -50,7 +50,7 @@ impl PlayControl {
                 .sound_file
                 .unwrap()
                 .display_name
-                .unwrap_or("".to_string()),
+                .unwrap_or_default(),
             voice_channel_id,
         };
     }
@@ -175,7 +175,7 @@ impl ControlsServerMessage {
     }
 
     pub fn get_id(&self) -> u128 {
-        return self.message_id.clone();
+        return self.message_id;
     }
 
     pub fn get_error(self) -> ClientError {
@@ -291,9 +291,8 @@ impl Handler<Connect> for ControlsServer {
     fn handle(&mut self, msg: Connect, _ctx: &mut Self::Context) -> Self::Result {
         self.clients.insert(msg.id, msg.address);
         let last_address = self.clients.get(&msg.id);
-        match last_address {
-            Some(addr) => addr.do_send(ControlsServerMessage::new_connect()),
-            None => (),
+        if let Some(addr) = last_address {
+            addr.do_send(ControlsServerMessage::new_connect());
         }
     }
 }

@@ -26,7 +26,8 @@ awc = { version = "3.0.0", features = ["rustls"] }
 dotenv = "0.15.0"
 env_logger = "0.9.0"
 # actix-session = "0.5.0-beta.8"
-log = "0.4.14"
+log = { version = "0.4.14", features = ["std", "release_max_level_trace"] }
+# log = { version = "0.4.14", features = ["release_max_level_info"] }
 # actix-identity = "0.4.0-beta.9"
 futures-util = "0.3.21"
 futures = "0.3.21"

@@ -26,7 +26,7 @@ use lazy_static::lazy_static;
 lazy_static! {
     // TODO: Make nicer
     static ref MAX_FILE_SIZE: usize = dotenv::var("MAX_FILE_SIZE")
-        .unwrap_or(10_000_000.to_string())
+        .unwrap_or_else(|_| 10_000_000.to_string())
         .parse()
         .unwrap_or(10_000_000);
 }
@@ -36,20 +36,12 @@ pub fn config(cfg: &mut ServiceConfig) {
 }
 
 async fn delete_file(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
-    let full_file_path = format!(
-        "{}{}",
-        dotenv::var("SOUNDFILE_DIR")?,
-        sound_file.id.0.to_string()
-    );
+    let full_file_path = format!("{}{}", dotenv::var("SOUNDFILE_DIR")?, sound_file.id.0);
     return Ok(remove_file(full_file_path).await?);
 }
 
 async fn validate_audio_mime(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
-    let full_file_path = format!(
-        "{}{}",
-        dotenv::var("SOUNDFILE_DIR")?,
-        sound_file.id.0.to_string()
-    );
+    let full_file_path = format!("{}{}", dotenv::var("SOUNDFILE_DIR")?, sound_file.id.0);
     let mime = web::block(move || infer::get_from_path(full_file_path)).await??;
 
     let mime = match mime {
@@ -67,7 +59,7 @@ async fn validate_audio_mime(sound_file: Arc<SoundFile>) -> Result<(), KekServer
 fn parse_display_name(field: &Field) -> String {
     let display_name = field.name().trim();
 
-    if display_name != "" {
+    if !display_name.is_empty() {
         return display_name.to_string();
     } else if let Some(name) = field.content_disposition().get_filename() {
         return name.to_string();
@@ -98,7 +90,7 @@ async fn insert_valid_files(
     }
     transaction.commit().await?;
 
-    if uploaded.len() == 0 {
+    if uploaded.is_empty() {
         return Err(KekServerError::NoFilesUploadedError);
     }
 
@@ -132,15 +124,11 @@ pub async fn upload_file(
             SoundFileId(id as u64),
             parse_display_name(&field),
             authorized_user.discord_user.id.clone(),
-            None
+            None,
         ));
         files.push(Arc::clone(&sound_file));
 
-        let full_file_path = format!(
-            "{}{}",
-            dotenv::var("SOUNDFILE_DIR")?,
-            sound_file.id.0.to_string()
-        );
+        let full_file_path = format!("{}{}", dotenv::var("SOUNDFILE_DIR")?, sound_file.id.0);
 
         let mut file_handle = File::create(full_file_path).await?;
 

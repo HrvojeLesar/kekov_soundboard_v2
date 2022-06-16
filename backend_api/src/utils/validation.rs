@@ -35,7 +35,7 @@ impl Validation {
 
     pub async fn is_user_in_provided_guilds(
         authorized_user: &AuthorizedUser,
-        guild_ids: &Vec<GuildId>,
+        guild_ids: &[GuildId],
         user_guilds_cache: &Data<UserGuildsCache>,
     ) -> Result<(), KekServerError> {
         match user_guilds_cache.get(&authorized_user.discord_user.id) {
@@ -52,11 +52,11 @@ impl Validation {
     }
 
     pub async fn user_owns_provided_files(
-        file_ids: &Vec<SoundFileId>,
-        user_owned_files: &Vec<SoundFile>,
+        file_ids: &[SoundFileId],
+        user_owned_files: &[SoundFile],
     ) -> Result<(), KekServerError> {
         for id in file_ids {
-            if user_owned_files.iter().find(|s| &s.id == id).is_none() {
+            if user_owned_files.iter().any(|s| &s.id == id) {
                 return Err(KekServerError::UnauthorizedFileAccessError(format!(
                     "User doesn't own file with id: [{}]",
                     id.0
@@ -73,12 +73,12 @@ pub async fn guild_and_file_exist(
     file_id: &SoundFileId,
     transaction: &mut Transaction<'_, Postgres>,
 ) -> Result<(), KekServerError> {
-    match Guild::get_guild_from_id(&guild_id, &mut *transaction).await? {
+    match Guild::get_guild_from_id(guild_id, &mut *transaction).await? {
         Some(_) => (),
         None => return Err(KekServerError::InvalidGuildIdError),
     }
 
-    match SoundFile::get_file_from_id(&file_id, &mut *transaction).await? {
+    match SoundFile::get_file_from_id(file_id, &mut *transaction).await? {
         Some(_) => (),
         None => return Err(KekServerError::InvalidFileIdError),
     }

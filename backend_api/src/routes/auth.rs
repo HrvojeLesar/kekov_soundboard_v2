@@ -24,7 +24,7 @@ use crate::{
         auth::{self, get_discord_user_from_token},
         cache::AuthorizedUsersCache,
     },
-    ALLOWED_USERS, ALLOWED_GUILDS,
+    ALLOWED_GUILDS, ALLOWED_USERS,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -44,7 +44,7 @@ pub enum TokenType {
     AccessToken,
     RefreshToken,
     #[serde(other)]
-    InvalidTokenType,
+    Invalid,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -112,23 +112,20 @@ async fn check_collision(
     pkce_challange: PkceCodeChallenge,
     oauth_client_url_fn: impl Fn(PkceCodeChallenge) -> (Url, CsrfToken),
 ) -> Result<(), KekServerError> {
-    loop {
-        if let Some(_) = sqlx::query!(
-            // TODO: Expire or cleanup old states
-            // Replace or update old state if key matches (csrf_token)
-            "
-            SELECT * FROM state
-            WHERE csrf_token = $1
-            ",
-            csrf_token.secret()
-        )
-        .fetch_optional(&mut *transaction)
-        .await?
-        {
-            (*auth_url, *csrf_token) = oauth_client_url_fn(pkce_challange.clone());
-        } else {
-            break;
-        }
+    while sqlx::query!(
+        // TODO: Expire or cleanup old states
+        // Replace or update old state if key matches (csrf_token)
+        "
+        SELECT * FROM state
+        WHERE csrf_token = $1
+        ",
+        csrf_token.secret()
+    )
+    .fetch_optional(&mut *transaction)
+    .await?
+    .is_some()
+    {
+        (*auth_url, *csrf_token) = oauth_client_url_fn(pkce_challange.clone());
     }
     return Ok(());
 }
@@ -185,7 +182,7 @@ pub async fn auth_init(
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
     let url_getter_fn = |pkce: PkceCodeChallenge| oauth_client.get_url(pkce);
-    return Ok(create_url(url_getter_fn, db_pool).await?);
+    return create_url(url_getter_fn, db_pool).await;
 }
 
 #[get("/botinvite")]
@@ -194,7 +191,7 @@ pub async fn bot_invite(
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
     let url_getter_fn = |pkce: PkceCodeChallenge| oauth_client.get_bot_url(pkce);
-    return Ok(create_url(url_getter_fn, db_pool).await?);
+    return create_url(url_getter_fn, db_pool).await;
 }
 
 #[get("/callback")]
@@ -232,7 +229,10 @@ pub async fn auth_callback(
                 return Ok(HttpResponse::Forbidden().finish());
             }
 
-            if let None = User::get_with_id(&user.id, &mut transaction).await? {
+            if User::get_with_id(&user.id, &mut transaction)
+                .await?
+                .is_none()
+            {
                 User::insert_user(
                     &user.id,
                     &user.username,
@@ -245,13 +245,15 @@ pub async fn auth_callback(
             // Adds guild to database
             // TODO: If guild exists mark as active (if bot was previously in guild)
             if let Some(guild) = &access_token.extra_fields().guild {
-
                 // WARN: HARDCODED BETA LIMIT
                 if !ALLOWED_GUILDS.contains(&guild.id.0) {
                     return Ok(HttpResponse::Forbidden().finish());
                 }
 
-                if let None = Guild::get_guild_from_id(guild.get_id(), &mut transaction).await? {
+                if Guild::get_guild_from_id(guild.get_id(), &mut transaction)
+                    .await?
+                    .is_none()
+                {
                     Guild::insert_guild(
                         guild.get_id(),
                         guild.get_name(),
@@ -285,25 +287,19 @@ pub async fn auth_revoke(
     authorized_users_cache: Data<AuthorizedUsersCache>,
 ) -> Result<HttpResponse, KekServerError> {
     let client = oauth_client.get_client();
-    let request;
-
-    match revoke_token.token_type {
-        TokenType::AccessToken | TokenType::InvalidTokenType => {
-            request = client.revoke_token(StandardRevocableToken::AccessToken(
-                AccessToken::new(revoke_token.token.clone()),
-            ))?;
-        }
-        TokenType::RefreshToken => {
-            request = client.revoke_token(StandardRevocableToken::RefreshToken(
-                RefreshToken::new(revoke_token.token.clone()),
-            ))?;
-        }
-    }
+    let request = match revoke_token.token_type {
+        TokenType::AccessToken | TokenType::Invalid => client.revoke_token(
+            StandardRevocableToken::AccessToken(AccessToken::new(revoke_token.token.clone())),
+        )?,
+        TokenType::RefreshToken => client.revoke_token(StandardRevocableToken::RefreshToken(
+            RefreshToken::new(revoke_token.token.clone()),
+        ))?,
+    };
 
     match request.request_async(send_oauth_request).await {
         Ok(_) => {
             if revoke_token.token_type == TokenType::AccessToken
-                || revoke_token.token_type == TokenType::InvalidTokenType
+                || revoke_token.token_type == TokenType::Invalid
             {
                 authorized_users_cache
                     .invalidate(&Arc::new(auth::AccessToken(revoke_token.token)))

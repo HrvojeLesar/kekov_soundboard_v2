@@ -82,10 +82,7 @@ impl GuildFile {
         let guild_files = records
             .into_iter()
             .map(|r| {
-                let owner = match r.owner {
-                    Some(o) => Some(UserId(o as u64)),
-                    None => None,
-                };
+                let owner = r.owner.map(|o| UserId(o as u64));
                 SoundFile {
                     id: SoundFileId(r.id as u64),
                     owner,
@@ -147,7 +144,7 @@ impl GuildFile {
     }
 
     pub async fn get_matching_guilds_for_file(
-        guilds: &Vec<Guild>,
+        guilds: &[Guild],
         file_id: &SoundFileId,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<HashSet<Guild>, KekServerError> {
@@ -221,11 +218,7 @@ impl GuildFile {
         let enabled_sounds = records
             .into_iter()
             .map(|r| {
-                let owner = match r.owner {
-                    Some(o) => Some(UserId(o as u64)),
-                    None => None,
-                };
-
+                let owner = r.owner.map(|o| UserId(o as u64));
                 SoundFile {
                     id: SoundFileId(r.id as u64),
                     display_name: r.display_name,
@@ -241,8 +234,8 @@ impl GuildFile {
     }
 
     pub async fn bulk_insert(
-        guild_ids: &Vec<GuildId>,
-        file_ids: &Vec<SoundFileId>,
+        guild_ids: &[GuildId],
+        file_ids: &[SoundFileId],
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), KekServerError> {
         let guild_ids = guild_ids.iter().map(|g| g.0 as i64).collect::<Vec<i64>>();

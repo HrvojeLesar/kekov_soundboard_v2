@@ -13,7 +13,7 @@ pub struct State {
 
 impl State {
     pub async fn get_with_token(
-        csrf_token: &String,
+        csrf_token: &str,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Option<Self>, KekServerError> {
         return Ok(sqlx::query_as!(
@@ -29,7 +29,7 @@ impl State {
     }
 
     pub async fn delete_state(
-        csrf_token: &String,
+        csrf_token: &str,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), KekServerError> {
         sqlx::query!(

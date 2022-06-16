@@ -37,11 +37,7 @@ impl SoundFile {
         &self,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), KekServerError> {
-        let owner = match &self.owner {
-            Some(o) => Some(o.0 as i64),
-            None => None,
-        };
-
+        let owner = self.owner.as_ref().map(|o| o.0 as i64);
         sqlx::query!(
             "
             INSERT INTO files (id, display_name, owner, is_public)
@@ -76,10 +72,7 @@ impl SoundFile {
         .await?
         {
             Some(r) => {
-                let owner = match r.owner {
-                    Some(o) => Some(UserId(o as u64)),
-                    None => None,
-                };
+                let owner = r.owner.map(|o| UserId(o as u64));
                 return Ok(Some(Self {
                     id: SoundFileId(r.id as u64),
                     owner,
@@ -94,7 +87,7 @@ impl SoundFile {
     }
 
     pub async fn delete_multiple(
-        ids: &Vec<SoundFileId>,
+        ids: &[SoundFileId],
         owner: &UserId,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Self>, KekServerError> {
@@ -114,10 +107,7 @@ impl SoundFile {
         let rows_deleted = records
             .into_iter()
             .map(|r| {
-                let owner = match r.owner {
-                    Some(o) => Some(UserId(o as u64)),
-                    None => None,
-                };
+                let owner = r.owner.map(|o| UserId(o as u64));
                 Self {
                     id: SoundFileId(r.id as u64),
                     owner,
@@ -146,10 +136,7 @@ impl SoundFile {
         .await?
         {
             Some(r) => {
-                let owner = match r.owner {
-                    Some(o) => Some(UserId(o as u64)),
-                    None => None,
-                };
+                let owner = r.owner.map(|o| UserId(o as u64));
                 return Ok(Some(Self {
                     id: SoundFileId(r.id as u64),
                     owner,
@@ -179,10 +166,7 @@ impl SoundFile {
         let files = records
             .into_iter()
             .map(|r| {
-                let owner = match r.owner {
-                    Some(o) => Some(UserId(o as u64)),
-                    None => None,
-                };
+                let owner = r.owner.map(|o| UserId(o as u64));
                 Self {
                     id: SoundFileId(r.id as u64),
                     owner,

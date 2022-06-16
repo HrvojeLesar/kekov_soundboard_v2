@@ -12,6 +12,8 @@ use crate::error::errors::KekServerError;
 pub struct Status {
     pub ws_channel_num: usize,
     pub ws_clients_num: usize,
+    pub auth_queue_cache: usize,
+    pub guilds_queue_cache: usize,
 }
 
 impl Status {
@@ -19,6 +21,8 @@ impl Status {
         return Self {
             ws_channel_num: 0,
             ws_clients_num: 0,
+            auth_queue_cache: 0,
+            guilds_queue_cache: 0,
         };
     }
 }

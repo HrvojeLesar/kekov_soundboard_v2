@@ -28,7 +28,7 @@ impl From<String> for AccessToken {
 
 impl AuthorizedUser {
     pub async fn get_guilds(&self) -> Result<Vec<DiscordGuild>, KekServerError> {
-        return Ok(make_discord_get_request(&self, USERGUILDS)
+        return Ok(make_discord_get_request(self, USERGUILDS)
             .await?
             .json()
             .await?);

@@ -105,17 +105,14 @@ pub async fn get_user_guilds(
     let guilds = guilds
         .into_iter()
         .map(|mut guild| {
-            match user_guilds.iter().find(|g| &g.id == &guild.id) {
-                Some(g) => {
-                    guild = Guild {
-                        id: g.id.clone(),
-                        name: g.name.clone(),
-                        icon: g.icon.clone(),
-                        icon_hash: g.icon_hash.clone(),
-                        time_added: guild.time_added,
-                    }
+            if let Some(g) = user_guilds.iter().find(|g| g.id == guild.id) {
+                guild = Guild {
+                    id: g.id.clone(),
+                    name: g.name.clone(),
+                    icon: g.icon.clone(),
+                    icon_hash: g.icon_hash.clone(),
+                    time_added: guild.time_added,
                 }
-                None => (),
             }
             return guild;
         })
@@ -172,16 +169,13 @@ pub async fn get_enabled_user_files(
     let guild_id = guild_id.into_inner();
     let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
-    if !user_guilds.iter().any(|guild| &guild.id == &guild_id) {
+    if !user_guilds.iter().any(|guild| guild.id == guild_id) {
         return Err(KekServerError::NotInGuildError);
     }
 
     let mut transaction = db_pool.begin().await?;
-    let files = SoundFile::get_user_files(
-        &authorized_user.discord_user.id,
-        &mut transaction,
-    )
-    .await?;
+    let files =
+        SoundFile::get_user_files(&authorized_user.discord_user.id, &mut transaction).await?;
     let enabled_files = GuildFile::get_users_enabled_files_for_guild(
         &authorized_user.discord_user.id,
         &guild_id,

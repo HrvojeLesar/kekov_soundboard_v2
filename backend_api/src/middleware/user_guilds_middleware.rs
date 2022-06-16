@@ -9,12 +9,15 @@ use actix_web::{
     web::Data,
     Error, HttpMessage,
 };
-use log::{warn, debug};
+use log::{debug, warn};
 use tokio::sync::Notify;
 
 use crate::{
     error::errors::KekServerError,
-    utils::{auth::AuthorizedUserServiceType, cache::{UserGuildsCache, UserGuildsMiddlwareQueueCache}},
+    utils::{
+        auth::AuthorizedUserServiceType,
+        cache::{UserGuildsCache, UserGuildsMiddlwareQueueCache},
+    },
 };
 
 pub struct UserGuildsService;
@@ -68,7 +71,8 @@ where
                     None => panic!("Guild cache should always be present!"),
                 };
 
-                let queue_cache = match req.app_data::<Data<Mutex<UserGuildsMiddlwareQueueCache>>>() {
+                let queue_cache = match req.app_data::<Data<Mutex<UserGuildsMiddlwareQueueCache>>>()
+                {
                     Some(c) => c.clone(),
                     None => panic!("Queue cache should always be present!"),
                 };

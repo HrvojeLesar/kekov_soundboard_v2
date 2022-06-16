@@ -27,7 +27,6 @@ impl Scheduler {
     }
 }
 
-
 impl Drop for Scheduler {
     fn drop(&mut self) {
         self.arbiter.stop();

@@ -22,7 +22,12 @@ pub struct SoundFile {
 }
 
 impl SoundFile {
-    pub fn new(id: SoundFileId, display_name: String, owner: UserId, is_public: Option<bool>) -> Self {
+    pub fn new(
+        id: SoundFileId,
+        display_name: String,
+        owner: UserId,
+        is_public: Option<bool>,
+    ) -> Self {
         return Self {
             id,
             display_name: Some(display_name),
@@ -79,7 +84,7 @@ impl SoundFile {
                     display_name: r.display_name,
                     time_added: Some(r.time_added),
                     is_public: r.is_public.unwrap_or(false),
-                    is_deleted: r.is_deleted.unwrap_or(false)
+                    is_deleted: r.is_deleted.unwrap_or(false),
                 }));
             }
             None => return Ok(None),
@@ -114,7 +119,7 @@ impl SoundFile {
                     display_name: r.display_name,
                     time_added: Some(r.time_added),
                     is_public: r.is_public.unwrap_or(false),
-                    is_deleted: r.is_deleted.unwrap_or(false)
+                    is_deleted: r.is_deleted.unwrap_or(false),
                 }
             })
             .collect::<Vec<SoundFile>>();
@@ -143,7 +148,7 @@ impl SoundFile {
                     display_name: r.display_name,
                     time_added: Some(r.time_added),
                     is_public: r.is_public.unwrap_or(false),
-                    is_deleted: r.is_deleted.unwrap_or(false)
+                    is_deleted: r.is_deleted.unwrap_or(false),
                 }));
             }
             None => return Ok(None),
@@ -173,7 +178,7 @@ impl SoundFile {
                     display_name: r.display_name,
                     time_added: Some(r.time_added),
                     is_public: r.is_public.unwrap_or(false),
-                    is_deleted: r.is_deleted.unwrap_or(false)
+                    is_deleted: r.is_deleted.unwrap_or(false),
                 }
             })
             .collect();

@@ -114,11 +114,8 @@ pub async fn bulk_enable(
     .await?;
     let mut transaction = db_pool.begin().await?;
     {
-        let files = SoundFile::get_user_files(
-            &authorized_user.discord_user.id,
-            &mut transaction,
-        )
-        .await?;
+        let files =
+            SoundFile::get_user_files(&authorized_user.discord_user.id, &mut transaction).await?;
         Validation::user_owns_provided_files(&bulk_payload.files, &files).await?;
     }
 

@@ -157,7 +157,6 @@ mod tests {
         assert_eq!(id.unwrap().0, TESTNUM);
         let id: Option<GuildId> = serde_json::from_str(r#"123"#).ok();
         assert_eq!(id, None);
-
     }
 
     #[test]

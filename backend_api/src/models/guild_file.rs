@@ -19,7 +19,7 @@ pub struct GuildFile {
     pub time_added: NaiveDateTime,
     #[serde(skip)]
     pub is_deleted: bool,
-    pub sound_file: Option<SoundFile>
+    pub sound_file: Option<SoundFile>,
 }
 
 impl GuildFile {
@@ -89,7 +89,7 @@ impl GuildFile {
                     display_name: r.display_name,
                     time_added: Some(r.time_added),
                     is_public: r.is_public.unwrap_or(false),
-                    is_deleted: r.is_deleted.unwrap_or(false)
+                    is_deleted: r.is_deleted.unwrap_or(false),
                 }
             })
             .collect::<Vec<SoundFile>>();
@@ -137,7 +137,7 @@ impl GuildFile {
                         is_deleted: false,
                         time_added: None,
                     }),
-                }))
+                }));
             }
             None => return Ok(None),
         }
@@ -225,7 +225,7 @@ impl GuildFile {
                     owner,
                     time_added: Some(r.file_time_added),
                     is_public: r.file_is_public.unwrap_or(false),
-                    is_deleted: r.file_is_deleted.unwrap_or(false)
+                    is_deleted: r.file_is_deleted.unwrap_or(false),
                 }
             })
             .collect();

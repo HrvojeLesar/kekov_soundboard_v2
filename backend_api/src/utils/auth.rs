@@ -8,7 +8,7 @@ use crate::{
     models::{guild::Guild, user::User},
 };
 
-use super::{make_discord_get_request, USERGUILDS, cache::DiscordGuild};
+use super::{cache::DiscordGuild, make_discord_get_request, USERGUILDS};
 
 pub type AuthorizedUserServiceType = Arc<AuthorizedUser>;
 

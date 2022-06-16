@@ -9,7 +9,7 @@ use actix_web::{
     web::Data,
     Error, HttpMessage,
 };
-use log::{warn, debug};
+use log::{debug, warn};
 use tokio::sync::Notify;
 
 use crate::{

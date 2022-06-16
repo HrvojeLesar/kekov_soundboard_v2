@@ -5,7 +5,7 @@ use std::{future::Future, pin::Pin, sync::Arc};
 
 use crate::{
     error::errors::KekServerError,
-    models::{guild::Guild, user::User},
+    models::{user::User},
 };
 
 use super::{cache::DiscordGuild, make_discord_get_request, USERGUILDS};

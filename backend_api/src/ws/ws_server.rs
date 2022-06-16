@@ -317,7 +317,7 @@ impl Handler<ControlsServerMessage> for ControlsServer {
 impl Handler<Status> for ControlsServer {
     type Result = usize;
 
-    fn handle(&mut self, msg: Status, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, _msg: Status, _ctx: &mut Self::Context) -> Self::Result {
         return self.clients.len();
     }
 }
@@ -325,7 +325,7 @@ impl Handler<Status> for ControlsServer {
 #[cfg(test)]
 mod tests {
 
-    use chrono::{NaiveDate, NaiveDateTime};
+    use chrono::{NaiveDateTime};
 
     use crate::{
         models::{

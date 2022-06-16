@@ -16,7 +16,7 @@ use tokio::sync::{oneshot::Sender, RwLock};
 use uuid::Uuid;
 
 use super::ws_server::{
-    ClientError, Connect, ControlsServer, ControlsServerMessage, Disconnect, OpCode,
+    Connect, ControlsServer, ControlsServerMessage, Disconnect, OpCode,
 };
 
 pub type WsSessionCommChannels =

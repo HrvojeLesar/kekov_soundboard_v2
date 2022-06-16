@@ -111,6 +111,7 @@ impl Actor for ControlsSession {
 
     fn stopping(&mut self, _: &mut Self::Context) -> actix::Running {
         info!("Stopping sessions websocket");
+        self.server_address.do_send(Disconnect { id: self.id });
         return actix::Running::Stop;
     }
 }
@@ -155,7 +156,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ControlsSession {
                 self.heartbeat = Instant::now();
             }
             ws::Message::Close(reason) => {
-                self.server_address.do_send(Disconnect { id: self.id });
                 ctx.close(reason);
                 ctx.stop();
             }

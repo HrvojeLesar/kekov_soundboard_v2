@@ -33,7 +33,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(scope("/ws").service(controls_ws).service(sync_ws));
 }
 
-#[get("controls", guard = "websocket_token_guard")]
+#[get("/controls", guard = "websocket_token_guard")]
 pub async fn controls_ws(
     request: HttpRequest,
     stream: Payload,
@@ -49,7 +49,7 @@ pub async fn controls_ws(
     )?);
 }
 
-#[get("sync", guard = "websocket_token_guard")]
+#[get("/sync", guard = "websocket_token_guard")]
 pub async fn sync_ws(
     request: HttpRequest,
     stream: Payload,

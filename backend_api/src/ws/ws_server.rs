@@ -27,6 +27,10 @@ pub struct Disconnect {
     pub id: u128,
 }
 
+#[derive(Message)]
+#[rtype(result = "usize")]
+pub struct Status;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PlayControl {
     // submitted_by: u64,
@@ -308,6 +312,14 @@ impl Handler<ControlsServerMessage> for ControlsServer {
     // TODO: If there are no active ws connections return error
     fn handle(&mut self, msg: ControlsServerMessage, _ctx: &mut Self::Context) -> Self::Result {
         self.send_command(msg);
+    }
+}
+
+impl Handler<Status> for ControlsServer {
+    type Result = usize;
+
+    fn handle(&mut self, msg: Status, ctx: &mut Self::Context) -> Self::Result {
+        return self.clients.len();
     }
 }
 

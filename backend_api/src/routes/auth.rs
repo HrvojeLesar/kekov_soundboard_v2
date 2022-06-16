@@ -24,7 +24,7 @@ use crate::{
         auth::{self, get_discord_user_from_token},
         cache::AuthorizedUsersCache,
     },
-    ALLOWED_USERS,
+    ALLOWED_USERS, ALLOWED_GUILDS,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -227,6 +227,7 @@ pub async fn auth_callback(
             ))
             .await?;
 
+            // WARN: HARDCODED BETA LIMIT
             if !ALLOWED_USERS.contains(&user.get_id().0) {
                 return Ok(HttpResponse::Forbidden().finish());
             }
@@ -244,6 +245,12 @@ pub async fn auth_callback(
             // Adds guild to database
             // TODO: If guild exists mark as active (if bot was previously in guild)
             if let Some(guild) = &access_token.extra_fields().guild {
+
+                // WARN: HARDCODED BETA LIMIT
+                if !ALLOWED_GUILDS.contains(&guild.id.0) {
+                    return Ok(HttpResponse::Forbidden().finish());
+                }
+
                 if let None = Guild::get_guild_from_id(guild.get_id(), &mut transaction).await? {
                     Guild::insert_guild(
                         guild.get_id(),

@@ -106,7 +106,7 @@ async fn insert_valid_files(
 }
 
 // TODO: full path code repeats, make nicer
-#[post("upload")]
+#[post("/upload")]
 pub async fn upload_file(
     mut payload: Multipart,
     snowflake: Data<Mutex<SnowflakeIdGenerator>>,

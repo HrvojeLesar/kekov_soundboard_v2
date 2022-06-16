@@ -7,13 +7,14 @@ use std::{
 use actix_cors::Cors;
 use actix_web::{web::Data, App, HttpServer};
 use env::check_required_env_variables;
+use log::warn;
 use routes::{not_found::not_found, routes_config, status::Status};
 
 use dotenv::dotenv;
 use snowflake::SnowflakeIdGenerator;
 use tokio::sync::RwLock;
 use utils::cache::{create_authorized_user_cache, create_user_guilds_cache};
-use ws::{ws_server::ControlsServer, ws_session::WsSessionCommChannels};
+use ws::{ws_server::{ControlsServer, self}, ws_session::WsSessionCommChannels};
 
 mod database;
 mod discord_client_config;
@@ -79,13 +80,20 @@ async fn main() -> std::io::Result<()> {
 
     let status_ref = status.clone();
     let ws_channels_ref = ws_channels.clone();
+    let controls_server_ref = controls_server.clone();
     scheduler.run(std::time::Duration::from_secs(1), move || {
         let ws_channels_ref = ws_channels_ref.clone();
         let status_ref = status_ref.clone();
+        let controls_server_ref = controls_server_ref.clone();
         async move {
             let mut status = status_ref.write().await;
             status.ws_channel_num = ws_channels_ref.read().await.len();
-
+            match controls_server_ref.send(ws_server::Status{}).await {
+                Ok(n) => status.ws_clients_num = n,
+                Err(e) => {
+                    warn!("Failed to fetch control server websocket status! Error: {}", e);
+                }
+            }
         }
     });
 

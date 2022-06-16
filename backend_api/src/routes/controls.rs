@@ -112,7 +112,7 @@ async fn send_command(
     return wait_for_ws_response(&id, receiver, ws_channels).await;
 }
 
-#[post("play")]
+#[post("/play")]
 pub async fn play_request(
     server_address: Data<Addr<ControlsServer>>,
     AuthorizedUserExt(authorized_user): AuthorizedUserExt,
@@ -152,7 +152,7 @@ pub async fn play_request(
     }
 }
 
-#[post("stop")]
+#[post("/stop")]
 pub async fn stop_request(
     server_address: Data<Addr<ControlsServer>>,
     AuthorizedUserExt(authorized_user): AuthorizedUserExt,
@@ -175,7 +175,7 @@ pub async fn stop_request(
     return Ok(HttpResponse::Ok().json(resp));
 }
 
-#[post("skip")]
+#[post("/skip")]
 pub async fn skip_request(
     server_address: Data<Addr<ControlsServer>>,
     AuthorizedUserExt(authorized_user): AuthorizedUserExt,
@@ -198,7 +198,7 @@ pub async fn skip_request(
     return Ok(HttpResponse::Ok().json(resp));
 }
 
-#[post("queue")]
+#[post("/queue")]
 pub async fn queue_request(
     server_address: Data<Addr<ControlsServer>>,
     AuthorizedUserExt(authorized_user): AuthorizedUserExt,

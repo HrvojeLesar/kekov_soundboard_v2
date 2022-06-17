@@ -15,12 +15,17 @@ namespace KekovBot
             GuildConnection = guildConnection;
         }
 
-        public async void UnconditionalStart(Sound startSound)
+        public async Task UnconditionalStart(Sound startSound)
         {
-            CurrentlyPlaying = startSound;
-            Queue.Clear();
-            var track = await GuildConnection.GetTrack(CurrentlyPlaying.FileInfo);
-            await GuildConnection.PlayAsync(track);
+            try {
+                CurrentlyPlaying = startSound;
+                Queue.Clear();
+                var track = await GuildConnection.GetTrack(CurrentlyPlaying.FileInfo);
+                await GuildConnection.PlayAsync(track);
+            } catch (FileLoadingFailedException e) {
+                await GuildConnection.Disconnect();
+                throw e;
+            }
         }
 
         // Returns `true` when successfully playing next item `false` otherwise

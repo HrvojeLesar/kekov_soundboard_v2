@@ -33,40 +33,65 @@ namespace KekovBot
 
             conn.PlaybackFinished += async (gc, args) =>
             {
-                if (!await playQueue.PlayNext())
+                try
                 {
-                    try
+                    if (!await playQueue.PlayNext())
                     {
-                        await conn.DelayedDisconnect();
+                        try
+                        {
+                            await conn.DelayedDisconnect();
+                        }
+                        catch { }
                     }
-                    catch { }
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e.ToString());
+                    await conn.Disconnect();
                 }
             };
 
             conn.TrackException += async (gc, args) =>
             {
-                if (!await playQueue.PlayNext())
+                try
                 {
-                    try
+
+                    if (!await playQueue.PlayNext())
                     {
-                        await conn.DelayedDisconnect();
+                        try
+                        {
+                            await conn.DelayedDisconnect();
+                        }
+                        catch { }
                     }
-                    catch { }
+                    Log.Error("Track exception");
                 }
-                Log.Error("Track exception");
+                catch (Exception e)
+                {
+                    Log.Error(e.ToString());
+                    await conn.Disconnect();
+                }
             };
 
             conn.TrackStuck += async (gc, args) =>
             {
-                if (!await playQueue.PlayNext())
+                try
                 {
-                    try
+                    if (!await playQueue.PlayNext())
                     {
-                        await conn.DelayedDisconnect();
+                        try
+                        {
+                            await conn.DelayedDisconnect();
+                        }
+                        catch { }
                     }
-                    catch { }
+                    Log.Error("Track stuck");
                 }
-                Log.Error("Track stuck");
+                catch (Exception e)
+                {
+                    Log.Error(e.ToString());
+                    await conn.Disconnect();
+                }
             };
         }
 

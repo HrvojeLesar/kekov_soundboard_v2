@@ -53,39 +53,30 @@ namespace KekovBot
             if (connection == null)
             {
                 connection = await node.ConnectAsync(channel);
-                var playQueue = new PlayQueue(connection);
-                PlayQueueDict.Add(guild, playQueue);
+                var newPlayQueue = new PlayQueue(connection);
+                PlayQueueDict.Add(guild, newPlayQueue);
                 CancelationTokenDict.Add(guild, new CancellationTokenSource());
-                connection.RegisterConnectionHandlers(playQueue);
+                connection.RegisterConnectionHandlers(newPlayQueue);
             }
 
-            try
+            var playQueue = PlayQueueDict[guild];
+            if (AwaitingDisconnectDict.Contains(guild))
             {
-                var playQueue = PlayQueueDict[guild];
-                if (AwaitingDisconnectDict.Contains(guild))
-                {
-                    var cancelToken = CancelationTokenDict[guild];
-                    cancelToken.Cancel();
-                    cancelToken.Dispose();
-                    CancelationTokenDict[guild] = new CancellationTokenSource();
-                }
-
-                if (playQueue.CurrentlyPlaying == null)
-                {
-                    playQueue.UnconditionalStart(sound);
-                    return false;
-                }
-                else
-                {
-                    playQueue.Queue.Enqueue(sound);
-                    return true;
-                }
+                var cancelToken = CancelationTokenDict[guild];
+                cancelToken.Cancel();
+                cancelToken.Dispose();
+                CancelationTokenDict[guild] = new CancellationTokenSource();
             }
-            catch (Exception e)
+
+            if (playQueue.CurrentlyPlaying == null)
             {
-                Log.Error(e.ToString());
-                await connection.Disconnect();
+                await playQueue.UnconditionalStart(sound);
                 return false;
+            }
+            else
+            {
+                playQueue.Queue.Enqueue(sound);
+                return true;
             }
         }
 

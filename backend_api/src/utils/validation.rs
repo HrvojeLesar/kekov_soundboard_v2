@@ -56,7 +56,7 @@ impl Validation {
         user_owned_files: &[SoundFile],
     ) -> Result<(), KekServerError> {
         for id in file_ids {
-            if user_owned_files.iter().any(|s| &s.id == id) {
+            if !user_owned_files.iter().any(|s| &s.id == id) {
                 return Err(KekServerError::UnauthorizedFileAccessError(format!(
                     "User doesn't own file with id: [{}]",
                     id.0

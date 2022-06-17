@@ -10,6 +10,18 @@ namespace KekovBot
         private static Dictionary<DiscordGuild, CancellationTokenSource> _cancelationTokenDict = Controls.CancelationTokenDict;
         private static HashSet<DiscordGuild> _awaitingDisconnectDict = Controls.AwaitingDisconnectDict;
 
+        private static async Task TryPlayNext(LavalinkGuildConnection conn, PlayQueue playQueue)
+        {
+            if (!await playQueue.PlayNext())
+            {
+                try
+                {
+                    await conn.DelayedDisconnect();
+                }
+                catch { }
+            }
+        }
+
         public static async Task<LavalinkTrack> GetTrack(this LavalinkGuildConnection conn, FileInfo file)
         {
             var loadResult = await conn.GetTracksAsync(file);
@@ -35,14 +47,12 @@ namespace KekovBot
             {
                 try
                 {
-                    if (!await playQueue.PlayNext())
-                    {
-                        try
-                        {
-                            await conn.DelayedDisconnect();
-                        }
-                        catch { }
-                    }
+                    await TryPlayNext(conn, playQueue);
+                }
+                catch (FileLoadingFailedException e)
+                {
+                    Log.Error(e.ToString());
+                    await TryPlayNext(conn, playQueue);
                 }
                 catch (Exception e)
                 {
@@ -55,15 +65,7 @@ namespace KekovBot
             {
                 try
                 {
-
-                    if (!await playQueue.PlayNext())
-                    {
-                        try
-                        {
-                            await conn.DelayedDisconnect();
-                        }
-                        catch { }
-                    }
+                    await TryPlayNext(conn, playQueue);
                     Log.Error("Track exception");
                 }
                 catch (Exception e)
@@ -77,14 +79,7 @@ namespace KekovBot
             {
                 try
                 {
-                    if (!await playQueue.PlayNext())
-                    {
-                        try
-                        {
-                            await conn.DelayedDisconnect();
-                        }
-                        catch { }
-                    }
+                    await TryPlayNext(conn, playQueue);
                     Log.Error("Track stuck");
                 }
                 catch (Exception e)

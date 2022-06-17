@@ -159,7 +159,7 @@ impl ResponseError for KekServerError {
                 KekServerError::RevocationRequestTokenError(..) => {
                     "revocation_requiest_token_error"
                 }
-                KekServerError::CookieParseError(..) => "cokkie_parse_error",
+                KekServerError::CookieParseError(..) => "cookie_parse_error",
                 KekServerError::UuidError(..) => "uuid_error",
                 KekServerError::SqlxError(..) => "sqlx_error",
                 KekServerError::SerdeJsonParseError(..) => "serde_json_parse_error",

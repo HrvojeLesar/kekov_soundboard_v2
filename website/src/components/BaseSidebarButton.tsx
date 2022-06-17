@@ -26,8 +26,7 @@ export const baseSidebarButtonStyle = (theme: MantineTheme): CSSObject => {
         transition: ".2s",
 
         "&:hover": {
-            backgroundColor:
-                theme.colors[theme.primaryColor][(shade + 1) % 9],
+            backgroundColor: theme.colors[theme.primaryColor][(shade + 1) % 9],
             borderRadius: "40%",
             transition: ".2s",
         },
@@ -38,17 +37,71 @@ export const baseSidebarButtonStyle = (theme: MantineTheme): CSSObject => {
     };
 };
 
-export const baseSidebarButtonStyles = createStyles((theme) => {
-    const shade = primaryShade(theme);
-    return {
-    baseLinkButton: baseSidebarButtonStyle(theme),
-    baseLinkButtonActive: {
-        ...baseSidebarButtonStyle(theme),
+export const baseSidebarButtonStyles = createStyles(
+    (theme, _params, getRef) => {
+        const shade = primaryShade(theme);
+        return {
+            baseLinkButton: {
+                ref: getRef("baseLinkButton"),
+                ...baseSidebarButtonStyle(theme),
+            },
+            baseLinkButtonActive: {
+                ref: getRef("baseLinkButtonActive"),
+                ...baseSidebarButtonStyle(theme),
 
-        borderRadius: "40%",
-        transition: ".2s",
-    },
-}});
+                borderRadius: "40%",
+                transition: ".2s",
+            },
+            container: {
+                ref: getRef("container"),
+                width: "100%",
+                justifyContent: "center",
+                alignItems: "center",
+                display: "flex",
+                flexWrap: "nowrap",
+                position: "relative",
+            },
+            notch: {
+                backgroundColor:
+                    theme.colorScheme === "dark"
+                        ? theme.colors.gray[2]
+                        : theme.colors.dark[5],
+                position: "absolute",
+                left: 0,
+                width: "4px",
+                height: "0px",
+                borderRadius: "0px 4px 4px 0px",
+                transition: ".2s",
+
+                [`.${getRef("tooltip")}:hover + &`]: {
+                    transition: ".2s",
+                    height: "20px",
+                },
+            },
+
+            notchActive: {
+                backgroundColor:
+                    theme.colorScheme === "dark"
+                        ? theme.colors.gray[2]
+                        : theme.colors.dark[5],
+                position: "absolute",
+                left: 0,
+                width: "4px",
+                height: "40px",
+                borderRadius: "0px 4px 4px 0px",
+                transition: ".2s",
+            },
+            tooltip: {
+                ref: getRef("tooltip"),
+                borderRadius: "50%",
+            },
+            tooltipActive: {
+                ref: getRef("tooltipActive"),
+                borderRadius: "40%",
+            },
+        };
+    }
+);
 
 type Props = {
     children: JSX.Element;
@@ -71,18 +124,25 @@ export default function BaseSidebarButton({ children, route, label }: Props) {
     }, [match]);
 
     return (
-        <Tooltip label={label} position="right" withArrow>
-            <UnstyledButton
+        <Box className={classes.container}>
+            <Tooltip label={label} position="right" withArrow
                 className={
-                    isActive
-                        ? classes.baseLinkButtonActive
-                        : classes.baseLinkButton
-                }
-                component={Link}
-                to={route}
-            >
-                {children}
-            </UnstyledButton>
-        </Tooltip>
+                    isActive ? classes.tooltipActive : classes.tooltip}>
+                <UnstyledButton
+                    className={
+                        isActive
+                            ? classes.baseLinkButtonActive
+                            : classes.baseLinkButton
+                    }
+                    component={Link}
+                    to={route}
+                >
+                    {children}
+                </UnstyledButton>
+            </Tooltip>
+            <div
+                className={isActive ? classes.notchActive : classes.notch}
+            ></div>
+        </Box>
     );
 }

@@ -11,7 +11,7 @@ use actix::{
 use actix_http::ws;
 use actix_web::web::Data;
 use actix_web_actors::ws::WebsocketContext;
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use tokio::sync::{oneshot::Sender, RwLock};
 use uuid::Uuid;
 
@@ -166,6 +166,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ControlsSession {
                         Ok(c) => c,
                         Err(e) => return error!("WsSession Error: {}", e),
                     };
+
+                    debug!("WsSession Message: {:#?}", control_message);
 
                     ControlsSession::handle_message(control_message, channels).await;
                 }

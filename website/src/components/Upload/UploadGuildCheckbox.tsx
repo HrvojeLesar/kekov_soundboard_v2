@@ -49,7 +49,7 @@ const useStyles = createStyles((theme, { checked }: { checked: boolean }) => {
                           theme.colorScheme === "dark" ? 9 : 6
                       ]
                     : theme.colorScheme === "dark"
-                    ? theme.colors.dark[8]
+                    ? theme.colors.dark[7]
                     : theme.colors.gray[3]
             }`,
             borderRadius: "50%",

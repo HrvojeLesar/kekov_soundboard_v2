@@ -1,4 +1,5 @@
 import {
+    Box,
     Center,
     createStyles,
     Divider,
@@ -20,18 +21,10 @@ import BaseSidebarButton, { baseSidebarButtonStyle } from "./BaseSidebarButton";
 import GuildLinkButton from "./GuildLinkButton";
 
 const useStyles = createStyles((theme) => ({
-    navbarHeader: {
-        padding: theme.spacing.xs,
+    navbarDivider: {
+        marginTop: theme.spacing.xs,
+        marginBottom: theme.spacing.xs,
         borderBottom: `3px solid ${
-            theme.colorScheme === "dark"
-                ? theme.colors.dark[5]
-                : theme.colors.gray[3]
-        }`,
-    },
-
-    navbarFooter: {
-        padding: theme.spacing.xs,
-        borderTop: `3px solid ${
             theme.colorScheme === "dark"
                 ? theme.colors.dark[5]
                 : theme.colors.gray[3]
@@ -70,6 +63,15 @@ const useStyles = createStyles((theme) => ({
     sidebarBottomGroup: {
         alignItems: "center",
     },
+
+    sidebarTop: {
+        marginLeft: "-10px",
+        marginRight: "-10px",
+        display: "flex",
+        flexDirection: "column",
+        paddingTop: theme.spacing.sm,
+        gap: theme.spacing.xs,
+    },
 }));
 
 export default function Sidebar() {
@@ -101,29 +103,25 @@ export default function Sidebar() {
 
     return (
         <Navbar height="100vh" width={{ base: 80 }} p="sm">
-            <Navbar.Section className={classes.navbarHeader}>
-                <Center>
-                    <Group direction="column" spacing="xs">
-                        <BaseSidebarButton label="User files" route="/user">
-                            <img
-                                className={classes.userImg}
-                                src={DISCORD_CND_USER_AVATAR(
-                                    user?.id,
-                                    user?.avatar,
-                                    user?.discriminator
-                                )}
-                                alt=""
-                            />
-                        </BaseSidebarButton>
-                        <BaseSidebarButton label="Upload" route="/upload">
-                            <TbUpload size={24} />
-                        </BaseSidebarButton>
-                    </Group>
-                </Center>
+            <Navbar.Section component={Box} className={classes.sidebarTop}>
+                <BaseSidebarButton label="User files" route="/user">
+                    <img
+                        className={classes.userImg}
+                        src={DISCORD_CND_USER_AVATAR(
+                            user?.id,
+                            user?.avatar,
+                            user?.discriminator
+                        )}
+                        alt={`${user?.username}'s profile image`}
+                    />
+                </BaseSidebarButton>
+                <BaseSidebarButton label="Upload" route="/upload">
+                    <TbUpload size={24} />
+                </BaseSidebarButton>
             </Navbar.Section>
+            <Navbar.Section className={classes.navbarDivider}>{}</Navbar.Section>
             <Navbar.Section
                 grow
-                my="xs"
                 component={ScrollArea}
                 offsetScrollbars
                 scrollbarSize={0}
@@ -134,7 +132,8 @@ export default function Sidebar() {
                     {guilds.length > 0 ? renderGuilds() : spawnSkeletons()}
                 </Group>
             </Navbar.Section>
-            <Navbar.Section className={classes.navbarFooter}>
+            <Navbar.Section className={classes.navbarDivider}>{}</Navbar.Section>
+            <Navbar.Section>
                 <Center>
                     <Group
                         direction="column"

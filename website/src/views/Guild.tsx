@@ -1,6 +1,6 @@
-import { Box, Button, createStyles, Grid } from "@mantine/core";
+import { Box, Button, createStyles, Grid, Paper, Title } from "@mantine/core";
 import { useDocumentTitle } from "@mantine/hooks";
-import { CanceledError } from "axios";
+import axios, { AxiosError, CanceledError } from "axios";
 import { CSSProperties, useContext, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { useParams } from "react-router-dom";
@@ -34,6 +34,14 @@ const useStyles = createStyles((theme) => {
             gap: theme.spacing.sm,
             ...guildMaximumWindowHeight,
         },
+        invalidPaperStyle: {
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+        },
     };
 });
 
@@ -48,6 +56,7 @@ export default function Guild() {
     // TODO: admin
     const [adminMode, setAdminMode] = useState(false);
     const { classes } = useStyles();
+    const [invalidServer, setInvalidServer] = useState(false);
     useDocumentTitle(`KSv2 - ${guilds.find((g) => g.id === guildId)?.name}`);
 
     const fetchGuildFiles = async () => {
@@ -64,15 +73,23 @@ export default function Guild() {
                 });
                 setGuildFiles(data);
                 setIsUpdating(false);
-            } catch (e) {
-                // TODO: Handle
+            } catch (e: any | AxiosError) {
+                console.log(typeof e);
                 console.log(e);
                 if (e instanceof CanceledError) {
                     return;
-                } else {
-                    setIsUpdating(false);
                 }
-            }
+                if (axios.isAxiosError(e)) {
+                    if (
+                        e.response?.status === 401 ||
+                        e.response?.status === 404
+                    ) {
+                        setInvalidServer(true);
+                    }
+                    return;
+                }
+                setIsUpdating(false);
+            } 
         }
     };
 
@@ -96,12 +113,25 @@ export default function Guild() {
     };
 
     useEffect(() => {
+        setInvalidServer(false);
         abortController?.abort();
         setIsUpdating(true);
         fetchGuildFiles();
     }, [guildId]);
 
-    return (
+    return invalidServer ? (
+        <Paper
+            withBorder
+            shadow="sm"
+            p="sm"
+            className={classes.invalidPaperStyle}
+        >
+            <Title>
+                You don't belong to this server or server ID is invalid!
+            </Title>
+            <Title order={4}>Try selecting another server!</Title>
+        </Paper>
+    ) : (
         <>
             <Grid>
                 <Grid.Col xs={9}>

@@ -6,12 +6,18 @@ import {
     Modal,
     Paper,
     ScrollArea,
+    Text,
     Title,
 } from "@mantine/core";
 import { Dispatch, SetStateAction, useState } from "react";
 import { useCookies } from "react-cookie";
 import { COOKIE_NAMES } from "../../auth/AuthProvider";
-import { ApiRequest, GuildFile, LOADINGOVERLAY_ZINDEX, MODAL_ZINDEX } from "../../utils/utils";
+import {
+    ApiRequest,
+    GuildFile,
+    LOADINGOVERLAY_ZINDEX,
+    MODAL_ZINDEX,
+} from "../../utils/utils";
 import DeleteModalBody from "../DeleteModalBody";
 import { PlayControl } from "../PlayControl";
 import SearchBar from "../SearchBar";
@@ -71,7 +77,10 @@ export default function ServerSoundsWindow({
                 p="sm"
                 className={classes.serverSoundsPaper}
             >
-                <LoadingOverlay zIndex={LOADINGOVERLAY_ZINDEX} visible={isUpdating} />
+                <LoadingOverlay
+                    zIndex={LOADINGOVERLAY_ZINDEX}
+                    visible={isUpdating}
+                />
                 <Group position="apart" direction="row">
                     <Title title="Server sounds" order={3} pb="xs">
                         Server sounds
@@ -93,28 +102,34 @@ export default function ServerSoundsWindow({
                 </Box>
                 <ScrollArea className={classes.scollAreaStyle}>
                     <Group>
-                        {!adminMode
-                            ? filterFiles().map((file) => {
-                                  return (
-                                      <PlayControl
-                                          key={file.id}
-                                          file={file}
-                                          guildId={guildId}
-                                      />
-                                  );
-                              })
-                            : filterFiles().map((file) => {
-                                  return (
-                                      <Button
-                                          onClick={() => {
-                                              setLastClickedFile(file);
-                                              setIsModalOpen(true);
-                                          }}
-                                      >
-                                          {file.display_name}
-                                      </Button>
-                                  );
-                              })}
+                        {guildFiles.length > 0
+                            ? !adminMode
+                                ? filterFiles().map((file) => {
+                                      return (
+                                          <PlayControl
+                                              key={file.id}
+                                              file={file}
+                                              guildId={guildId}
+                                          />
+                                      );
+                                  })
+                                : filterFiles().map((file) => {
+                                      return (
+                                          <Button
+                                              onClick={() => {
+                                                  setLastClickedFile(file);
+                                                  setIsModalOpen(true);
+                                              }}
+                                          >
+                                              {file.display_name}
+                                          </Button>
+                                      );
+                                  })
+                            : isUpdating && (
+                                  <Text size="xl" weight="bold">
+                                      Server has no sounds.
+                                  </Text>
+                              )}
                     </Group>
                 </ScrollArea>
             </Paper>

@@ -104,7 +104,7 @@ export default function Sidebar() {
     return (
         <Navbar height="100vh" width={{ base: 80 }} p="sm">
             <Navbar.Section component={Box} className={classes.sidebarTop}>
-                <BaseSidebarButton label="User files" route="/user">
+                <BaseSidebarButton label="Your files" route="/user">
                     <img
                         className={classes.userImg}
                         src={DISCORD_CND_USER_AVATAR(

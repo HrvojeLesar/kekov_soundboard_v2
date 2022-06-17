@@ -5,6 +5,7 @@ import {
     LoadingOverlay,
     Paper,
     ScrollArea,
+    Text,
     Title,
 } from "@mantine/core";
 import { CanceledError } from "axios";
@@ -104,7 +105,7 @@ export default function ServerSelect({ file }: ServerSelectProps) {
                 zIndex={LOADINGOVERLAY_ZINDEX}
                 visible={isFetchingGuilds}
             />
-            {file !== undefined && (
+            {file !== undefined ? (
                 <ScrollArea>
                     {guilds.map(({ guild, has_file }, index) => {
                         return (
@@ -122,6 +123,10 @@ export default function ServerSelect({ file }: ServerSelectProps) {
                         );
                     })}
                 </ScrollArea>
+            ) : (
+                <Text size="xl" weight="bold">
+                    Select a file to display servers.
+                </Text>
             )}
         </Paper>
     );

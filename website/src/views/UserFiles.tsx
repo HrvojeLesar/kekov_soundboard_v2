@@ -6,6 +6,7 @@ import {
     LoadingOverlay,
     Paper,
     ScrollArea,
+    Text,
     Title,
 } from "@mantine/core";
 import { useDocumentTitle } from "@mantine/hooks";
@@ -164,21 +165,28 @@ export default function UserFiles() {
                         />
                         <ScrollArea className={classes.scollAreaStyle}>
                             <Group>
-                                {!isFetching &&
-                                    filterFiles().map((file) => {
-                                        return (
-                                            <UserFileContainer
-                                                key={file.id}
-                                                file={file}
-                                                isSelected={
-                                                    selectedFile?.id === file.id
-                                                }
-                                                onClickCallback={(f) => {
-                                                    setSelectedFile(f);
-                                                }}
-                                            />
-                                        );
-                                    })}
+                                {files.length > 0
+                                    ? !isFetching &&
+                                      filterFiles().map((file) => {
+                                          return (
+                                              <UserFileContainer
+                                                  key={file.id}
+                                                  file={file}
+                                                  isSelected={
+                                                      selectedFile?.id ===
+                                                      file.id
+                                                  }
+                                                  onClickCallback={(f) => {
+                                                      setSelectedFile(f);
+                                                  }}
+                                              />
+                                          );
+                                      })
+                                    : !isFetching && (
+                                          <Text size="xl" weight="bold">
+                                              You have no uploaded files.
+                                          </Text>
+                                      )}
                             </Group>
                         </ScrollArea>
                     </Paper>

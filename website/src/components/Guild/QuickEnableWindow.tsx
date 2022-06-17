@@ -4,6 +4,7 @@ import {
     LoadingOverlay,
     Paper,
     ScrollArea,
+    Text,
     Title,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
@@ -167,16 +168,22 @@ export default function QuickEnableWindow({
                 />
             </Box>
             <ScrollArea>
-                {filterFiles().map((file) => {
-                    return (
-                        <Box my="sm" key={file.sound_file.id}>
-                            <QuickEnableCheckbox
-                                file={file}
-                                onChange={handleToggle}
-                            />
-                        </Box>
-                    );
-                })}
+                {userFiles.length > 0
+                    ? filterFiles().map((file) => {
+                          return (
+                              <Box my="sm" key={file.sound_file.id}>
+                                  <QuickEnableCheckbox
+                                      file={file}
+                                      onChange={handleToggle}
+                                  />
+                              </Box>
+                          );
+                      })
+                    : !isFetchingFiles && (
+                          <Text size="xl" weight="bold">
+                              You have no files to quick enable.
+                          </Text>
+                      )}
             </ScrollArea>
         </Paper>
     );

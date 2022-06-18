@@ -218,9 +218,12 @@ export default function Upload() {
         }
         const formData = new FormData();
         files.forEach((file, index) => {
-            let { fileName } = containerRefs.current[index];
+            let { fileName, isPublic } = containerRefs.current[index];
             fileName = fileName.trim() === "" ? file.file.name : fileName;
-            formData.append(fileName, file.file);
+            formData.append(
+                isPublic ? fileName.concat("_p") : fileName.concat("_n"),
+                file.file
+            );
         });
         setIsUploading(true);
         ApiRequest.upload(formData, cookies.access_token, setProgressValue)

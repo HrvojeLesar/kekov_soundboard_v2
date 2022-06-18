@@ -156,9 +156,7 @@ impl ResponseError for KekServerError {
                 KekServerError::SendRequestError(..) => "awc_send_request_error",
                 KekServerError::PayloadError(..) => "payload_error",
                 KekServerError::RequestTokenError(..) => "request_token_error",
-                KekServerError::RevocationRequestTokenError(..) => {
-                    "revocation_requiest_token_error"
-                }
+                KekServerError::RevocationRequestTokenError(..) => "revocation_request_token_error",
                 KekServerError::CookieParseError(..) => "cookie_parse_error",
                 KekServerError::UuidError(..) => "uuid_error",
                 KekServerError::SqlxError(..) => "sqlx_error",

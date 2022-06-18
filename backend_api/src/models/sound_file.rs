@@ -6,6 +6,8 @@ use crate::error::errors::KekServerError;
 
 use super::ids::{SoundFileId, UserId};
 
+pub const MAX_LIMIT: i64 = 200;
+
 #[derive(Clone, Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub struct SoundFile {
     /// unique file_name generated as snowflake
@@ -17,24 +19,18 @@ pub struct SoundFile {
     pub time_added: Option<NaiveDateTime>,
     #[serde(skip)]
     pub is_deleted: bool,
-    #[serde(skip)]
     pub is_public: bool,
 }
 
 impl SoundFile {
-    pub fn new(
-        id: SoundFileId,
-        display_name: String,
-        owner: UserId,
-        is_public: Option<bool>,
-    ) -> Self {
+    pub fn new(id: SoundFileId, display_name: String, owner: UserId, is_public: bool) -> Self {
         return Self {
             id,
             display_name: Some(display_name),
             owner: Some(owner),
             time_added: None,
             is_deleted: false,
-            is_public: is_public.unwrap_or(false),
+            is_public,
         };
     }
 
@@ -42,7 +38,6 @@ impl SoundFile {
         &self,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<(), KekServerError> {
-        let owner = self.owner.as_ref().map(|o| o.0 as i64);
         sqlx::query!(
             "
             INSERT INTO files (id, display_name, owner, is_public)
@@ -50,12 +45,44 @@ impl SoundFile {
             ",
             self.id.0 as i64,
             self.display_name,
-            owner,
+            self.owner.as_ref().map(|o| o.0 as i64),
             self.is_public
         )
         .execute(transaction)
         .await?;
         return Ok(());
+    }
+
+    pub async fn toggle_visibility(
+        id: &SoundFileId,
+        owner: &UserId,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Option<Self>, KekServerError> {
+        match sqlx::query!(
+            "
+            UPDATE files
+            SET is_public = NOT is_public
+            WHERE id = $1 AND owner = $2
+            RETURNING *
+            ",
+            id.0 as i64,
+            owner.0 as i64
+        )
+        .fetch_optional(transaction)
+        .await?
+        {
+            Some(r) => {
+                return Ok(Some(Self {
+                    id: SoundFileId(r.id as u64),
+                    owner: r.owner.map(|o| UserId(o as u64)),
+                    display_name: r.display_name,
+                    time_added: Some(r.time_added),
+                    is_public: r.is_public.unwrap_or(false),
+                    is_deleted: r.is_deleted.unwrap_or(false),
+                }));
+            }
+            None => return Ok(None),
+        }
     }
 
     pub async fn delete(
@@ -77,10 +104,9 @@ impl SoundFile {
         .await?
         {
             Some(r) => {
-                let owner = r.owner.map(|o| UserId(o as u64));
                 return Ok(Some(Self {
                     id: SoundFileId(r.id as u64),
-                    owner,
+                    owner: r.owner.map(|o| UserId(o as u64)),
                     display_name: r.display_name,
                     time_added: Some(r.time_added),
                     is_public: r.is_public.unwrap_or(false),
@@ -111,16 +137,13 @@ impl SoundFile {
         .await?;
         let rows_deleted = records
             .into_iter()
-            .map(|r| {
-                let owner = r.owner.map(|o| UserId(o as u64));
-                Self {
-                    id: SoundFileId(r.id as u64),
-                    owner,
-                    display_name: r.display_name,
-                    time_added: Some(r.time_added),
-                    is_public: r.is_public.unwrap_or(false),
-                    is_deleted: r.is_deleted.unwrap_or(false),
-                }
+            .map(|r| Self {
+                id: SoundFileId(r.id as u64),
+                owner: r.owner.map(|o| UserId(o as u64)),
+                display_name: r.display_name,
+                time_added: Some(r.time_added),
+                is_public: r.is_public.unwrap_or(false),
+                is_deleted: r.is_deleted.unwrap_or(false),
             })
             .collect::<Vec<SoundFile>>();
         return Ok(rows_deleted);
@@ -141,10 +164,9 @@ impl SoundFile {
         .await?
         {
             Some(r) => {
-                let owner = r.owner.map(|o| UserId(o as u64));
                 return Ok(Some(Self {
                     id: SoundFileId(r.id as u64),
-                    owner,
+                    owner: r.owner.map(|o| UserId(o as u64)),
                     display_name: r.display_name,
                     time_added: Some(r.time_added),
                     is_public: r.is_public.unwrap_or(false),
@@ -170,16 +192,45 @@ impl SoundFile {
         .await?;
         let files = records
             .into_iter()
-            .map(|r| {
-                let owner = r.owner.map(|o| UserId(o as u64));
-                Self {
-                    id: SoundFileId(r.id as u64),
-                    owner,
-                    display_name: r.display_name,
-                    time_added: Some(r.time_added),
-                    is_public: r.is_public.unwrap_or(false),
-                    is_deleted: r.is_deleted.unwrap_or(false),
-                }
+            .map(|r| Self {
+                id: SoundFileId(r.id as u64),
+                owner: r.owner.map(|o| UserId(o as u64)),
+                display_name: r.display_name,
+                time_added: Some(r.time_added),
+                is_public: r.is_public.unwrap_or(false),
+                is_deleted: r.is_deleted.unwrap_or(false),
+            })
+            .collect();
+        return Ok(files);
+    }
+
+    pub async fn get_public_files(
+        limit: i64,
+        page: i64,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<Self>, KekServerError> {
+        let offset = if page < 1 { 0 } else { page - 1 };
+        let records = sqlx::query!(
+            "
+            SELECT * FROM files
+            WHERE is_public = true AND is_deleted = false
+            LIMIT $1 OFFSET $2
+            ",
+            if limit > MAX_LIMIT { MAX_LIMIT } else { limit },
+            limit * offset
+        )
+        .fetch_all(&mut *transaction)
+        .await?;
+
+        let files = records
+            .into_iter()
+            .map(|r| Self {
+                id: SoundFileId(r.id as u64),
+                owner: r.owner.map(|o| UserId(o as u64)),
+                display_name: r.display_name,
+                time_added: Some(r.time_added),
+                is_public: r.is_public.unwrap_or(true),
+                is_deleted: r.is_deleted.unwrap_or(false),
             })
             .collect();
         return Ok(files);

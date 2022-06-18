@@ -1,13 +1,14 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 use actix_multipart::{Field, Multipart};
 use actix_web::{
-    post,
-    web::{self, scope, Data, ServiceConfig},
+    get, post,
+    web::{self, scope, Data, Query, ServiceConfig},
     HttpResponse,
 };
 use futures_util::TryStreamExt;
 use log::error;
+use serde::Deserialize;
 use snowflake::SnowflakeIdGenerator;
 use sqlx::PgPool;
 use tokio::{
@@ -18,7 +19,10 @@ use tokio::{
 use crate::{
     error::errors::KekServerError,
     middleware::auth_middleware::AuthService,
-    models::{ids::SoundFileId, sound_file::SoundFile},
+    models::{
+        ids::{SoundFileId, UserId},
+        sound_file::{SoundFile, MAX_LIMIT},
+    },
     utils::auth::AuthorizedUserExt,
 };
 use lazy_static::lazy_static;
@@ -31,16 +35,23 @@ lazy_static! {
         .unwrap_or(10_000_000);
 }
 
+const PUBLIC_SUFFIX: &str = "_p";
+
 pub fn config(cfg: &mut ServiceConfig) {
-    cfg.service(scope("/files").wrap(AuthService).service(upload_file));
+    cfg.service(
+        scope("/files")
+            .wrap(AuthService)
+            .service(upload_file)
+            .service(get_public_files),
+    );
 }
 
-async fn delete_file(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
+async fn delete_file(sound_file: SoundFile) -> Result<(), KekServerError> {
     let full_file_path = format!("{}{}", dotenv::var("SOUNDFILE_DIR")?, sound_file.id.0);
     return Ok(remove_file(full_file_path).await?);
 }
 
-async fn validate_audio_mime(sound_file: Arc<SoundFile>) -> Result<(), KekServerError> {
+async fn validate_audio_mime(sound_file: &SoundFile) -> Result<(), KekServerError> {
     let full_file_path = format!("{}{}", dotenv::var("SOUNDFILE_DIR")?, sound_file.id.0);
     let mime = web::block(move || infer::get_from_path(full_file_path)).await??;
 
@@ -57,12 +68,12 @@ async fn validate_audio_mime(sound_file: Arc<SoundFile>) -> Result<(), KekServer
 }
 
 fn parse_display_name(field: &Field) -> String {
-    let display_name = field.name().trim();
+    let display_name = field.name().trim().to_string();
 
     if !display_name.is_empty() {
-        return display_name.to_string();
+        return display_name;
     } else if let Some(name) = field.content_disposition().get_filename() {
-        return name.to_string();
+        return name.trim().to_string();
     } else if let Some(name) = field.content_disposition().get_filename_ext() {
         return name.to_string();
     } else {
@@ -71,13 +82,13 @@ fn parse_display_name(field: &Field) -> String {
 }
 
 async fn insert_valid_files(
-    files: Vec<Arc<SoundFile>>,
+    files: Vec<SoundFile>,
     db_pool: Data<PgPool>,
-) -> Result<Vec<Arc<SoundFile>>, KekServerError> {
+) -> Result<Vec<SoundFile>, KekServerError> {
     let mut uploaded = Vec::with_capacity(files.len());
     let mut transaction = db_pool.begin().await?;
     for file in files {
-        match validate_audio_mime(Arc::clone(&file)).await {
+        match validate_audio_mime(&file).await {
             Ok(_) => {
                 file.insert(&mut transaction).await?;
                 uploaded.push(file);
@@ -97,6 +108,17 @@ async fn insert_valid_files(
     return Ok(uploaded);
 }
 
+fn is_file_public(file_name: &str) -> bool {
+    return file_name.ends_with(PUBLIC_SUFFIX);
+}
+
+fn create_new_file(id: i64, user_id: UserId, field: &Field) -> SoundFile {
+    let mut name = parse_display_name(field);
+    let is_public = is_file_public(&name);
+    name.truncate(name.len() - PUBLIC_SUFFIX.len());
+    return SoundFile::new(SoundFileId(id as u64), name, user_id, is_public);
+}
+
 // TODO: full path code repeats, make nicer
 #[post("/upload")]
 pub async fn upload_file(
@@ -107,7 +129,7 @@ pub async fn upload_file(
 ) -> Result<HttpResponse, KekServerError> {
     let mut uploaded_files_size = 0;
     let mut max_file_size_exceeded = false;
-    let mut files: Vec<Arc<SoundFile>> = Vec::new();
+    let mut files: Vec<SoundFile> = Vec::new();
 
     while let Some(mut field) = payload.try_next().await? {
         if mime::AUDIO != field.content_type().type_() {
@@ -120,17 +142,11 @@ pub async fn upload_file(
             id = lock.generate();
         }
 
-        let sound_file = Arc::new(SoundFile::new(
-            SoundFileId(id as u64),
-            parse_display_name(&field),
-            authorized_user.discord_user.id.clone(),
-            None,
-        ));
-        files.push(Arc::clone(&sound_file));
-
+        let sound_file = create_new_file(id, authorized_user.discord_user.id.clone(), &field);
         let full_file_path = format!("{}{}", dotenv::var("SOUNDFILE_DIR")?, sound_file.id.0);
-
         let mut file_handle = File::create(full_file_path).await?;
+
+        files.push(sound_file);
 
         while let Some(chunk) = field.try_next().await? {
             uploaded_files_size += chunk.len();
@@ -152,4 +168,26 @@ pub async fn upload_file(
     let uploaded_files = insert_valid_files(files, db_pool).await?;
 
     return Ok(HttpResponse::Ok().json(uploaded_files));
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PublicFilesQueryParams {
+    limit: Option<i64>,
+    page: Option<i64>,
+}
+
+#[get("/public")]
+pub async fn get_public_files(
+    Query(query): Query<PublicFilesQueryParams>,
+    db_pool: Data<PgPool>,
+) -> Result<HttpResponse, KekServerError> {
+    let mut transaction = db_pool.begin().await?;
+    let files = SoundFile::get_public_files(
+        query.limit.unwrap_or(MAX_LIMIT),
+        query.page.unwrap_or(1),
+        &mut transaction,
+    )
+    .await?;
+    transaction.commit().await?;
+    return Ok(HttpResponse::Ok().json(files));
 }

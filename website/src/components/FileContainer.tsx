@@ -74,6 +74,7 @@ type FileContainerProps = {
 
 export type FileContainerRef = {
     fileName: string;
+    isPublic: boolean;
 };
 
 export const FileUploadContainer = forwardRef<
@@ -146,6 +147,7 @@ export const FileUploadContainer = forwardRef<
 
     useImperativeHandle(ref, () => ({
         fileName: value,
+        isPublic: isPublic
     }));
 
     return (
@@ -200,8 +202,7 @@ export const FileUploadContainer = forwardRef<
                 </Text>
             )}
             <Checkbox
-                // disabled={disabled}
-                disabled
+                disabled={disabled}
                 mt="xs"
                 checked={isPublic}
                 label={"Public"}

@@ -22,7 +22,6 @@ impl DiscordClientConfig {
             ),
             scopes: vec![
                 Scope::new("identify".to_string()),
-                Scope::new("email".to_string()),
                 Scope::new("guilds".to_string()),
             ],
             bot_scopes: vec![Scope::new("bot".to_string())],

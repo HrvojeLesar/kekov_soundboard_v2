@@ -150,6 +150,7 @@ export type UserFile = {
     id: string;
     display_name: string;
     time_added: string;
+    is_public: boolean;
 };
 
 export const ApiRequest = {
@@ -330,13 +331,23 @@ export const ApiRequest = {
             authorizationHeaders(accessToken)
         );
     },
+
+    toggleFileVisibility: (fileId: string, accessToken: string, abortController: AbortController | undefined): Promise<AxiosResponse<UserFile>> => {
+        return axiosInstance.patch(
+            `${UserRoute.toggleFileVisability}${fileId}`,
+            {},
+            {
+                ...authorizationHeaders(accessToken),
+                signal: abortController?.signal,
+            }
+        );
+    },
 };
 
 export const primaryShade = (theme: MantineTheme): number => {
     return typeof theme.primaryShade === "number"
         ? theme.primaryShade
         : theme.colorScheme === "dark"
-        ? theme.primaryShade.dark
-        : theme.primaryShade.light;
+            ? theme.primaryShade.dark
+            : theme.primaryShade.light;
 };
-

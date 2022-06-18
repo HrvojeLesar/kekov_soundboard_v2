@@ -15,9 +15,7 @@ use log::{debug, error, info, warn};
 use tokio::sync::{oneshot::Sender, RwLock};
 use uuid::Uuid;
 
-use super::ws_server::{
-    Connect, ControlsServer, ControlsServerMessage, Disconnect, OpCode,
-};
+use super::ws_server::{Connect, ControlsServer, ControlsServerMessage, Disconnect, OpCode};
 
 pub type WsSessionCommChannels =
     RwLock<HashMap<u128, Sender<Result<ControlsServerMessage, ControlsServerMessage>>>>;

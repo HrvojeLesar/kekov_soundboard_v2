@@ -1,5 +1,5 @@
 use actix_web::{
-    delete, get,
+    delete, get, patch,
     web::{scope, Data, Json, Path, ServiceConfig},
     HttpResponse,
 };
@@ -30,7 +30,8 @@ pub fn config(cfg: &mut ServiceConfig) {
             .service(delete_multiple_user_files)
             .service(get_user_guilds)
             .service(get_guilds_with_file)
-            .service(get_enabled_user_files),
+            .service(get_enabled_user_files)
+            .service(toggle_file_visibility),
     );
 }
 
@@ -63,6 +64,25 @@ pub async fn delete_user_file(
 
     transaction.commit().await?;
     return Ok(HttpResponse::Ok().json(deleted_file));
+}
+
+#[patch("/files/togglevisibility/{file_id}")]
+pub async fn toggle_file_visibility(
+    AuthorizedUserExt(authorized_user): AuthorizedUserExt,
+    db_pool: Data<PgPool>,
+    file_id: Path<SoundFileId>,
+) -> Result<HttpResponse, KekServerError> {
+    let mut transaction = db_pool.begin().await?;
+
+    let toggled_file = SoundFile::toggle_visibility(
+        &file_id.into_inner(),
+        &authorized_user.discord_user.id,
+        &mut transaction,
+    )
+    .await?;
+
+    transaction.commit().await?;
+    return Ok(HttpResponse::Ok().json(toggled_file));
 }
 
 #[derive(Serialize, Deserialize)]

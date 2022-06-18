@@ -3,10 +3,7 @@ use actix_web::{dev::ServiceRequest, http::header::AUTHORIZATION, FromRequest, H
 use log::debug;
 use std::{future::Future, pin::Pin, sync::Arc};
 
-use crate::{
-    error::errors::KekServerError,
-    models::{user::User},
-};
+use crate::{error::errors::KekServerError, models::user::User};
 
 use super::{cache::DiscordGuild, make_discord_get_request, USERGUILDS};
 

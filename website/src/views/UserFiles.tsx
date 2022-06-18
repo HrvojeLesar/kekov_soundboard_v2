@@ -1,5 +1,6 @@
 import {
     Box,
+    Checkbox,
     createStyles,
     Grid,
     Group,
@@ -10,8 +11,10 @@ import {
     Title,
 } from "@mantine/core";
 import { useDocumentTitle } from "@mantine/hooks";
+import { showNotification } from "@mantine/notifications";
 import { CSSProperties, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
+import { TbX } from "react-icons/tb";
 import { COOKIE_NAMES } from "../auth/AuthProvider";
 import SearchBar from "../components/SearchBar";
 import DeleteFile from "../components/UserFiles/DeleteFile";
@@ -62,6 +65,8 @@ const useStyle = createStyles((theme) => {
         },
     };
 });
+
+let abortController: AbortController | undefined = undefined;
 
 export default function UserFiles() {
     const [cookies] = useCookies(COOKIE_NAMES);
@@ -134,9 +139,44 @@ export default function UserFiles() {
         }
     };
 
+    const toggleFileVisibility = (file: UserFile) => {
+        if (cookies.access_token) {
+            abortController = new AbortController();
+            ApiRequest.toggleFileVisibility(
+                file.id,
+                cookies.access_token,
+                abortController
+            )
+                .then(({ data }) => {
+                    setFiles([
+                        ...files.map((f) => {
+                            if (f.id === data.id) {
+                                f.is_public = data.is_public;
+                            }
+                            return f;
+                        }),
+                    ]);
+                })
+                .catch((e) => {
+                    console.log(e);
+                    showNotification({
+                        title: "Error",
+                        message: "Failed to toggle files visibility!",
+                        autoClose: false,
+                        color: "red",
+                        icon: <TbX size={24} />,
+                    });
+                });
+        }
+    };
+
     useEffect(() => {
         fetchFiles();
     }, []);
+
+    useEffect(() => {
+        abortController?.abort();
+    }, [selectedFile]);
 
     return (
         <>
@@ -209,12 +249,21 @@ export default function UserFiles() {
                             </Title>
                             {/*TODO: Add delete, toggle public, private*/}
                             {selectedFile !== undefined ? (
-                                <DeleteFile
-                                    deleteCallback={() =>
-                                        deleteFile(selectedFile)
-                                    }
-                                    file={selectedFile}
-                                />
+                                <>
+                                    <DeleteFile
+                                        deleteCallback={() =>
+                                            deleteFile(selectedFile)
+                                        }
+                                        file={selectedFile}
+                                    />
+                                    <Checkbox
+                                        label="Public"
+                                        checked={selectedFile.is_public}
+                                        onChange={() => {
+                                            toggleFileVisibility(selectedFile);
+                                        }}
+                                    />
+                                </>
                             ) : (
                                 "No file selected"
                             )}

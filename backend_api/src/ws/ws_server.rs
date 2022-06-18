@@ -325,7 +325,7 @@ impl Handler<Status> for ControlsServer {
 #[cfg(test)]
 mod tests {
 
-    use chrono::{NaiveDateTime};
+    use chrono::NaiveDateTime;
 
     use crate::{
         models::{

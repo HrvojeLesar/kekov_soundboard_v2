@@ -38,6 +38,7 @@ export enum UserRoute {
     getEnabledFiles = "/user/",
     deleteFile = "/user/files/",
     deleteFiles = "/user/files",
+    toggleFileVisability = "/user/files/togglevisibility/"
 }
 
 export enum GuildRoute {

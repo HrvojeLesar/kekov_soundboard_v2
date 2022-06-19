@@ -5,7 +5,7 @@ use crate::{
     error::errors::KekServerError,
     models::{
         guild::Guild,
-        ids::{GuildId, SoundFileId},
+        ids::{GuildId, SoundFileId, UserId},
         sound_file::SoundFile,
     },
 };
@@ -65,22 +65,22 @@ impl Validation {
         }
         return Ok(());
     }
-}
 
-// TODO: can add any file if id is right
-pub async fn guild_and_file_exist(
-    guild_id: &GuildId,
-    file_id: &SoundFileId,
-    transaction: &mut Transaction<'_, Postgres>,
-) -> Result<(), KekServerError> {
-    match Guild::get_guild_from_id(guild_id, &mut *transaction).await? {
-        Some(_) => (),
-        None => return Err(KekServerError::InvalidGuildIdError),
-    }
+    pub async fn are_guild_and_file_ids_valid(
+        user_id: &UserId,
+        guild_id: &GuildId,
+        file_id: &SoundFileId,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<(), KekServerError> {
+        match Guild::get_guild_from_id(guild_id, &mut *transaction).await? {
+            Some(_) => (),
+            None => return Err(KekServerError::InvalidGuildIdError),
+        }
 
-    match SoundFile::get_file_from_id(file_id, &mut *transaction).await? {
-        Some(_) => (),
-        None => return Err(KekServerError::InvalidFileIdError),
+        match SoundFile::get_file(file_id, user_id, &mut *transaction).await? {
+            Some(_) => (),
+            None => return Err(KekServerError::InvalidFileIdError),
+        }
+        return Ok(());
     }
-    return Ok(());
 }

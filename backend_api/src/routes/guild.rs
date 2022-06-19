@@ -17,7 +17,7 @@ use crate::{
     utils::{
         auth::AuthorizedUserExt,
         cache::UserGuildsCache,
-        validation::{guild_and_file_exist, Validation},
+        validation::Validation,
     },
 };
 
@@ -35,12 +35,6 @@ pub fn config(cfg: &mut ServiceConfig) {
     );
 }
 
-// TODO: can add any file if id is right
-// WARN: can add any file if id is right
-// Get users guilds
-// Check if file is owned by this user
-// or if file is public
-// add if true reject if false
 #[post("/{guild_id}/{file_id}")]
 pub async fn add_sound_to_guild(
     db_pool: Data<PgPool>,
@@ -52,7 +46,7 @@ pub async fn add_sound_to_guild(
     Validation::is_user_in_guild(&authorized_user, &guild_id, &user_guilds_cache).await?;
 
     let mut transaction = db_pool.begin().await?;
-    guild_and_file_exist(&guild_id, &file_id, &mut transaction).await?;
+    Validation::are_guild_and_file_ids_valid(&authorized_user.discord_user.id, &guild_id, &file_id, &mut transaction).await?;
     GuildFile::insert_guild_file(&guild_id, &file_id, &mut transaction).await?;
     transaction.commit().await?;
     return Ok(HttpResponse::Created().finish());
@@ -69,7 +63,6 @@ pub async fn delete_sound_from_guild(
     Validation::is_user_in_guild(&authorized_user, &guild_id, &user_guilds_cache).await?;
 
     let mut transaction = db_pool.begin().await?;
-    guild_and_file_exist(&guild_id, &file_id, &mut transaction).await?;
     GuildFile::delete_guild_file(&guild_id, &file_id, &mut transaction).await?;
     transaction.commit().await?;
 

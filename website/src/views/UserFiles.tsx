@@ -19,7 +19,7 @@ import { COOKIE_NAMES } from "../auth/AuthProvider";
 import SearchBar from "../components/SearchBar";
 import DeleteFile from "../components/UserFiles/DeleteFile";
 import ServerSelect from "../components/UserFiles/ServerSelect";
-import UserFileContainer from "../components/UserFiles/UserFileContainer";
+import SelectableFileContainer from "../components/UserFiles/UserFileContainer";
 import { ApiRequest, LOADINGOVERLAY_ZINDEX, UserFile } from "../utils/utils";
 
 export enum UserFilesModalType {
@@ -209,7 +209,7 @@ export default function UserFiles() {
                                     ? !isFetching &&
                                       filterFiles().map((file) => {
                                           return (
-                                              <UserFileContainer
+                                              <SelectableFileContainer
                                                   key={file.id}
                                                   file={file}
                                                   isSelected={

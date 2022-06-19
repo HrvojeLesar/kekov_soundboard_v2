@@ -1,5 +1,6 @@
 import {
     createStyles,
+    Grid,
     Group,
     LoadingOverlay,
     Paper,
@@ -11,6 +12,8 @@ import {
 import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { COOKIE_NAMES } from "../auth/AuthProvider";
+import ServerSelect from "../components/UserFiles/ServerSelect";
+import SelectableFileContainer from "../components/UserFiles/UserFileContainer";
 import {
     ApiRequest,
     LOADINGOVERLAY_ZINDEX,
@@ -91,6 +94,9 @@ export default function PublicFiles() {
     const [cookies] = useCookies(COOKIE_NAMES);
     const { classes } = useStyle({ isSelected: false });
     const [files, setFiles] = useState<PublicFile[]>([]);
+    const [selectedFile, setSelectedFile] = useState<PublicFile | undefined>(
+        undefined
+    );
     const [isFetching, setIsFetching] = useState(true);
 
     const fetchFiles = async () => {
@@ -113,51 +119,51 @@ export default function PublicFiles() {
     }, []);
 
     return (
-        <Paper withBorder shadow="sm" p="sm" className={classes.paperStyle}>
-            <Title order={3} pb="xs">
-                Public sounds
-            </Title>
-            <LoadingOverlay
-                zIndex={LOADINGOVERLAY_ZINDEX}
-                visible={isFetching}
-            />
-            <ScrollArea className={classes.scollAreaStyle}>
-                <Group>
-                    {files.length > 0
-                        ? !isFetching &&
-                          files.map((f) => {
-                              return (
-                                  <Paper
-                                      withBorder
-                                      shadow="xs"
-                                      className={classes.button}
-                                  >
-                                      <UnstyledButton
-                                          p="sm"
-                                          className={
-                                              classes.unstyledButtonStyle
-                                          }
-                                          onClick={() => {}}
-                                      >
-                                          <Group spacing="sm">
-                                              <Text
-                                                  className={classes.textStyle}
-                                                  title={f.display_name}
-                                              >
-                                                  {f.display_name}
-                                              </Text>
-                                          </Group>
-                                      </UnstyledButton>
-                                  </Paper>
-                              );
-                          })
-                        : !isFetching && (
-                              <Text size="xl" weight="bold">
-                                  There is no public sounds.
-                              </Text>
-                          )}
-                </Group>
-            </ScrollArea>
-        </Paper>
+        <Grid>
+            <Grid.Col xs={9}>
+                <Paper
+                    withBorder
+                    shadow="sm"
+                    p="sm"
+                    className={classes.paperStyle}
+                >
+                    <Title order={3} pb="xs">
+                        Public sounds
+                    </Title>
+                    <LoadingOverlay
+                        zIndex={LOADINGOVERLAY_ZINDEX}
+                        visible={isFetching}
+                    />
+                    <ScrollArea className={classes.scollAreaStyle}>
+                        <Group>
+                            {files.length > 0
+                                ? !isFetching &&
+                                  files.map((f) => {
+                                      return (
+                                          <SelectableFileContainer
+                                              key={f.id}
+                                              file={f}
+                                              isSelected={
+                                                  selectedFile?.id === f.id
+                                              }
+                                              onClickCallback={(f) => {
+                                                  setSelectedFile(f);
+                                              }}
+                                          />
+                                      );
+                                  })
+                                : !isFetching && (
+                                      <Text size="xl" weight="bold">
+                                          There is no public sounds.
+                                      </Text>
+                                  )}
+                        </Group>
+                    </ScrollArea>
+                </Paper>
+            </Grid.Col>
+            <Grid.Col xs={3}>
+                <ServerSelect file={selectedFile} />
+            </Grid.Col>
+        </Grid>
     );
 }

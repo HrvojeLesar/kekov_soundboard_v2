@@ -149,16 +149,19 @@ impl SoundFile {
         return Ok(rows_deleted);
     }
 
-    pub async fn get_file_from_id(
+    pub async fn get_file(
         id: &SoundFileId,
+        owner_id: &UserId,
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Option<Self>, KekServerError> {
         match sqlx::query!(
             "
             SELECT * FROM files
-            WHERE id = $1
+            WHERE id = $1 AND is_deleted = false
+            AND (is_public = true OR owner = $2)
             ",
-            id.0 as i64
+            id.0 as i64,
+            owner_id.0 as i64
         )
         .fetch_optional(&mut *transaction)
         .await?

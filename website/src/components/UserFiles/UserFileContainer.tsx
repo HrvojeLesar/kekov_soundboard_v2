@@ -5,12 +5,12 @@ import {
     UnstyledButton,
     createStyles,
 } from "@mantine/core";
-import { primaryShade, UserFile } from "../../utils/utils";
+import { primaryShade, PublicFile, UserFile } from "../../utils/utils";
 
 type UserFileContainerProps = {
     isSelected: boolean;
-    file: UserFile;
-    onClickCallback: (file: UserFile) => void;
+    file: UserFile | PublicFile;
+    onClickCallback: (file: UserFile | PublicFile ) => void;
 };
 
 const useStyles = createStyles(
@@ -72,7 +72,7 @@ const useStyles = createStyles(
     }
 );
 
-export default function UserFileContainer({
+export default function SelectableFileContainer({
     isSelected,
     file,
     onClickCallback,

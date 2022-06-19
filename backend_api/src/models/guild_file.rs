@@ -69,7 +69,7 @@ impl GuildFile {
     ) -> Result<Vec<SoundFile>, KekServerError> {
         let records = sqlx::query!(
             "
-            SELECT files.* FROM files
+            SELECT files.*, guild_file.time_added as gf_time_added FROM files
             INNER JOIN guild_file ON guild_file.guild_id = $1
             AND files.id = guild_file.file_id
             AND guild_file.is_deleted = false
@@ -87,7 +87,7 @@ impl GuildFile {
                     id: SoundFileId(r.id as u64),
                     owner,
                     display_name: r.display_name,
-                    time_added: Some(r.time_added),
+                    time_added: Some(r.gf_time_added),
                     is_public: r.is_public.unwrap_or(false),
                     is_deleted: r.is_deleted.unwrap_or(false),
                 }

@@ -153,6 +153,13 @@ export type UserFile = {
     is_public: boolean;
 };
 
+export type PublicFile = {
+    id: string;
+    display_name: string;
+    time_added: string;
+    is_public: boolean;
+};
+
 export const ApiRequest = {
     revokeToken: (
         token: RevokeAccessToken
@@ -166,7 +173,9 @@ export const ApiRequest = {
     refreshToken: (
         token: RefreshToken
     ): Promise<AxiosResponse<LoginResponse>> => {
-        return axiosInstance.post(AuthRoute.postRefresh, { refresh_token: token });
+        return axiosInstance.post(AuthRoute.postRefresh, {
+            refresh_token: token,
+        });
     },
     fetchDiscordUser: (
         accessToken: string
@@ -331,8 +340,11 @@ export const ApiRequest = {
             authorizationHeaders(accessToken)
         );
     },
-
-    toggleFileVisibility: (fileId: string, accessToken: string, abortController: AbortController | undefined): Promise<AxiosResponse<UserFile>> => {
+    toggleFileVisibility: (
+        fileId: string,
+        accessToken: string,
+        abortController: AbortController | undefined
+    ): Promise<AxiosResponse<UserFile>> => {
         return axiosInstance.patch(
             `${UserRoute.toggleFileVisability}${fileId}`,
             {},
@@ -342,12 +354,18 @@ export const ApiRequest = {
             }
         );
     },
+    getPublicFiles: (accessToken: string): Promise<AxiosResponse<UserFile[]>> => {
+        return axiosInstance.get(
+            FilesRoute.getPublic,
+            authorizationHeaders(accessToken)
+        );
+    },
 };
 
 export const primaryShade = (theme: MantineTheme): number => {
     return typeof theme.primaryShade === "number"
         ? theme.primaryShade
         : theme.colorScheme === "dark"
-            ? theme.primaryShade.dark
-            : theme.primaryShade.light;
+        ? theme.primaryShade.dark
+        : theme.primaryShade.light;
 };

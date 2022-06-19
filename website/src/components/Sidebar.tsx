@@ -13,7 +13,7 @@ import {
     useMantineColorScheme,
 } from "@mantine/core";
 import { useContext, useEffect } from "react";
-import { FaSignOutAlt, FaDiscord } from "react-icons/fa";
+import { FaSignOutAlt, FaDiscord, FaGlobe } from "react-icons/fa";
 import { TbMoonStars, TbSun, TbUpload } from "react-icons/tb";
 import { API_URL, AuthRoute, DISCORD_CND_USER_AVATAR } from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
@@ -117,6 +117,9 @@ export default function Sidebar() {
                 </BaseSidebarButton>
                 <BaseSidebarButton label="Upload" route="/upload">
                     <TbUpload size={24} />
+                </BaseSidebarButton>
+                <BaseSidebarButton label="Public Sounds" route="/public">
+                    <FaGlobe size={24} />
                 </BaseSidebarButton>
             </Navbar.Section>
             <Navbar.Section className={classes.navbarDivider}>{}</Navbar.Section>

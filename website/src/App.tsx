@@ -21,6 +21,7 @@ const Guild = React.lazy(() => import("./views/Guild"));
 const Upload = React.lazy(() => import("./views/Upload"));
 const UserFiles = React.lazy(() => import("./views/UserFiles"));
 const Sidebar = React.lazy(() => import("./components/Sidebar"));
+const PublicFiles = React.lazy(() => import("./views/PublicFiles"));
 
 export default function App() {
     const [colorScheme, setColorScheme] = useLocalStorage<ColorScheme>({
@@ -101,6 +102,10 @@ export default function App() {
                                         <Route
                                             path="/user"
                                             element={<UserFiles />}
+                                        />
+                                        <Route
+                                            path="/public"
+                                            element={<PublicFiles />}
                                         />
                                     </Route>
                                 </Route>

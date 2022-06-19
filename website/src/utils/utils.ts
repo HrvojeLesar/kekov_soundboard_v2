@@ -166,7 +166,7 @@ export const ApiRequest = {
     refreshToken: (
         token: RefreshToken
     ): Promise<AxiosResponse<LoginResponse>> => {
-        return axiosInstance.post(AuthRoute.postRefresh, token);
+        return axiosInstance.post(AuthRoute.postRefresh, { refresh_token: token });
     },
     fetchDiscordUser: (
         accessToken: string

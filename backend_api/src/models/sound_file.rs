@@ -19,6 +19,7 @@ pub struct SoundFile {
     pub time_added: Option<NaiveDateTime>,
     #[serde(skip)]
     pub is_deleted: bool,
+    #[serde(default)]
     pub is_public: bool,
 }
 

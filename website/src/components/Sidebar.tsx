@@ -14,7 +14,7 @@ import {
 } from "@mantine/core";
 import { useContext, useEffect } from "react";
 import { FaSignOutAlt, FaDiscord, FaGlobe } from "react-icons/fa";
-import { TbMoonStars, TbSun, TbUpload } from "react-icons/tb";
+import { TbMoonStars, TbSun, TbUpload, TbX } from "react-icons/tb";
 import { API_URL, AuthRoute, DISCORD_CND_USER_AVATAR } from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
 import BaseSidebarButton, { baseSidebarButtonStyle } from "./BaseSidebarButton";
@@ -37,6 +37,17 @@ const useStyles = createStyles((theme) => ({
 
         "&:hover": {
             backgroundColor: "#5865f2",
+            borderRadius: "40%",
+            transition: ".2s",
+        },
+    },
+
+    noServers: {
+        ...baseSidebarButtonStyle(theme),
+        backgroundColor: theme.colors.red[8],
+
+        "&:hover": {
+            backgroundColor: theme.colors.red[9],
             borderRadius: "40%",
             transition: ".2s",
         },
@@ -75,7 +86,8 @@ const useStyles = createStyles((theme) => ({
 }));
 
 export default function Sidebar() {
-    const { user, guilds, fetchGuilds, logout } = useContext(AuthContext);
+    const { user, guilds, fetchGuilds, isFetchingGuilds, logout } =
+        useContext(AuthContext);
     const { colorScheme, toggleColorScheme } = useMantineColorScheme();
     const { classes } = useStyles();
 
@@ -85,12 +97,6 @@ export default function Sidebar() {
             skeletons.push(<Skeleton key={i} height={45} circle mb="xs" />);
         }
         return skeletons;
-    };
-
-    const renderGuilds = () => {
-        return guilds.map((guild) => {
-            return <GuildLinkButton key={guild.id} guild={guild} />;
-        });
     };
 
     const isColorSchemeDark = () => {
@@ -122,7 +128,9 @@ export default function Sidebar() {
                     <FaGlobe size={24} />
                 </BaseSidebarButton>
             </Navbar.Section>
-            <Navbar.Section className={classes.navbarDivider}>{}</Navbar.Section>
+            <Navbar.Section className={classes.navbarDivider}>
+                {}
+            </Navbar.Section>
             <Navbar.Section
                 grow
                 component={ScrollArea}
@@ -132,10 +140,42 @@ export default function Sidebar() {
             >
                 <Group direction="column" align="center" spacing="xs">
                     {/*TODO: Handle a situation when there is no guilds to show*/}
-                    {guilds.length > 0 ? renderGuilds() : spawnSkeletons()}
+                    {!isFetchingGuilds ? (
+                        guilds.length > 0 ? (
+                            guilds.map((guild) => {
+                                return (
+                                    <GuildLinkButton
+                                        key={guild.id}
+                                        guild={guild}
+                                    />
+                                );
+                            })
+                        ) : (
+                            <Tooltip
+                                label="You don't share any Discord servers with the bot, try inviting the bot to a server. Clicking here will redirect you to Discords bot invitation."
+                                position="right"
+                                color="red"
+                                wrapLines
+                                width={200}
+                                withArrow
+                            >
+                                <UnstyledButton
+                                    className={classes.noServers}
+                                    component={"a"}
+                                    href={`${API_URL}${AuthRoute.getBotInvite}`}
+                                >
+                                    <TbX size={32} />
+                                </UnstyledButton>
+                            </Tooltip>
+                        )
+                    ) : (
+                        spawnSkeletons()
+                    )}
                 </Group>
             </Navbar.Section>
-            <Navbar.Section className={classes.navbarDivider}>{}</Navbar.Section>
+            <Navbar.Section className={classes.navbarDivider}>
+                {}
+            </Navbar.Section>
             <Navbar.Section>
                 <Center>
                     <Group

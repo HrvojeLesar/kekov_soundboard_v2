@@ -43,6 +43,7 @@ type AuthContextType = {
     refresh: () => Promise<void>;
     fetchGuilds: () => Promise<void>;
     isFetching: boolean;
+    isFetchingGuilds: boolean;
 };
 
 export const COOKIE_NAMES = ["access_token", "refresh_token", "expires"];
@@ -55,6 +56,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
     const [guilds, setGuilds] = useState<Guild[]>([]);
     const [cookies, setCookie, removeCookie] = useCookies(COOKIE_NAMES);
     const [isFetching, setIsFetching] = useState(true);
+    const [isFetchingGuilds, setIsFetchingGuilds] = useState(true);
 
     const fetchUserInfo = async (access_token: string) => {
         await ApiRequest.fetchDiscordUser(access_token)
@@ -122,6 +124,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
                 let { data } = await ApiRequest.fetchGuilds(
                     cookies.access_token
                 );
+                setIsFetchingGuilds(false);
                 setGuilds(data);
             }
         } catch (e) {
@@ -159,6 +162,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
         fetchGuilds: fetchGuilds,
         guilds: guilds,
         isFetching: isFetching,
+        isFetchingGuilds: isFetchingGuilds,
     };
 
     return (

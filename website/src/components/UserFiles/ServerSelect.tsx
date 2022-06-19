@@ -107,21 +107,27 @@ export default function ServerSelect({ file }: ServerSelectProps) {
             />
             {file !== undefined ? (
                 <ScrollArea>
-                    {guilds.map(({ guild, has_file }, index) => {
-                        return (
-                            <Box m="sm" key={guild.id}>
-                                <GuildToggle
-                                    toggleCallback={(state) => {
-                                        guilds[index].has_file = state;
-                                        setGuilds([...guilds]);
-                                    }}
-                                    file={file}
-                                    guild={guild}
-                                    hasFile={has_file}
-                                />
-                            </Box>
-                        );
-                    })}
+                    {guilds.length > 0 ? (
+                        guilds.map(({ guild, has_file }, index) => {
+                            return (
+                                <Box m="sm" key={guild.id}>
+                                    <GuildToggle
+                                        toggleCallback={(state) => {
+                                            guilds[index].has_file = state;
+                                            setGuilds([...guilds]);
+                                        }}
+                                        file={file}
+                                        guild={guild}
+                                        hasFile={has_file}
+                                    />
+                                </Box>
+                            );
+                        })
+                    ) : (
+                        <Text size="xl" weight="bold">
+                            You don't share any server with bot.
+                        </Text>
+                    )}
                 </ScrollArea>
             ) : (
                 <Text size="xl" weight="bold">

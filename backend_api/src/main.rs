@@ -45,9 +45,6 @@ pub static ALLOWED_USERS: [u64; 7] = [
     252114544485335051, // Metajđoš
 ];
 
-// WARN: HARDCODED LIMITS
-pub static ALLOWED_GUILDS: [u64; 1] = [173766075484340234];
-
 // #[cfg(debug_assertions)]
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

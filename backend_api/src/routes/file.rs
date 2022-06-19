@@ -24,6 +24,7 @@ use crate::{
         sound_file::{SoundFile, MAX_LIMIT},
     },
     utils::auth::AuthorizedUserExt,
+    ALLOWED_USERS,
 };
 use lazy_static::lazy_static;
 
@@ -127,6 +128,11 @@ pub async fn upload_file(
     AuthorizedUserExt(authorized_user): AuthorizedUserExt,
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
+    // WARN: HARDCODED BETA LIMIT
+    if !ALLOWED_USERS.contains(&authorized_user.discord_user.id.0) {
+        return Ok(HttpResponse::Forbidden().finish());
+    }
+
     let mut uploaded_files_size = 0;
     let mut max_file_size_exceeded = false;
     let mut files: Vec<SoundFile> = Vec::new();

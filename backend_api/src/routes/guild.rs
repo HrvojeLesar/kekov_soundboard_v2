@@ -14,11 +14,7 @@ use crate::{
         ids::{GuildId, SoundFileId},
         sound_file::SoundFile,
     },
-    utils::{
-        auth::AuthorizedUserExt,
-        cache::UserGuildsCache,
-        validation::Validation,
-    },
+    utils::{auth::AuthorizedUserExt, cache::UserGuildsCache, validation::Validation},
 };
 
 type GuildFileIds = Path<(GuildId, SoundFileId)>;
@@ -46,7 +42,13 @@ pub async fn add_sound_to_guild(
     Validation::is_user_in_guild(&authorized_user, &guild_id, &user_guilds_cache).await?;
 
     let mut transaction = db_pool.begin().await?;
-    Validation::are_guild_and_file_ids_valid(&authorized_user.discord_user.id, &guild_id, &file_id, &mut transaction).await?;
+    Validation::are_guild_and_file_ids_valid(
+        &authorized_user.discord_user.id,
+        &guild_id,
+        &file_id,
+        &mut transaction,
+    )
+    .await?;
     GuildFile::insert_guild_file(&guild_id, &file_id, &mut transaction).await?;
     transaction.commit().await?;
     return Ok(HttpResponse::Created().finish());

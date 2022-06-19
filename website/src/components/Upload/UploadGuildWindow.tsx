@@ -3,6 +3,7 @@ import {
     Checkbox,
     Paper,
     ScrollArea,
+    Text,
     Title,
     createStyles,
 } from "@mantine/core";
@@ -108,7 +109,9 @@ export const UploadGuildWindow = forwardRef<
                     </ScrollArea>
                 </>
             ) : (
-                <></>
+                <Text size="xl" weight="bold">
+                    You don't share any server with bot.
+                </Text>
             )}
         </Paper>
     );

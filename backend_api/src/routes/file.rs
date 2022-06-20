@@ -117,7 +117,7 @@ fn create_new_file(id: i64, user_id: UserId, field: &Field) -> SoundFile {
     let mut name = parse_display_name(field);
     let is_public = is_file_public(&name);
     name.truncate(name.len() - PUBLIC_SUFFIX.len());
-    return SoundFile::new(SoundFileId(id as u64), name, user_id, is_public);
+    return SoundFile::new(SoundFileId(id as u64), name, Some(user_id), is_public);
 }
 
 // TODO: full path code repeats, make nicer

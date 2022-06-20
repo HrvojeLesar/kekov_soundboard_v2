@@ -24,11 +24,11 @@ pub struct SoundFile {
 }
 
 impl SoundFile {
-    pub fn new(id: SoundFileId, display_name: String, owner: UserId, is_public: bool) -> Self {
+    pub fn new(id: SoundFileId, display_name: String, owner: Option<UserId>, is_public: bool) -> Self {
         return Self {
             id,
             display_name: Some(display_name),
-            owner: Some(owner),
+            owner,
             time_added: None,
             is_deleted: false,
             is_public,

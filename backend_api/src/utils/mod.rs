@@ -93,3 +93,199 @@ pub async fn make_discord_get_request(
 
     return Ok(resp);
 }
+
+#[cfg(test)]
+pub mod test_utils {
+    use chrono::Utc;
+    use sqlx::{Postgres, Transaction};
+    use uuid::Uuid;
+
+    use crate::{
+        database::tests_db_helper::DB_POOL,
+        models::{
+            guild::Guild,
+            guild_file::GuildFile,
+            ids::{GuildId, SoundFileId, UserId},
+            sound_file::{self, SoundFile},
+            user::User,
+        },
+    };
+
+    pub async fn insert_user_test_util(transaction: &mut Transaction<'_, Postgres>) -> User {
+        let user_id = UserId(Uuid::new_v4().as_u128() as u64);
+        let now = Utc::now().naive_utc();
+        let username = format!("Test user {}", user_id.0.clone());
+        let user = User {
+            id: user_id,
+            username,
+            avatar: None,
+        };
+
+        sqlx::query!(
+            "
+            INSERT INTO users (id, username)
+            VALUES ($1, $2)
+            ",
+            user.id.0 as i64,
+            user.username,
+        )
+        .execute(&mut *transaction)
+        .await
+        .unwrap();
+
+        return user;
+    }
+
+    pub async fn insert_guild_test_util(transaction: &mut Transaction<'_, Postgres>) -> Guild {
+        let guild_id = GuildId(Uuid::new_v4().as_u128() as u64);
+        let now = Utc::now().naive_utc();
+        let name = format!("Test guild {}", guild_id.0.clone());
+        let guild = Guild {
+            id: guild_id,
+            name,
+            time_added: now,
+        };
+
+        sqlx::query!(
+            "
+            INSERT INTO guild (id, name, time_added)
+            VALUES ($1, $2, $3)
+            ",
+            guild.id.0 as i64,
+            guild.name,
+            guild.time_added
+        )
+        .execute(&mut *transaction)
+        .await
+        .unwrap();
+
+        return guild;
+    }
+
+    pub async fn insert_random_file_test_util(transaction: &mut Transaction<'_, Postgres>) -> SoundFile {
+        let id = SoundFileId(Uuid::new_v4().as_u128() as u64);
+        let owner = insert_user_test_util(&mut *transaction).await;
+        let now = Utc::now().naive_utc();
+        let sound_file = SoundFile {
+            id,
+            display_name: Some("Test file name".to_string()),
+            time_added: now,
+            is_deleted: false,
+            is_public: false,
+            owner: Some(owner.id),
+        };
+        sqlx::query!(
+            "
+            INSERT INTO files (id, display_name, owner, is_public, time_added)
+            VALUES ($1, $2, $3, $4, $5)
+            ",
+            sound_file.id.0 as i64,
+            sound_file.display_name,
+            sound_file.owner.as_ref().map(|o| o.0 as i64),
+            sound_file.is_public,
+            sound_file.time_added
+        )
+        .execute(transaction)
+        .await
+        .unwrap();
+
+        return sound_file;
+    }
+
+    pub async fn insert_file_test_util(owner_id: &UserId, transaction: &mut Transaction<'_, Postgres>) -> SoundFile {
+        let id = SoundFileId(Uuid::new_v4().as_u128() as u64);
+        let now = Utc::now().naive_utc();
+        let sound_file = SoundFile {
+            id,
+            display_name: Some("Test file name".to_string()),
+            time_added: now,
+            is_deleted: false,
+            is_public: false,
+            owner: Some(owner_id.clone()),
+        };
+        sqlx::query!(
+            "
+            INSERT INTO files (id, display_name, owner, is_public, time_added)
+            VALUES ($1, $2, $3, $4, $5)
+            ",
+            sound_file.id.0 as i64,
+            sound_file.display_name,
+            sound_file.owner.as_ref().map(|o| o.0 as i64),
+            sound_file.is_public,
+            sound_file.time_added
+        )
+        .execute(transaction)
+        .await
+        .unwrap();
+
+        return sound_file;
+    }
+
+    pub async fn insert_random_guild_file_test_util(
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> GuildFile {
+        let guild = insert_guild_test_util(&mut *transaction).await;
+        let file = insert_random_file_test_util(&mut *transaction).await;
+        let file_id = file.id.clone();
+        let now = Utc::now().naive_utc();
+        let guild_file = GuildFile {
+            guild_id: guild.id,
+            file_id,
+            time_added: now,
+            is_deleted: false,
+            sound_file: Some(file),
+        };
+
+        sqlx::query!(
+            "
+            INSERT INTO guild_file (guild_id, file_id, time_added)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (guild_id, file_id)
+            DO UPDATE
+            SET is_deleted = false;
+            ",
+            guild_file.guild_id.0 as i64,
+            guild_file.file_id.0 as i64,
+            guild_file.time_added
+        )
+        .execute(&mut *transaction)
+        .await
+        .unwrap();
+
+        return guild_file;
+    }
+
+    pub async fn insert_guild_file_test_util(
+        guild_id: &GuildId,
+        sound_file: SoundFile,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> GuildFile {
+        let now = Utc::now().naive_utc();
+        let file_id = sound_file.id.clone();
+        let guild_file = GuildFile {
+            guild_id: guild_id.clone(),
+            file_id,
+            time_added: now,
+            is_deleted: false,
+            sound_file: Some(sound_file),
+        };
+
+        sqlx::query!(
+            "
+            INSERT INTO guild_file (guild_id, file_id, time_added)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (guild_id, file_id)
+            DO UPDATE
+            SET is_deleted = false;
+            ",
+            guild_file.guild_id.0 as i64,
+            guild_file.file_id.0 as i64,
+            guild_file.time_added
+        )
+        .execute(&mut *transaction)
+        .await
+        .unwrap();
+
+        return guild_file;
+    }
+}

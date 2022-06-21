@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{Postgres, Transaction};
 
@@ -16,7 +16,7 @@ pub struct SoundFile {
     pub display_name: Option<String>,
     #[serde(skip)]
     pub owner: Option<UserId>,
-    pub time_added: Option<NaiveDateTime>,
+    pub time_added: NaiveDateTime,
     #[serde(skip)]
     pub is_deleted: bool,
     #[serde(default)]
@@ -24,12 +24,18 @@ pub struct SoundFile {
 }
 
 impl SoundFile {
-    pub fn new(id: SoundFileId, display_name: String, owner: Option<UserId>, is_public: bool) -> Self {
+    pub fn new(
+        id: SoundFileId,
+        display_name: String,
+        owner: Option<UserId>,
+        is_public: bool,
+    ) -> Self {
+        let now = Utc::now().naive_utc();
         return Self {
             id,
             display_name: Some(display_name),
             owner,
-            time_added: None,
+            time_added: now,
             is_deleted: false,
             is_public,
         };
@@ -77,7 +83,7 @@ impl SoundFile {
                     id: SoundFileId(r.id as u64),
                     owner: r.owner.map(|o| UserId(o as u64)),
                     display_name: r.display_name,
-                    time_added: Some(r.time_added),
+                    time_added: r.time_added,
                     is_public: r.is_public.unwrap_or(false),
                     is_deleted: r.is_deleted.unwrap_or(false),
                 }));
@@ -109,7 +115,7 @@ impl SoundFile {
                     id: SoundFileId(r.id as u64),
                     owner: r.owner.map(|o| UserId(o as u64)),
                     display_name: r.display_name,
-                    time_added: Some(r.time_added),
+                    time_added: r.time_added,
                     is_public: r.is_public.unwrap_or(false),
                     is_deleted: r.is_deleted.unwrap_or(false),
                 }));
@@ -142,7 +148,7 @@ impl SoundFile {
                 id: SoundFileId(r.id as u64),
                 owner: r.owner.map(|o| UserId(o as u64)),
                 display_name: r.display_name,
-                time_added: Some(r.time_added),
+                time_added: r.time_added,
                 is_public: r.is_public.unwrap_or(false),
                 is_deleted: r.is_deleted.unwrap_or(false),
             })
@@ -172,7 +178,7 @@ impl SoundFile {
                     id: SoundFileId(r.id as u64),
                     owner: r.owner.map(|o| UserId(o as u64)),
                     display_name: r.display_name,
-                    time_added: Some(r.time_added),
+                    time_added: r.time_added,
                     is_public: r.is_public.unwrap_or(false),
                     is_deleted: r.is_deleted.unwrap_or(false),
                 }));
@@ -200,7 +206,7 @@ impl SoundFile {
                 id: SoundFileId(r.id as u64),
                 owner: r.owner.map(|o| UserId(o as u64)),
                 display_name: r.display_name,
-                time_added: Some(r.time_added),
+                time_added: r.time_added,
                 is_public: r.is_public.unwrap_or(false),
                 is_deleted: r.is_deleted.unwrap_or(false),
             })
@@ -232,7 +238,7 @@ impl SoundFile {
                 id: SoundFileId(r.id as u64),
                 owner: r.owner.map(|o| UserId(o as u64)),
                 display_name: r.display_name,
-                time_added: Some(r.time_added),
+                time_added: r.time_added,
                 is_public: r.is_public.unwrap_or(true),
                 is_deleted: r.is_deleted.unwrap_or(false),
             })

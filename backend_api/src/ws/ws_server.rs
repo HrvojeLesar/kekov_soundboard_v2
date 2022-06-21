@@ -352,7 +352,7 @@ mod tests {
                 id: FILE,
                 display_name: Some("TestFile".to_string()),
                 is_deleted: false,
-                time_added: Some(NaiveDateTime::from_timestamp(0, 0)),
+                time_added: NaiveDateTime::from_timestamp(0, 0),
                 is_public: false,
                 owner: None,
             }),

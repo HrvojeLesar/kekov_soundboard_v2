@@ -129,12 +129,20 @@ export type GuildsWithFile = {
     has_file: boolean;
 };
 
-export type GuildFile = {
+export type SoundFile = {
     id: string;
     display_name?: string;
     owner?: string;
+    is_public: boolean;
     time_added: string;
 };
+
+export type GuildFile = {
+    file_id: string;
+    guild_id: string;
+    time_added: string;
+    sound_file: SoundFile;
+}
 
 export type QueueReponse = {
     id: string;
@@ -144,20 +152,6 @@ export type QueueReponse = {
 export type BulkEnablePayload = {
     guilds: string[];
     files: string[];
-};
-
-export type UserFile = {
-    id: string;
-    display_name: string;
-    time_added: string;
-    is_public: boolean;
-};
-
-export type PublicFile = {
-    id: string;
-    display_name: string;
-    time_added: string;
-    is_public: boolean;
 };
 
 export const ApiRequest = {
@@ -311,7 +305,7 @@ export const ApiRequest = {
         formData: FormData,
         accessToken: string,
         setProgressValue: Dispatch<SetStateAction<number>>
-    ): Promise<AxiosResponse<UserFile[]>> => {
+    ): Promise<AxiosResponse<SoundFile[]>> => {
         return axiosInstance.post(FilesRoute.postUpload, formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
@@ -328,13 +322,13 @@ export const ApiRequest = {
     deleteUserFile: (
         fileId: string,
         accessToken: string
-    ): Promise<AxiosResponse<UserFile>> => {
+    ): Promise<AxiosResponse<SoundFile>> => {
         return axiosInstance.delete(
             `${UserRoute.deleteFile}${fileId}`,
             authorizationHeaders(accessToken)
         );
     },
-    getUserFiles: (accessToken: string): Promise<AxiosResponse<UserFile[]>> => {
+    getUserFiles: (accessToken: string): Promise<AxiosResponse<SoundFile[]>> => {
         return axiosInstance.get(
             UserRoute.getFiles,
             authorizationHeaders(accessToken)
@@ -344,7 +338,7 @@ export const ApiRequest = {
         fileId: string,
         accessToken: string,
         abortController: AbortController | undefined
-    ): Promise<AxiosResponse<UserFile>> => {
+    ): Promise<AxiosResponse<SoundFile>> => {
         return axiosInstance.patch(
             `${UserRoute.toggleFileVisability}${fileId}`,
             {},
@@ -354,7 +348,7 @@ export const ApiRequest = {
             }
         );
     },
-    getPublicFiles: (accessToken: string): Promise<AxiosResponse<UserFile[]>> => {
+    getPublicFiles: (accessToken: string): Promise<AxiosResponse<SoundFile[]>> => {
         return axiosInstance.get(
             FilesRoute.getPublic,
             authorizationHeaders(accessToken)

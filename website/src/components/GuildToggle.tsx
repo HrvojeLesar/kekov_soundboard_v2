@@ -14,12 +14,12 @@ import {
     ApiRequest,
     nameToInitials,
     primaryShade,
-    UserFile,
+    SoundFile,
 } from "../utils/utils";
 
 type GuildToggleProps = {
     guild: Guild;
-    file: UserFile;
+    file: SoundFile;
     hasFile: boolean;
     toggleCallback: (state: boolean) => void;
 };

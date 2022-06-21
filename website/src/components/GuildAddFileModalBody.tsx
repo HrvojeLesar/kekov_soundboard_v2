@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { COOKIE_NAMES } from "../auth/AuthProvider";
-import { ApiRequest, UserFile } from "../utils/utils";
+import { ApiRequest, SoundFile } from "../utils/utils";
 import { FileToggle } from "./FileToggle";
 
 type GuildAddFileModalBodyPropsType = {
-    addFileCallback: (file: UserFile) => void;
-    removeFileCallback: (file: UserFile) => void;
+    addFileCallback: (file: SoundFile) => void;
+    removeFileCallback: (file: SoundFile) => void;
     guildId: string;
 };
 
 type EnabledFile = {
-    sound_file: UserFile;
+    sound_file: SoundFile;
     enabled: boolean;
 };
 
@@ -40,13 +40,13 @@ export default function GuildAddFileModalBody({
         }
     };
 
-    const addToGuild = async (file: UserFile) => {
+    const addToGuild = async (file: SoundFile) => {
         await ApiRequest.addFileToGuild(guildId, file.id, cookies.access_token);
         addFileCallback(file);
         return;
     };
 
-    const removeFromGuild = async (file: UserFile) => {
+    const removeFromGuild = async (file: SoundFile) => {
         await ApiRequest.removeFileFromGuild(
             guildId,
             file.id,

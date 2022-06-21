@@ -7,10 +7,10 @@ import {
     ScrollArea,
     Text,
     Title,
-    UnstyledButton,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
+import { useQuery } from "react-query";
 import { COOKIE_NAMES } from "../auth/AuthProvider";
 import ServerSelect from "../components/UserFiles/ServerSelect";
 import SelectableFileContainer from "../components/UserFiles/UserFileContainer";
@@ -18,7 +18,7 @@ import {
     ApiRequest,
     LOADINGOVERLAY_ZINDEX,
     primaryShade,
-    PublicFile,
+    SoundFile,
 } from "../utils/utils";
 
 const useStyle = createStyles(
@@ -93,11 +93,18 @@ const useStyle = createStyles(
 export default function PublicFiles() {
     const [cookies] = useCookies(COOKIE_NAMES);
     const { classes } = useStyle({ isSelected: false });
-    const [files, setFiles] = useState<PublicFile[]>([]);
-    const [selectedFile, setSelectedFile] = useState<PublicFile | undefined>(
+    const [files, setFiles] = useState<SoundFile[]>([]);
+    const [selectedFile, setSelectedFile] = useState<SoundFile | undefined>(
         undefined
     );
     const [isFetching, setIsFetching] = useState(true);
+
+    // const {
+    //     isLoading: isFetching,
+    //     data: files,
+    // } = useQuery(["files", "public"], async () => {
+    //     return (await ApiRequest.getPublicFiles(cookies.access_token)).data;
+    // });
 
     const fetchFiles = async () => {
         if (cookies.access_token) {

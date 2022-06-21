@@ -8,7 +8,7 @@ import {
 } from "@mantine/core";
 import { useDocumentTitle, useLocalStorage } from "@mantine/hooks";
 import { NotificationsProvider } from "@mantine/notifications";
-import React, { useState } from "react";
+import React from "react";
 import { CookiesProvider } from "react-cookie";
 import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
 import AuthProvider from "./auth/AuthProvider";

@@ -1,12 +1,12 @@
 import { Avatar, Group, Text, Switch } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { UserFile } from "../utils/utils";
+import { SoundFile } from "../utils/utils";
 
 type FileToggleProps = {
-    file: UserFile;
+    file: SoundFile;
     isActive: boolean;
-    addCallback: (file: UserFile) => Promise<void>;
-    removeCallback: (file: UserFile) => Promise<void>;
+    addCallback: (file: SoundFile) => Promise<void>;
+    removeCallback: (file: SoundFile) => Promise<void>;
 };
 
 export function FileToggle({

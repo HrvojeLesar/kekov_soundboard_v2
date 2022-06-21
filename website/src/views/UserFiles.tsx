@@ -20,7 +20,7 @@ import SearchBar from "../components/SearchBar";
 import DeleteFile from "../components/UserFiles/DeleteFile";
 import ServerSelect from "../components/UserFiles/ServerSelect";
 import SelectableFileContainer from "../components/UserFiles/UserFileContainer";
-import { ApiRequest, LOADINGOVERLAY_ZINDEX, UserFile } from "../utils/utils";
+import { ApiRequest, LOADINGOVERLAY_ZINDEX, SoundFile } from "../utils/utils";
 
 export enum UserFilesModalType {
     Add,
@@ -70,9 +70,9 @@ let abortController: AbortController | undefined = undefined;
 
 export default function UserFiles() {
     const [cookies] = useCookies(COOKIE_NAMES);
-    const [files, setFiles] = useState<UserFile[]>([]);
+    const [files, setFiles] = useState<SoundFile[]>([]);
     const [isFetching, setIsFetching] = useState(true);
-    const [selectedFile, setSelectedFile] = useState<UserFile | undefined>(
+    const [selectedFile, setSelectedFile] = useState<SoundFile | undefined>(
         undefined
     );
     const [filterTerm, setFilterTerm] = useState("");
@@ -100,7 +100,7 @@ export default function UserFiles() {
             : "Edit";
     };
 
-    const deleteFile = (file: UserFile): Promise<void> => {
+    const deleteFile = (file: SoundFile): Promise<void> => {
         return new Promise((resolve, reject) => {
             if (cookies.access_token) {
                 ApiRequest.deleteUserFile(file.id, cookies.access_token)
@@ -139,7 +139,7 @@ export default function UserFiles() {
         }
     };
 
-    const toggleFileVisibility = (file: UserFile) => {
+    const toggleFileVisibility = (file: SoundFile) => {
         if (cookies.access_token) {
             abortController = new AbortController();
             ApiRequest.toggleFileVisibility(

@@ -1,11 +1,11 @@
 import { ActionIcon, Modal } from "@mantine/core";
 import { useState } from "react";
 import { TbTrash } from "react-icons/tb";
-import { GuildFile, MODAL_ZINDEX, UserFile } from "../../utils/utils";
+import { MODAL_ZINDEX, SoundFile } from "../../utils/utils";
 import DeleteModalBody from "../DeleteModalBody";
 
 type DeleteFileProps = {
-    file: UserFile | GuildFile;
+    file: SoundFile;
     deleteCallback: () => Promise<void>;
 };
 

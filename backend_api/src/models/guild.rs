@@ -10,6 +10,8 @@ use super::ids::GuildId;
 pub struct Guild {
     pub id: GuildId,
     pub name: String,
+    pub icon: Option<String>,
+    pub icon_hash: Option<String>,
     pub time_added: NaiveDateTime,
 }
 
@@ -33,6 +35,8 @@ impl Guild {
                     id: GuildId(r.id as u64),
                     name: r.name,
                     time_added: r.time_added,
+                    icon: None,
+                    icon_hash: None,
                 }));
             }
             None => return Ok(None),
@@ -80,6 +84,8 @@ impl Guild {
                 id: GuildId(r.id as u64),
                 name: r.name,
                 time_added: r.time_added,
+                icon: None,
+                icon_hash: None,
             })
             .collect::<Vec<Self>>();
         return Ok(guilds);

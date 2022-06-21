@@ -37,7 +37,7 @@ import {
 } from "../components/Upload/UploadGuildWindow";
 import { useCookies } from "react-cookie";
 import { useDocumentTitle } from "@mantine/hooks";
-import { ApiRequest, UserFile } from "../utils/utils";
+import { ApiRequest, SoundFile } from "../utils/utils";
 import { IconType } from "react-icons";
 
 const MAX_TOTAL_SIZE = 10_000_000;
@@ -186,8 +186,8 @@ export default function Upload() {
         return size;
     };
 
-    const compareUploaded: (uploadedFiles: UserFile[]) => FileWithId[] = (
-        uploadedFiles: UserFile[]
+    const compareUploaded: (uploadedFiles: SoundFile[]) => FileWithId[] = (
+        uploadedFiles: SoundFile[]
     ) => {
         const maxLen = files.length - uploadedFiles.length;
         let len = 0;
@@ -284,7 +284,7 @@ export default function Upload() {
             });
     };
 
-    const quickEnable = (guilds: string[], files: UserFile[]) => {
+    const quickEnable = (guilds: string[], files: SoundFile[]) => {
         if (!cookies.access_token) {
             return Promise.reject("Access token not set");
         }

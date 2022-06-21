@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { TbX } from "react-icons/tb";
 import { COOKIE_NAMES } from "../../auth/AuthProvider";
-import { ApiRequest, LOADINGOVERLAY_ZINDEX, UserFile } from "../../utils/utils";
+import { ApiRequest, LOADINGOVERLAY_ZINDEX, SoundFile } from "../../utils/utils";
 import SearchBar from "../SearchBar";
 import QuickEnableCheckbox from "./QuickEnableCheckbox";
 
@@ -31,7 +31,7 @@ const useStyle = createStyles((_theme) => {
 });
 
 export type EnabledUserFile = {
-    sound_file: UserFile;
+    sound_file: SoundFile;
     enabled: boolean;
 };
 

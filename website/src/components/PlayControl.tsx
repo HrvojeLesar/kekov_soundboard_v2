@@ -6,7 +6,6 @@ import {
     Paper,
     UnstyledButton,
     LoadingOverlay,
-    useMantineTheme,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useState } from "react";
@@ -161,7 +160,7 @@ export function PlayControl({ file, guildId }: PlayControlProps) {
             shadow="sm"
             p="sm"
             className={classes.container}
-            title={file.display_name}
+            title={file.sound_file.display_name}
         >
             <LoadingOverlay
                 zIndex={LOADINGOVERLAY_ZINDEX}
@@ -173,13 +172,13 @@ export function PlayControl({ file, guildId }: PlayControlProps) {
                 mx="xl"
                 className={classes.textStyle}
             >
-                {file.display_name}
+                {file.sound_file.display_name}
             </Text>
             <TbPlayerPlay className={classes.playerPlayIconStyle} />
             <UnstyledButton
                 className={classes.buttonStyle}
                 onClick={() => {
-                    playFunc(file.id);
+                    playFunc(file.file_id);
                 }}
             />
         </Paper>

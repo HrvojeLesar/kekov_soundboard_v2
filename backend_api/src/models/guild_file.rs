@@ -189,6 +189,8 @@ impl GuildFile {
                 id: GuildId(r.guild_id as u64),
                 name: r.name,
                 time_added: r.guild_time_added,
+                icon: None,
+                icon_hash: None,
             })
             .collect();
         return Ok(guilds);

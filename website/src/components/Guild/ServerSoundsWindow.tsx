@@ -55,9 +55,9 @@ export default function ServerSoundsWindow({
     const filterFiles = () => {
         if (filterTerm !== "") {
             return guildFiles.filter((file) => {
-                if (file.display_name) {
+                if (file.sound_file.display_name) {
                     return (
-                        file.display_name.toLowerCase().indexOf(filterTerm) !==
+                        file.sound_file.display_name.toLowerCase().indexOf(filterTerm) !==
                         -1
                     );
                 } else {
@@ -68,6 +68,8 @@ export default function ServerSoundsWindow({
             return guildFiles;
         }
     };
+
+    console.log(guildFiles);
 
     return (
         <>
@@ -107,7 +109,7 @@ export default function ServerSoundsWindow({
                                 ? filterFiles().map((file) => {
                                       return (
                                           <PlayControl
-                                              key={file.id}
+                                              key={file.file_id}
                                               file={file}
                                               guildId={guildId}
                                           />
@@ -121,7 +123,7 @@ export default function ServerSoundsWindow({
                                                   setIsModalOpen(true);
                                               }}
                                           >
-                                              {file.display_name}
+                                              {file.sound_file.display_name}
                                           </Button>
                                       );
                                   })
@@ -142,7 +144,7 @@ export default function ServerSoundsWindow({
                     closeOnEscape={false}
                     centered
                     onClose={() => setIsModalOpen(false)}
-                    title={lastClickedFile?.display_name}
+                    title={lastClickedFile?.sound_file.display_name}
                     styles={{
                         title: {
                             maxWidth: "15ch",
@@ -151,13 +153,13 @@ export default function ServerSoundsWindow({
                     }}
                 >
                     <DeleteModalBody
-                        file={lastClickedFile}
+                        file={lastClickedFile.sound_file}
                         closeCallback={() => setIsModalOpen(false)}
                         deleteCallback={() => {
                             return new Promise<void>((resolve, reject) => {
                                 ApiRequest.removeFileFromGuild(
                                     guildId,
-                                    lastClickedFile.id,
+                                    lastClickedFile.file_id,
                                     cookies.access_token
                                 )
                                     .then((_resp) => {
@@ -165,8 +167,8 @@ export default function ServerSoundsWindow({
                                         setGuildFiles([
                                             ...guildFiles.filter((file) => {
                                                 return (
-                                                    file.id !==
-                                                    lastClickedFile.id
+                                                    file.file_id !==
+                                                    lastClickedFile.file_id
                                                 );
                                             }),
                                         ]);

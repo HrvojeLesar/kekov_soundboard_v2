@@ -16,11 +16,11 @@ import {
     ApiRequest,
     GuildsWithFile,
     LOADINGOVERLAY_ZINDEX,
-    UserFile,
+    SoundFile,
 } from "../../utils/utils";
 
 type ServerSelectProps = {
-    file?: UserFile;
+    file?: SoundFile;
 };
 
 const useStyle = createStyles((_theme) => {

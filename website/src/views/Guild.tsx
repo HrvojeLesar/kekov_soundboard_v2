@@ -1,4 +1,4 @@
-import { Box, Button, createStyles, Grid, Paper, Title } from "@mantine/core";
+import { Box, createStyles, Grid, Paper, Title } from "@mantine/core";
 import { useDocumentTitle } from "@mantine/hooks";
 import axios, { AxiosError, CanceledError } from "axios";
 import { CSSProperties, useContext, useEffect, useState } from "react";
@@ -89,22 +89,30 @@ export default function Guild() {
                     return;
                 }
                 setIsUpdating(false);
-            } 
+            }
         }
     };
 
     const quickEnableFilesCallback = (file: EnabledUserFile) => {
         const foundFile = guildFiles.find((f) => {
-            return f.id === file.sound_file.id;
+            return f.file_id === file.sound_file.id;
         });
         if (foundFile) {
             setGuildFiles([
                 ...guildFiles.filter((f) => {
-                    return f.id !== foundFile.id;
+                    return f.file_id !== foundFile.file_id;
                 }),
             ]);
         } else {
-            setGuildFiles([...guildFiles, file.sound_file]);
+            setGuildFiles([
+                ...guildFiles,
+                {
+                    file_id: file.sound_file.id,
+                    guild_id: guildId ?? "1",
+                    sound_file: file.sound_file,
+                    time_added: Date.now().toString(),
+                },
+            ]);
         }
     };
 

@@ -130,6 +130,8 @@ pub async fn get_user_guilds(
                     id: g.id.clone(),
                     name: g.name.clone(),
                     time_added: guild.time_added,
+                    icon: g.icon.clone(),
+                    icon_hash: g.icon_hash.clone(),
                 }
             }
             return guild;

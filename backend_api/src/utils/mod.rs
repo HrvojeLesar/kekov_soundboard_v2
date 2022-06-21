@@ -144,6 +144,8 @@ pub mod test_utils {
             id: guild_id,
             name,
             time_added: now,
+            icon: None,
+            icon_hash: None
         };
 
         sqlx::query!(

@@ -24,6 +24,12 @@ impl FromStr for GuildId {
     }
 }
 
+impl From<i64> for GuildId {
+    fn from(i: i64) -> Self {
+        return Self(i as u64);
+    }
+}
+
 impl TryFrom<String> for GuildId {
     type Error = ParseIntError;
 
@@ -48,6 +54,12 @@ pub struct UserId(pub u64);
 impl Id for UserId {
     fn get_id(&self) -> u64 {
         return self.0;
+    }
+}
+
+impl From<i64> for UserId {
+    fn from(i: i64) -> Self {
+        return Self(i as u64);
     }
 }
 
@@ -86,6 +98,12 @@ impl Id for SoundFileId {
     }
 }
 
+impl From<i64> for SoundFileId {
+    fn from(i: i64) -> Self {
+        return Self(i as u64);
+    }
+}
+
 impl FromStr for SoundFileId {
     type Err = ParseIntError;
 
@@ -118,6 +136,12 @@ pub struct ChannelId(pub u64);
 impl Id for ChannelId {
     fn get_id(&self) -> u64 {
         return self.0;
+    }
+}
+
+impl From<i64> for ChannelId {
+    fn from(i: i64) -> Self {
+        return Self(i as u64);
     }
 }
 

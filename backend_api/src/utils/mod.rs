@@ -101,7 +101,7 @@ pub mod test_utils {
     use uuid::Uuid;
 
     use crate::{
-        database::tests_db_helper::DB_POOL,
+        database::tests_db_helper::db_connection,
         models::{
             guild::Guild,
             guild_file::GuildFile,
@@ -110,6 +110,11 @@ pub mod test_utils {
             user::User,
         },
     };
+
+    pub struct PublicDeleted {
+        pub is_public: bool,
+        pub is_deleted: bool,
+    }
 
     pub async fn insert_user_test_util(transaction: &mut Transaction<'_, Postgres>) -> User {
         let user_id = UserId(Uuid::new_v4().as_u128() as u64);
@@ -145,7 +150,7 @@ pub mod test_utils {
             name,
             time_added: now,
             icon: None,
-            icon_hash: None
+            icon_hash: None,
         };
 
         sqlx::query!(
@@ -164,7 +169,9 @@ pub mod test_utils {
         return guild;
     }
 
-    pub async fn insert_random_file_test_util(transaction: &mut Transaction<'_, Postgres>) -> SoundFile {
+    pub async fn insert_random_file_test_util(
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> SoundFile {
         let id = SoundFileId(Uuid::new_v4().as_u128() as u64);
         let owner = insert_user_test_util(&mut *transaction).await;
         let now = Utc::now().naive_utc();
@@ -194,27 +201,36 @@ pub mod test_utils {
         return sound_file;
     }
 
-    pub async fn insert_file_test_util(owner_id: &UserId, transaction: &mut Transaction<'_, Postgres>) -> SoundFile {
+    pub async fn insert_file_test_util(
+        owner_id: &UserId,
+        public_deleted: Option<PublicDeleted>,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> SoundFile {
         let id = SoundFileId(Uuid::new_v4().as_u128() as u64);
         let now = Utc::now().naive_utc();
+        let public_deleted = public_deleted.unwrap_or(PublicDeleted {
+            is_deleted: false,
+            is_public: false,
+        });
         let sound_file = SoundFile {
             id,
             display_name: Some("Test file name".to_string()),
             time_added: now,
-            is_deleted: false,
-            is_public: false,
+            is_deleted: public_deleted.is_deleted,
+            is_public: public_deleted.is_public,
             owner: Some(owner_id.clone()),
         };
         sqlx::query!(
             "
-            INSERT INTO files (id, display_name, owner, is_public, time_added)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO files (id, display_name, owner, is_public, time_added, is_deleted)
+            VALUES ($1, $2, $3, $4, $5, $6)
             ",
             sound_file.id.0 as i64,
             sound_file.display_name,
             sound_file.owner.as_ref().map(|o| o.0 as i64),
             sound_file.is_public,
-            sound_file.time_added
+            sound_file.time_added,
+            sound_file.is_deleted
         )
         .execute(transaction)
         .await

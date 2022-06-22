@@ -88,13 +88,13 @@ impl GuildFile {
         let guild_files = records
             .into_iter()
             .map(|r| GuildFile {
-                guild_id: GuildId(r.guild_id as u64),
-                file_id: SoundFileId(r.file_id as u64),
+                guild_id: r.guild_id.into(),
+                file_id: r.file_id.into(),
                 time_added: r.gf_time_added,
                 is_deleted: r.gf_is_deleted.unwrap_or(false),
                 sound_file: Some(SoundFile {
-                    id: SoundFileId(r.id as u64),
-                    owner: r.owner.map(|o| UserId(o as u64)),
+                    id: r.id.into(),
+                    owner: r.owner.map(|o| o.into()),
                     display_name: r.display_name,
                     time_added: r.time_added,
                     is_public: r.is_public.unwrap_or(false),
@@ -132,14 +132,14 @@ impl GuildFile {
         {
             Some(r) => {
                 return Ok(Some(Self {
-                    guild_id: GuildId(r.guild_id as u64),
-                    file_id: SoundFileId(r.file_id as u64),
+                    guild_id: r.guild_id.into(),
+                    file_id: r.file_id.into(),
                     time_added: r.gf_time_added,
                     is_deleted: r.gf_is_deleted.unwrap_or(false),
                     sound_file: Some(SoundFile {
-                        id: SoundFileId(r.file_id as u64),
+                        id: r.file_id.into(),
                         display_name: r.display_name,
-                        owner: r.owner.map(|o| UserId(o as u64)),
+                        owner: r.owner.map(|o| o.into()),
                         time_added: r.time_added,
                         is_public: r.is_public.unwrap_or(false),
                         is_deleted: r.is_deleted.unwrap_or(false),
@@ -186,7 +186,7 @@ impl GuildFile {
         let guilds = records
             .into_iter()
             .map(|r| Guild {
-                id: GuildId(r.guild_id as u64),
+                id: r.guild_id.into(),
                 name: r.name,
                 time_added: r.guild_time_added,
                 icon: None,
@@ -225,11 +225,10 @@ impl GuildFile {
         let enabled_sounds = records
             .into_iter()
             .map(|r| {
-                let owner = r.owner.map(|o| UserId(o as u64));
                 SoundFile {
-                    id: SoundFileId(r.id as u64),
+                    id: r.id.into(),
                     display_name: r.display_name,
-                    owner,
+                    owner: r.owner.map(|o| o.into()),
                     time_added: r.file_time_added,
                     is_public: r.file_is_public.unwrap_or(false),
                     is_deleted: r.file_is_deleted.unwrap_or(false),
@@ -264,11 +263,11 @@ impl GuildFile {
 #[cfg(test)]
 mod tests {
     use chrono::Utc;
-    use sqlx::{Postgres, Transaction};
+    use sqlx::{Postgres, Transaction, Connection};
     use uuid::Uuid;
 
     use crate::{
-        database::tests_db_helper::DB_POOL,
+        database::tests_db_helper::db_connection,
         models::{
             guild::Guild,
             ids::{GuildId, SoundFileId, UserId},
@@ -345,7 +344,8 @@ mod tests {
 
     #[actix_web::test]
     async fn test_insert_guild_file() {
-        let mut transaction = DB_POOL.begin().await.unwrap();
+        let mut connection = db_connection().await;
+        let mut transaction = connection.begin().await.unwrap();
         let guild = insert_guild_test_util(&mut transaction).await;
         let sound_file = insert_random_file_test_util(&mut transaction).await;
 
@@ -375,7 +375,8 @@ mod tests {
 
     #[actix_web::test]
     async fn test_insert_guild_file_do_update() {
-        let mut transaction = DB_POOL.begin().await.unwrap();
+        let mut connection = db_connection().await;
+        let mut transaction = connection.begin().await.unwrap();
         let guild_file = insert_random_guild_file_test_util(&mut transaction).await;
 
         delete_guild_file(&guild_file, &mut transaction).await;
@@ -409,7 +410,8 @@ mod tests {
 
     #[actix_web::test]
     async fn test_delete_guild_file() {
-        let mut transaction = DB_POOL.begin().await.unwrap();
+        let mut connection = db_connection().await;
+        let mut transaction = connection.begin().await.unwrap();
         let guild_file = insert_random_guild_file_test_util(&mut transaction).await;
 
         GuildFile::delete_guild_file(&guild_file.guild_id, &guild_file.file_id, &mut transaction)
@@ -429,7 +431,8 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_guild_files() {
-        let mut transaction = DB_POOL.begin().await.unwrap();
+        let mut connection = db_connection().await;
+        let mut transaction = connection.begin().await.unwrap();
         let mut sound_files = vec![];
 
         let guild = insert_guild_test_util(&mut transaction).await;
@@ -471,7 +474,8 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_guild_file() {
-        let mut transaction = DB_POOL.begin().await.unwrap();
+        let mut connection = db_connection().await;
+        let mut transaction = connection.begin().await.unwrap();
 
         let test_guild_file = insert_random_guild_file_test_util(&mut transaction).await;
 
@@ -508,7 +512,8 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_matching_guilds_for_file() {
-        let mut transaction = DB_POOL.begin().await.unwrap();
+        let mut connection = db_connection().await;
+        let mut transaction = connection.begin().await.unwrap();
 
         let sound_file = insert_random_file_test_util(&mut transaction).await;
 
@@ -520,8 +525,6 @@ mod tests {
             }
             guilds.push(guild);
         }
-
-        println!("{:#?}", guilds);
 
         let matching_guilds =
             GuildFile::get_matching_guilds_for_file(&guilds, &sound_file.id, &mut transaction)
@@ -541,7 +544,8 @@ mod tests {
 
     #[actix_web::test]
     async fn test_get_users_enabled_files_for_guild() {
-        let mut transaction = DB_POOL.begin().await.unwrap();
+        let mut connection = db_connection().await;
+        let mut transaction = connection.begin().await.unwrap();
         let mut inserted_files = vec![];
 
         let user = insert_user_test_util(&mut transaction).await;
@@ -549,7 +553,7 @@ mod tests {
         let other_guild = insert_guild_test_util(&mut transaction).await;
 
         for i in 0..5 {
-            let sound_file = insert_file_test_util(&user.id, &mut transaction).await;
+            let sound_file = insert_file_test_util(&user.id, None, &mut transaction).await;
 
             if i != 2 {
                 insert_guild_file_test_util(&guild.id, sound_file.clone(), &mut transaction).await;
@@ -580,7 +584,8 @@ mod tests {
 
     #[actix_web::test]
     async fn test_bulk_insert() {
-        let mut transaction = DB_POOL.begin().await.unwrap();
+        let mut connection = db_connection().await;
+        let mut transaction = connection.begin().await.unwrap();
         let mut guild_ids = vec![];
         let mut file_ids = vec![];
         for _ in 0..5 {

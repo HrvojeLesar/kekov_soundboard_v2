@@ -27,7 +27,7 @@ impl GuildFile {
         guild_id: &GuildId,
         file_id: &SoundFileId,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), KekServerError> {
+    ) -> Result<Option<Self>, KekServerError> {
         sqlx::query!(
             "
             INSERT INTO guild_file (guild_id, file_id)
@@ -41,14 +41,15 @@ impl GuildFile {
         )
         .execute(&mut *transaction)
         .await?;
-        return Ok(());
+        return Self::get_guild_file(guild_id, file_id, transaction).await;
     }
 
     pub async fn delete_guild_file(
         guild_id: &GuildId,
         file_id: &SoundFileId,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<(), KekServerError> {
+    ) -> Result<Option<Self>, KekServerError> {
+        let guild_file = Self::get_guild_file(guild_id, file_id, transaction).await?;
         sqlx::query!(
             "
             UPDATE guild_file
@@ -60,7 +61,7 @@ impl GuildFile {
         )
         .execute(&mut *transaction)
         .await?;
-        return Ok(());
+        return Ok(guild_file);
     }
 
     pub async fn get_guild_files(
@@ -224,15 +225,13 @@ impl GuildFile {
 
         let enabled_sounds = records
             .into_iter()
-            .map(|r| {
-                SoundFile {
-                    id: r.id.into(),
-                    display_name: r.display_name,
-                    owner: r.owner.map(|o| o.into()),
-                    time_added: r.file_time_added,
-                    is_public: r.file_is_public.unwrap_or(false),
-                    is_deleted: r.file_is_deleted.unwrap_or(false),
-                }
+            .map(|r| SoundFile {
+                id: r.id.into(),
+                display_name: r.display_name,
+                owner: r.owner.map(|o| o.into()),
+                time_added: r.file_time_added,
+                is_public: r.file_is_public.unwrap_or(false),
+                is_deleted: r.file_is_deleted.unwrap_or(false),
             })
             .collect();
 
@@ -262,21 +261,18 @@ impl GuildFile {
 
 #[cfg(test)]
 mod tests {
-    use chrono::Utc;
-    use sqlx::{Postgres, Transaction, Connection};
-    use uuid::Uuid;
+    use sqlx::{Connection, Postgres, Transaction};
 
     use crate::{
         database::tests_db_helper::db_connection,
         models::{
-            guild::Guild,
             ids::{GuildId, SoundFileId, UserId},
-            sound_file::{self, SoundFile},
-            user::User,
+            sound_file::SoundFile,
         },
         utils::test_utils::{
-            insert_random_file_test_util, insert_guild_file_test_util, insert_guild_test_util,
-            insert_random_guild_file_test_util, insert_user_test_util, insert_file_test_util,
+            insert_file_test_util, insert_guild_file_test_util, insert_guild_test_util,
+            insert_random_file_test_util, insert_random_guild_file_test_util,
+            insert_user_test_util,
         },
     };
 
@@ -558,7 +554,8 @@ mod tests {
             if i != 2 {
                 insert_guild_file_test_util(&guild.id, sound_file.clone(), &mut transaction).await;
             } else {
-                insert_guild_file_test_util(&other_guild.id, sound_file.clone(), &mut transaction).await;
+                insert_guild_file_test_util(&other_guild.id, sound_file.clone(), &mut transaction)
+                    .await;
             }
             inserted_files.push(sound_file);
         }

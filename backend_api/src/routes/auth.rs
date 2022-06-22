@@ -104,49 +104,6 @@ async fn fetch_access_token(
     };
 }
 
-async fn check_collision(
-    transaction: &mut Transaction<'_, Postgres>,
-    auth_url: &mut Url,
-    csrf_token: &mut CsrfToken,
-    pkce_challange: PkceCodeChallenge,
-    oauth_client_url_fn: impl Fn(PkceCodeChallenge) -> (Url, CsrfToken),
-) -> Result<(), KekServerError> {
-    while sqlx::query!(
-        // TODO: Expire or cleanup old states
-        // Replace or update old state if key matches (csrf_token)
-        "
-        SELECT * FROM state
-        WHERE csrf_token = $1
-        ",
-        csrf_token.secret()
-    )
-    .fetch_optional(&mut *transaction)
-    .await?
-    .is_some()
-    {
-        (*auth_url, *csrf_token) = oauth_client_url_fn(pkce_challange.clone());
-    }
-    return Ok(());
-}
-
-async fn insert_state(
-    transaction: &mut Transaction<'_, Postgres>,
-    csrf_token: CsrfToken,
-    pkce_verifier: PkceCodeVerifier,
-) -> Result<(), KekServerError> {
-    sqlx::query!(
-        "
-        INSERT INTO state (csrf_token, pkce_verifier)
-        VALUES ($1, $2)
-        ",
-        csrf_token.secret(),
-        pkce_verifier.secret(),
-    )
-    .execute(transaction)
-    .await?;
-    return Ok(());
-}
-
 async fn create_url(
     oauth_client_url_fn: impl Fn(PkceCodeChallenge) -> (Url, CsrfToken),
     db_pool: Data<PgPool>,
@@ -156,7 +113,7 @@ async fn create_url(
 
     let mut transaction = db_pool.begin().await?;
 
-    check_collision(
+    State::check_collision(
         &mut transaction,
         &mut auth_url,
         &mut csrf_token,
@@ -164,7 +121,7 @@ async fn create_url(
         oauth_client_url_fn,
     )
     .await?;
-    insert_state(&mut transaction, csrf_token, pkce_verifier).await?;
+    State::insert_state(&mut transaction, csrf_token, pkce_verifier).await?;
 
     transaction.commit().await?;
 
@@ -243,12 +200,7 @@ pub async fn auth_callback(
                     .await?
                     .is_none()
                 {
-                    Guild::insert_guild(
-                        &guild.id,
-                        &guild.name,
-                        &mut transaction,
-                    )
-                    .await?;
+                    Guild::insert_guild(&guild.id, &guild.name, &mut transaction).await?;
                 }
             }
 

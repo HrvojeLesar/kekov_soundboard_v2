@@ -57,7 +57,7 @@ impl SoundFile {
             self.owner.as_ref().map(|o| o.0 as i64),
             self.is_public
         )
-        .fetch_one(transaction)
+        .fetch_one(&mut *transaction)
         .await?;
         return Ok(Self {
             id: r.id.into(),
@@ -84,7 +84,7 @@ impl SoundFile {
             id.0 as i64,
             owner.0 as i64
         )
-        .fetch_one(transaction)
+        .fetch_one(&mut *transaction)
         .await?;
         return Ok(Self {
             id: r.id.into(),
@@ -111,7 +111,7 @@ impl SoundFile {
             id.0 as i64,
             owner.0 as i64
         )
-        .fetch_one(transaction)
+        .fetch_one(&mut *transaction)
         .await?;
         return Ok(Self {
             id: r.id.into(),
@@ -139,7 +139,7 @@ impl SoundFile {
             &ids,
             owner.0 as i64
         )
-        .fetch_all(transaction)
+        .fetch_all(&mut *transaction)
         .await?;
         let rows_deleted = records
             .into_iter()
@@ -410,7 +410,6 @@ mod tests {
 
         transaction.commit().await.unwrap();
 
-        println!("{:#?}", gotten_files);
         assert_eq!(gotten_files.len(), files.len());
         for gotten_file in &gotten_files {
             assert_eq!(gotten_file.is_deleted, false);

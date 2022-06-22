@@ -13,7 +13,12 @@ import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { TbX } from "react-icons/tb";
 import { COOKIE_NAMES } from "../../auth/AuthProvider";
-import { ApiRequest, LOADINGOVERLAY_ZINDEX, SoundFile } from "../../utils/utils";
+import {
+    ApiRequest,
+    GuildFile,
+    LOADINGOVERLAY_ZINDEX,
+    SoundFile,
+} from "../../utils/utils";
 import SearchBar from "../SearchBar";
 import QuickEnableCheckbox from "./QuickEnableCheckbox";
 
@@ -37,7 +42,7 @@ export type EnabledUserFile = {
 
 type QuickEnableWindowProps = {
     guildId: string;
-    enableCallback: (file: EnabledUserFile) => void;
+    enableCallback: (file: GuildFile) => void;
 };
 
 let abortController: AbortController | undefined = undefined;
@@ -83,14 +88,15 @@ export default function QuickEnableWindow({
         });
         if (foundFile) {
             try {
+                let file;
                 if (state) {
-                    await addToGuild(foundFile);
+                    file = await addToGuild(foundFile);
                 } else {
-                    await removeFromGuild(foundFile);
+                    file = await removeFromGuild(foundFile);
                 }
                 foundFile.enabled = state;
                 setUserFiles([...userFiles]);
-                enableCallback(foundFile);
+                enableCallback(file);
             } catch (e) {
                 console.log(e);
             }
@@ -107,19 +113,21 @@ export default function QuickEnableWindow({
     };
 
     const addToGuild = async (file: EnabledUserFile) => {
-        await ApiRequest.addFileToGuild(
+        let { data } = await ApiRequest.addFileToGuild(
             guildId,
             file.sound_file.id,
             cookies.access_token
         );
+        return data;
     };
 
     const removeFromGuild = async (file: EnabledUserFile) => {
-        await ApiRequest.removeFileFromGuild(
+        let { data } = await ApiRequest.removeFileFromGuild(
             guildId,
             file.sound_file.id,
             cookies.access_token
         );
+        return data;
     };
 
     const filterFiles = () => {

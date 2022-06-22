@@ -69,8 +69,6 @@ export default function ServerSoundsWindow({
         }
     };
 
-    console.log(guildFiles);
-
     return (
         <>
             <Paper

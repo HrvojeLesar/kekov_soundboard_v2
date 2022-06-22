@@ -74,7 +74,6 @@ export default function Guild() {
                 setGuildFiles(data);
                 setIsUpdating(false);
             } catch (e: any | AxiosError) {
-                console.log(typeof e);
                 console.log(e);
                 if (e instanceof CanceledError) {
                     return;
@@ -93,7 +92,7 @@ export default function Guild() {
         }
     };
 
-    const quickEnableFilesCallback = (file: EnabledUserFile) => {
+    const quickEnableFilesCallback = (file: GuildFile) => {
         const foundFile = guildFiles.find((f) => {
             return f.file_id === file.sound_file.id;
         });
@@ -106,12 +105,7 @@ export default function Guild() {
         } else {
             setGuildFiles([
                 ...guildFiles,
-                {
-                    file_id: file.sound_file.id,
-                    guild_id: guildId ?? "1",
-                    sound_file: file.sound_file,
-                    time_added: Date.now().toString(),
-                },
+                file
             ]);
         }
     };

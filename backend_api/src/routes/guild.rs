@@ -49,9 +49,9 @@ pub async fn add_sound_to_guild(
         &mut transaction,
     )
     .await?;
-    GuildFile::insert_guild_file(&guild_id, &file_id, &mut transaction).await?;
+    let guild_file = GuildFile::insert_guild_file(&guild_id, &file_id, &mut transaction).await?;
     transaction.commit().await?;
-    return Ok(HttpResponse::Created().finish());
+    return Ok(HttpResponse::Created().json(guild_file));
 }
 
 #[delete("/{guild_id}/{file_id}")]
@@ -65,10 +65,10 @@ pub async fn delete_sound_from_guild(
     Validation::is_user_in_guild(&authorized_user, &guild_id, &user_guilds_cache).await?;
 
     let mut transaction = db_pool.begin().await?;
-    GuildFile::delete_guild_file(&guild_id, &file_id, &mut transaction).await?;
+    let guild_file = GuildFile::delete_guild_file(&guild_id, &file_id, &mut transaction).await?;
     transaction.commit().await?;
 
-    return Ok(HttpResponse::Ok().finish());
+    return Ok(HttpResponse::Ok().json(guild_file));
 }
 
 #[get("/{guild_id}")]

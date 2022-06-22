@@ -244,7 +244,7 @@ export const ApiRequest = {
         guildId: string,
         fileId: string,
         accessToken: string
-    ): Promise<AxiosResponse> => {
+    ): Promise<AxiosResponse<GuildFile>> => {
         return axiosInstance.post(
             `${GuildRoute.postAddSound}${guildId}/${fileId}`,
             {},
@@ -255,7 +255,7 @@ export const ApiRequest = {
         guildId: string,
         fileId: string,
         accessToken: string
-    ): Promise<AxiosResponse> => {
+    ): Promise<AxiosResponse<GuildFile>> => {
         return axiosInstance.delete(
             `${GuildRoute.deleteSound}${guildId}/${fileId}`,
             authorizationHeaders(accessToken)

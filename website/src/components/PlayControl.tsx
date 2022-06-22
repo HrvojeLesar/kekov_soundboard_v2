@@ -113,7 +113,6 @@ export function PlayControl({ file, guildId }: PlayControlProps) {
                     payload,
                     cookies.access_token
                 );
-                console.log(resp.data);
                 if (resp.data.op !== PlayOpCodeEnum.Error) {
                     showNotification({
                         title: "Success",
@@ -149,7 +148,6 @@ export function PlayControl({ file, guildId }: PlayControlProps) {
                 });
                 setIsSendingReq(false);
             }
-            console.log(fileId);
         }
     };
 

@@ -57,7 +57,7 @@ impl Guild {
             id.0 as i64,
             name
         )
-        .fetch_one(transaction)
+        .fetch_one(&mut *transaction)
         .await?;
 
         return Ok(Self {
@@ -84,7 +84,7 @@ impl Guild {
             ",
             &ids
         )
-        .fetch_all(transaction)
+        .fetch_all(&mut *transaction)
         .await?;
         let guilds = records
             .into_iter()

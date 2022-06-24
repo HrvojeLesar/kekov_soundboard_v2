@@ -122,7 +122,7 @@ namespace KekovBot
 
         public void RemoveMember(DiscordMember member)
         {
-            _users.Remove(_users.Where(user => user.UserObject.Id == member.Id).First());
+            Console.WriteLine(_users.Remove(_users.Where(user => user.UserObject.Id == member.Id).First()));
         }
     }
 }

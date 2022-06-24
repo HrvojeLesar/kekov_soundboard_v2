@@ -60,12 +60,12 @@ namespace KekovBot
             try
             {
                 Log.Debug("Voice state updated event fired!");
-                var discordChannel = args.Channel;
-                if (discordChannel == null)
-                {
-                    discordChannel = args.Before.Channel;
-                }
-                var channel = CustomChannel.GetCustomChannel(args.Guild, discordChannel);
+                var channel = CustomChannel.GetCustomChannel(
+                        args.Guild,
+                        args.Channel != null
+                            ? args.Channel
+                            : args.Before.Channel
+                        );
                 if (channel == null)
                 {
                     return Task.CompletedTask;
@@ -73,6 +73,11 @@ namespace KekovBot
 
                 if (args.Channel != null)
                 {
+                    if (args.Before?.Channel != null)
+                    {
+                        var channelBefore = CustomChannel.GetCustomChannel(args.Guild, args.Before.Channel);
+                        channelBefore?.RemoveMember(args.After.Member);
+                    }
                     channel.UpdateChannelMembers(args.Channel);
                 }
                 else

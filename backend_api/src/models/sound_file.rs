@@ -10,8 +10,6 @@ pub const MAX_LIMIT: i64 = 200;
 
 #[derive(Clone, Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub struct SoundFile {
-    /// unique file_name generated as snowflake
-    // #[serde(skip)]
     pub id: SoundFileId,
     pub display_name: Option<String>,
     #[serde(skip)]
@@ -21,6 +19,12 @@ pub struct SoundFile {
     pub is_deleted: bool,
     #[serde(default)]
     pub is_public: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
+pub struct SoundFilePartial {
+    pub id: SoundFileId,
+    pub display_name: Option<String>,
 }
 
 impl SoundFile {

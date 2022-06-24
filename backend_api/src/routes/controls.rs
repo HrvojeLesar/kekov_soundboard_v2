@@ -99,7 +99,7 @@ async fn send_command(
     server_address: Data<Addr<ControlsServer>>,
     ws_channels: Data<WsSessionCommChannels>,
 ) -> Result<ControlsServerMessage, KekServerError> {
-    let id = control.get_id();
+    let id = control.message_id;
 
     let receiver = create_channels(id, &ws_channels).await;
     match server_address.send(control).await {

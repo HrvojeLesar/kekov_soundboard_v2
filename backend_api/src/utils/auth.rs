@@ -9,6 +9,7 @@ use super::{cache::DiscordGuild, make_discord_get_request, USERGUILDS};
 
 pub type AuthorizedUserServiceType = Arc<AuthorizedUser>;
 
+#[derive(Debug)]
 pub struct AuthorizedUser {
     pub access_token: Arc<AccessToken>,
     pub discord_user: User,

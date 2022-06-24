@@ -1,4 +1,6 @@
+using System.Linq;
 using DSharpPlus;
+using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using Newtonsoft.Json;
 using Serilog;
@@ -40,5 +42,57 @@ namespace KekovBot
             SyncWebsocket.Client.Send(response_json);
             return Task.CompletedTask;
         }
+
+        private Task ChannelUpdatedEvent(DiscordClient c, ChannelUpdateEventArgs args)
+        {
+            Log.Debug("Channel updated event fired!");
+            var channel = CustomChannel.GetCustomChannel(args.Guild, args.ChannelBefore);
+            if (channel == null)
+            {
+                return Task.CompletedTask;
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private Task VoiceStateUpdatedEvent(DiscordClient c, VoiceStateUpdateEventArgs args)
+        {
+            try
+            {
+                Log.Debug("Voice state updated event fired!");
+                var discordChannel = args.Channel;
+                if (discordChannel == null)
+                {
+                    discordChannel = args.Before.Channel;
+                }
+                var channel = CustomChannel.GetCustomChannel(args.Guild, discordChannel);
+                if (channel == null)
+                {
+                    return Task.CompletedTask;
+                }
+
+                if (args.Channel != null)
+                {
+                    channel.UpdateChannelMembers(args.Channel);
+                }
+                else
+                {
+                    channel.RemoveMember(args.After.Member);
+                }
+
+                var guildVoiceChannels = SyncWebsocket.TrackedGuilds[args.Guild];
+                var response = new SyncMessage(guildVoiceChannels, args.Guild.Id);
+                var response_json = JsonConvert.SerializeObject(response);
+                Console.WriteLine(response_json);
+                SyncWebsocket.Client.Send(response_json);
+            }
+            catch (Exception e)
+            {
+                Log.Error(e.ToString());
+            }
+
+            return Task.CompletedTask;
+        }
+
     }
 }

@@ -3,17 +3,27 @@ use std::{
     time::{Duration, Instant},
 };
 
-use actix::{Actor, ActorContext, AsyncContext, ContextFutureSpawner, StreamHandler, WrapFuture};
+use actix::{
+    fut, Actor, ActorContext, ActorFutureExt, Addr, AsyncContext, ContextFutureSpawner, Handler,
+    Message, StreamHandler, WrapFuture,
+};
 use actix_http::ws;
 use actix_web::web::Data;
 use actix_web_actors::ws::WebsocketContext;
 use log::{error, info, warn};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use uuid::Uuid;
 
 use crate::{
     models::ids::{GuildId, UserId},
     utils::cache::UserGuildsCache,
+    ws::channels_server::DisconnectSyncSession,
+};
+
+use super::{
+    channels_server::{ChannelsServer, ConnectSyncSession, Update},
+    GuildVoiceChannels,
 };
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -23,6 +33,9 @@ const CLIENT_TIMEOUT: Duration = Duration::from_secs(HEARTBEAT_INTERVAL.as_secs(
 enum SyncOpCode {
     UpdateUserCache,
     InvalidateGuildsCache,
+    UpdateGuildChannels,
+    AddGuild,
+    RemoveGuild,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -30,19 +43,40 @@ struct SyncMessage {
     op: SyncOpCode,
     user_id: Option<UserId>,
     guild_id: Option<GuildId>,
+    guild_voice_channels: Option<GuildVoiceChannels>,
+}
+
+#[derive(Message, Serialize)]
+#[rtype(result = "()")]
+pub struct AddGuild {
+    pub guild_id: GuildId,
+}
+
+#[derive(Message, Serialize)]
+#[rtype(result = "()")]
+pub struct RemoveGuild {
+    pub guild_id: GuildId,
 }
 
 pub struct SyncSession {
+    id: u128,
     heartbeat: Instant,
     user_guilds_cache: Data<UserGuildsCache>,
+    channels_server: Data<Addr<ChannelsServer>>,
     db_pool: Data<PgPool>,
 }
 
 impl SyncSession {
-    pub fn new(user_guilds_cache: Data<UserGuildsCache>, db_pool: Data<PgPool>) -> Self {
+    pub fn new(
+        user_guilds_cache: Data<UserGuildsCache>,
+        db_pool: Data<PgPool>,
+        channels_server: Data<Addr<ChannelsServer>>,
+    ) -> Self {
         return Self {
+            id: Uuid::new_v4().as_u128(),
             heartbeat: Instant::now(),
             user_guilds_cache,
+            channels_server,
             db_pool,
         };
     }
@@ -65,12 +99,70 @@ impl Actor for SyncSession {
     fn started(&mut self, ctx: &mut Self::Context) {
         self.user_guilds_cache.invalidate_all();
         self.heartbeat(ctx);
+
+        let address = ctx.address();
+        self.channels_server
+            .send(ConnectSyncSession {
+                id: self.id,
+                address,
+            })
+            .into_actor(self)
+            .then(|_, _, _| {
+                return fut::ready(());
+            })
+            .wait(ctx);
+
+        // ctx.notify(AddGuild {
+        //     guild_id: GuildId(679094912179765271),
+        // });
     }
 
-    fn stopping(&mut self, _: &mut Self::Context) -> actix::Running {
+    fn stopping(&mut self, ctx: &mut Self::Context) -> actix::Running {
         info!("Stopping sync websocket");
         self.user_guilds_cache.invalidate_all();
+        self.channels_server
+            .do_send(DisconnectSyncSession { id: self.id });
         return actix::Running::Stop;
+    }
+}
+
+impl Handler<AddGuild> for SyncSession {
+    type Result = ();
+
+    fn handle(&mut self, msg: AddGuild, ctx: &mut Self::Context) -> Self::Result {
+        match serde_json::to_string(&SyncMessage {
+            op: SyncOpCode::AddGuild,
+            guild_id: Some(msg.guild_id),
+            user_id: None,
+            guild_voice_channels: None,
+        }) {
+            Ok(m) => {
+                ctx.text(m);
+            }
+            Err(e) => {
+                error!("{}", e);
+            }
+        }
+    }
+}
+
+impl Handler<RemoveGuild> for SyncSession {
+    type Result = ();
+
+    fn handle(&mut self, msg: RemoveGuild, ctx: &mut Self::Context) -> Self::Result {
+        match serde_json::to_string(&SyncMessage {
+            op: SyncOpCode::RemoveGuild,
+            guild_id: Some(msg.guild_id),
+            user_id: None,
+            guild_voice_channels: None,
+        }) {
+            Ok(m) => {
+                ctx.text(m);
+            }
+            Err(e) => {
+                error!("{}", e);
+            }
+        }
     }
 }
 
@@ -99,6 +191,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for SyncSession {
             }
             ws::Message::Text(msg) => {
                 let user_guilds_cache = Arc::clone(&self.user_guilds_cache);
+                let channels_server = self.channels_server.clone();
                 async move {
                     // TODO: remove user from cache on guild join/leave/kick/ban
                     // TODO: do something similar when bot gets joined/kicked/banned
@@ -121,10 +214,21 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for SyncSession {
                                 user_guilds_cache.invalidate_all();
                             }
                         }
+                        SyncOpCode::UpdateGuildChannels => {
+                            if let Some(gvc) = message.guild_voice_channels {
+                                if let Some(guild_id) = message.guild_id {
+                                    channels_server.do_send(Update {
+                                        guild: guild_id,
+                                        msg: gvc,
+                                    });
+                                }
+                            }
+                        }
+                        SyncOpCode::AddGuild | SyncOpCode::RemoveGuild => {}
                     }
                 }
                 .into_actor(self)
-                .wait(ctx);
+                .spawn(ctx);
             }
             _ => (),
         }

@@ -9,7 +9,7 @@ use uuid::Uuid;
 use crate::models::{
     guild_file::GuildFile,
     ids::{ChannelId, GuildId, SoundFileId},
-    sound_file::SoundFile,
+    sound_file::SoundFilePartial,
 };
 
 use super::ws_session::ControlsSession;
@@ -159,32 +159,17 @@ pub enum Controls {
 #[derive(Clone, Debug, Message, Serialize, Deserialize)]
 #[rtype(result = "()")]
 pub struct ControlsServerMessage {
-    op: OpCode,
-    message_id: u128,
+    pub op: OpCode,
+    pub message_id: u128,
     #[serde(flatten)]
-    control: Option<Controls>,
+    pub control: Option<Controls>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    client_error: Option<ClientError>,
+    pub client_error: Option<ClientError>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub queue: Option<Vec<SoundFile>>,
+    pub queue: Option<Vec<SoundFilePartial>>,
 }
 
 impl ControlsServerMessage {
-    pub fn get_op_code(&self) -> &OpCode {
-        return &self.op;
-    }
-
-    pub fn get_id(&self) -> u128 {
-        return self.message_id;
-    }
-
-    pub fn get_error(self) -> ClientError {
-        match self.client_error {
-            Some(e) => return e,
-            None => return ClientError::Unknown,
-        }
-    }
-
     pub fn new_connect() -> Self {
         return Self {
             op: OpCode::Connection,

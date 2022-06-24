@@ -19,7 +19,7 @@ use utils::cache::{
 };
 use ws::{
     ws_server::{self, ControlsServer},
-    ws_session::WsSessionCommChannels,
+    ws_session::WsSessionCommChannels, channels_server::ChannelsServer,
 };
 
 mod database;
@@ -80,6 +80,8 @@ async fn main() -> std::io::Result<()> {
     let user_guilds_middlware_queue =
         Data::new(Mutex::new(create_user_guilds_middlware_queue_cache()));
     let auth_middlware_queue = Data::new(Mutex::new(create_auth_middlware_queue_cache()));
+
+    let channels_server = Data::new(ChannelsServer::new());
 
     let mut scheduler = scheduler::Scheduler::new();
 
@@ -146,6 +148,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(user_guilds_middlware_queue.clone())
             .app_data(auth_middlware_queue.clone())
             .app_data(snowflakes)
+            .app_data(channels_server.clone())
             .configure(routes_config)
             .default_service(actix_web::web::to(not_found))
     })

@@ -101,12 +101,11 @@ pub mod test_utils {
     use uuid::Uuid;
 
     use crate::{
-        database::tests_db_helper::db_connection,
         models::{
             guild::Guild,
             guild_file::GuildFile,
             ids::{GuildId, SoundFileId, UserId},
-            sound_file::{self, SoundFile},
+            sound_file::{SoundFile},
             user::User,
         },
     };
@@ -118,7 +117,7 @@ pub mod test_utils {
 
     pub async fn insert_user_test_util(transaction: &mut Transaction<'_, Postgres>) -> User {
         let user_id = UserId(Uuid::new_v4().as_u128() as u64);
-        let now = Utc::now().naive_utc();
+        let _now = Utc::now().naive_utc();
         let username = format!("Test user {}", user_id.0.clone());
         let user = User {
             id: user_id,

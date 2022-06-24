@@ -55,6 +55,9 @@ namespace KekovBot
             DiscordClient.GuildMemberRemoved += GuildMemberRemovedEvent;
             DiscordClient.GuildCreated += BotJoinedGuildEvent;
             DiscordClient.GuildDeleted += BotLeftGuildEvent;
+
+            DiscordClient.ChannelUpdated += ChannelUpdatedEvent;
+            DiscordClient.VoiceStateUpdated += VoiceStateUpdatedEvent;
         }
 
         private void InitLavalink()

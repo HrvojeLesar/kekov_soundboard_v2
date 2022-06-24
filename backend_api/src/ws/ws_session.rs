@@ -58,13 +58,13 @@ impl ControlsSession {
         let sender;
         {
             let mut lock = channels.write().await;
-            sender = match lock.remove(&msg.get_id()) {
+            sender = match lock.remove(&msg.message_id) {
                 Some(s) => s,
                 None => return error!("WsSession lock error: Id not found!"),
             };
         }
 
-        match msg.get_op_code() {
+        match &msg.op {
             OpCode::PlayResponse
             | OpCode::StopResponse
             | OpCode::SkipResponse
@@ -118,18 +118,14 @@ impl Handler<ControlsServerMessage> for ControlsSession {
     type Result = ();
 
     fn handle(&mut self, msg: ControlsServerMessage, ctx: &mut Self::Context) -> Self::Result {
-        match msg.get_op_code() {
+        match &msg.op {
             OpCode::Play | OpCode::Stop | OpCode::Connection | OpCode::Skip | OpCode::GetQueue => {
                 match serde_json::to_string(&msg) {
                     Ok(msg) => ctx.text(msg),
-                    Err(e) => error!(
-                        "ControlsSession [{}] control send error: {}",
-                        msg.get_op_code(),
-                        e
-                    ),
+                    Err(e) => error!("ControlsSession [{}] control send error: {}", msg.op, e),
                 };
             }
-            _ => ctx.text("Poggers"),
+            _ => (),
         }
     }
 }
@@ -162,7 +158,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ControlsSession {
                 async move {
                     let control_message: ControlsServerMessage = match serde_json::from_str(&msg) {
                         Ok(c) => c,
-                        Err(e) => return error!("WsSession Error: {}", e),
+                        Err(e) => {
+                            error!("WsSession Error: {}", e);
+                            debug!("{:#?}", &msg);
+                            return;
+                        }
                     };
 
                     debug!("WsSession Message: {:#?}", control_message);
@@ -170,7 +170,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ControlsSession {
                     ControlsSession::handle_message(control_message, channels).await;
                 }
                 .into_actor(self)
-                .wait(ctx);
+                .spawn(ctx);
             }
             _ => (),
         }

@@ -4,5 +4,8 @@ namespace KekovBot
     {
         UpdateUserCache,
         InvalidateGuildsCache,
+        UpdateGuildChannels,
+        AddGuild,
+        RemoveGuild,
     }
 }

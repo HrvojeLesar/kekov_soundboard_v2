@@ -3,6 +3,7 @@ using Newtonsoft.Json.Converters;
 
 namespace KekovBot
 {
+    [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
     public class SyncMessage
     {
         [JsonProperty("op")]
@@ -17,6 +18,9 @@ namespace KekovBot
         [JsonConverter(typeof(ToStringConverter))]
         public ulong? GuildId { get; set; }
 
+        [JsonProperty("guild_voice_channels")]
+        public GuildVoiceChannels? GuildVoiceChannels { get; set; }
+
         public SyncMessage() { }
 
         public SyncMessage(SyncOpCode opCode, Nullable<ulong> userId, Nullable<ulong> guildId)
@@ -24,6 +28,13 @@ namespace KekovBot
             OpCode = opCode;
             UserId = userId;
             GuildId = guildId;
+        }
+
+        public SyncMessage(GuildVoiceChannels guildVoiceChannels, ulong guildId)
+        {
+            OpCode = SyncOpCode.UpdateGuildChannels;
+            GuildId = guildId;
+            GuildVoiceChannels = guildVoiceChannels;
         }
 
         public SyncMessage(SyncOpCode code, SyncMessage other)

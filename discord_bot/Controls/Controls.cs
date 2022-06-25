@@ -1,7 +1,6 @@
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
-using Serilog;
 
 namespace KekovBot
 {

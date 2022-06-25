@@ -15,7 +15,6 @@ namespace KekovBot
             StartClient();
         }
 
-        // TODO: Needs resubscribing when after crash
         private void SetupClientEvents()
         {
             _client.DisconnectionHappened.Subscribe(info =>
@@ -24,6 +23,7 @@ namespace KekovBot
             });
             _client.ReconnectionHappened.Subscribe(info =>
             {
+                TrackedGuilds.Clear();
                 Log.Warning($"Websocket reconnection happaned, type: {info.Type}");
             });
             _client.MessageReceived.Subscribe(msg => HandleMessage(msg));
@@ -41,9 +41,9 @@ namespace KekovBot
                         {
                             var guildVoiceChannels = AddGuild(syncMessage.GuildId ?? 0);
                             var response = new SyncMessage(guildVoiceChannels, syncMessage.GuildId ?? 0);
-                            var response_json = JsonConvert.SerializeObject(response);
-                            Console.WriteLine(response_json);
-                            _client.Send(response_json);
+                            var responseJson = JsonConvert.SerializeObject(response);
+                            Console.WriteLine(responseJson);
+                            _client.Send(responseJson);
                             break;
                         }
                     case SyncOpCode.RemoveGuild:

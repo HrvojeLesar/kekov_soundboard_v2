@@ -10,7 +10,7 @@ use actix::{
 use actix_http::ws;
 use actix_web::web::Data;
 use actix_web_actors::ws::WebsocketContext;
-use log::{error, info, warn};
+use log::{error, info, warn, debug};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -130,6 +130,7 @@ impl Handler<AddGuild> for SyncSession {
     type Result = ();
 
     fn handle(&mut self, msg: AddGuild, ctx: &mut Self::Context) -> Self::Result {
+        debug!("AddGuild");
         match serde_json::to_string(&SyncMessage {
             op: SyncOpCode::AddGuild,
             guild_id: Some(msg.guild_id),
@@ -150,6 +151,7 @@ impl Handler<RemoveGuild> for SyncSession {
     type Result = ();
 
     fn handle(&mut self, msg: RemoveGuild, ctx: &mut Self::Context) -> Self::Result {
+        debug!("RemoveGuild");
         match serde_json::to_string(&SyncMessage {
             op: SyncOpCode::RemoveGuild,
             guild_id: Some(msg.guild_id),

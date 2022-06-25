@@ -120,6 +120,12 @@ namespace KekovBot
             }
         }
 
+        public void Update(DiscordChannel channel)
+        {
+            _channelName = channel.Name;
+            _channel = channel;
+        }
+
         public void RemoveMember(DiscordMember member)
         {
             Console.WriteLine(_users.Remove(_users.Where(user => user.UserObject.Id == member.Id).First()));

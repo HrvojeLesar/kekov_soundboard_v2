@@ -23,7 +23,7 @@ use crate::{
     ws::channels_server::Unsubscribe,
 };
 
-use super::channels_server::{ChannelsServer, Subscribe};
+use super::channels_server::{ChannelsServer, Subscribe, CacheClearing};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(10);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(20);
@@ -50,7 +50,7 @@ pub struct ChannelClientData {
     pub server_address: Addr<ChannelsServer>,
     // pub user: Arc<AuthorizedUser>,
     // pub user_guilds_cache: Data<UserGuildsCache>,
-    pub current_guild: Arc<Option<GuildId>>,
+    pub current_guild: Option<GuildId>,
 }
 
 pub struct ChannelsClient {
@@ -72,7 +72,7 @@ impl ChannelsClient {
                 server_address,
                 // user,
                 // user_guilds_cache,
-                current_guild: Arc::new(None),
+                current_guild: None,
             },
         };
     }
@@ -88,22 +88,15 @@ impl ChannelsClient {
         });
     }
 
-    async fn handle_message(
-        id: u128,
-        msg: ListenToGuild,
-        data: ChannelClientData,
-        addr: Addr<Self>,
-    ) {
+    fn subscribe(id: u128, msg: ListenToGuild, data: ChannelClientData, addr: Addr<Self>) {
         // validate that user is allowed in guild
         // subscribe to that guild with server
-        data.server_address
-            .send(Subscribe {
-                id,
-                guild: msg.guild_id,
-                client: addr,
-                old_guild: data.current_guild.clone(),
-            })
-            .await;
+        data.server_address.do_send(Subscribe {
+            id,
+            guild: msg.guild_id,
+            client: addr,
+            old_guild: data.current_guild.clone(),
+        });
     }
 }
 
@@ -128,7 +121,8 @@ impl Handler<SubscribeResponse> for ChannelsClient {
     type Result = ();
 
     fn handle(&mut self, msg: SubscribeResponse, _ctx: &mut Self::Context) -> Self::Result {
-        self.data.current_guild = Arc::new(Some(msg.new_guild));
+        debug!("SubscribeResponse");
+        self.data.current_guild = Some(msg.new_guild);
     }
 }
 
@@ -136,7 +130,18 @@ impl Handler<ChannelsMessage> for ChannelsClient {
     type Result = ();
 
     fn handle(&mut self, msg: ChannelsMessage, ctx: &mut Self::Context) -> Self::Result {
+        debug!("ChannelsMessage");
         ctx.text(msg.channels);
+    }
+}
+
+impl Handler<CacheClearing> for ChannelsClient {
+    type Result = ();
+
+    fn handle(&mut self, _msg: CacheClearing, ctx: &mut Self::Context) -> Self::Result {
+        debug!("CacheClearing");
+        self.data.current_guild = None;
+        ctx.text("Disconnected");
     }
 }
 
@@ -167,19 +172,15 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChannelsClient {
                 let data = self.data.clone();
                 let id = self.id.clone();
                 let addr = ctx.address();
-                async move {
-                    let message: ListenToGuild = match serde_json::from_str(&msg) {
-                        Ok(c) => c,
-                        Err(e) => {
-                            error!("WsSession Error: {}", e);
-                            debug!("{:#?}", &msg);
-                            return;
-                        }
-                    };
-                    Self::handle_message(id, message, data, addr).await;
-                }
-                .into_actor(self)
-                .wait(ctx);
+                let message: ListenToGuild = match serde_json::from_str(&msg) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        error!("WsSession Error: {}", e);
+                        debug!("{:#?}", &msg);
+                        return;
+                    }
+                };
+                Self::subscribe(id, message, data, addr);
             }
             _ => (),
         }

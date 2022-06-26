@@ -6,7 +6,7 @@ export const API_URL =
 export const WEBSOCKET_URL =
     process.env.NODE_ENV !== "production"
         ? "ws://localhost:8080/v1/ws/channels"
-        : "wss://api.hrveklesarov.com/v1/channels";
+        : "wss://api.hrveklesarov.com/v1/ws/channels";
 
 export const DISCORD_CND_USER_AVATAR = (
     id?: string,

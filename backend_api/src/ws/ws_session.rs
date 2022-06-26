@@ -60,7 +60,7 @@ impl ControlsSession {
             let mut lock = channels.write().await;
             sender = match lock.remove(&msg.message_id) {
                 Some(s) => s,
-                None => return error!("WsSession lock error: Id not found!"),
+                None => return error!("WsSession sender error: Sender id not found!"),
             };
         }
 

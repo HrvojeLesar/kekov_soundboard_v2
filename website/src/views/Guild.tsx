@@ -6,9 +6,8 @@ import { useCookies } from "react-cookie";
 import { useParams } from "react-router-dom";
 import { AuthContext, COOKIE_NAMES } from "../auth/AuthProvider";
 import ControlsWindow from "../components/Guild/ControlsWindow";
-import QuickEnableWindow, {
-    EnabledUserFile,
-} from "../components/Guild/QuickEnableWindow";
+import DiscordChannelsWindow from "../components/Guild/DiscordChannelsWindow";
+import QuickEnableWindow from "../components/Guild/QuickEnableWindow";
 import ServerSoundsWindow from "../components/Guild/ServerSoundsWindow";
 import { ApiRequest, GuildFile } from "../utils/utils";
 
@@ -59,39 +58,6 @@ export default function Guild() {
     const [invalidServer, setInvalidServer] = useState(false);
     useDocumentTitle(`KSv2 - ${guilds.find((g) => g.id === guildId)?.name}`);
 
-    const fetchGuildFiles = async () => {
-        if (cookies?.access_token && guildId) {
-            try {
-                abortController = new AbortController();
-                const { data } = await ApiRequest.fetchGuildFiles(
-                    guildId,
-                    abortController,
-                    cookies.access_token
-                );
-                data.sort((a, b) => {
-                    return Date.parse(a.time_added) - Date.parse(b.time_added);
-                });
-                setGuildFiles(data);
-                setIsUpdating(false);
-            } catch (e: any | AxiosError) {
-                console.log(e);
-                if (e instanceof CanceledError) {
-                    return;
-                }
-                if (axios.isAxiosError(e)) {
-                    if (
-                        e.response?.status === 401 ||
-                        e.response?.status === 404
-                    ) {
-                        setInvalidServer(true);
-                    }
-                    return;
-                }
-                setIsUpdating(false);
-            }
-        }
-    };
-
     const quickEnableFilesCallback = (file: GuildFile) => {
         const foundFile = guildFiles.find((f) => {
             return f.file_id === file.sound_file.id;
@@ -103,10 +69,7 @@ export default function Guild() {
                 }),
             ]);
         } else {
-            setGuildFiles([
-                ...guildFiles,
-                file
-            ]);
+            setGuildFiles([...guildFiles, file]);
         }
     };
 
@@ -115,6 +78,41 @@ export default function Guild() {
     };
 
     useEffect(() => {
+        const fetchGuildFiles = async () => {
+            if (cookies?.access_token && guildId) {
+                try {
+                    abortController = new AbortController();
+                    const { data } = await ApiRequest.fetchGuildFiles(
+                        guildId,
+                        abortController,
+                        cookies.access_token
+                    );
+                    data.sort((a, b) => {
+                        return (
+                            Date.parse(a.time_added) - Date.parse(b.time_added)
+                        );
+                    });
+                    setGuildFiles(data);
+                    setIsUpdating(false);
+                } catch (e: any | AxiosError) {
+                    console.log(e);
+                    if (e instanceof CanceledError) {
+                        return;
+                    }
+                    if (axios.isAxiosError(e)) {
+                        if (
+                            e.response?.status === 401 ||
+                            e.response?.status === 404
+                        ) {
+                            setInvalidServer(true);
+                        }
+                        return;
+                    }
+                    setIsUpdating(false);
+                }
+            }
+        };
+
         setInvalidServer(false);
         abortController?.abort();
         setIsUpdating(true);
@@ -153,6 +151,7 @@ export default function Guild() {
                     ) : (
                         <Box className={classes.sideWindowsStyle}>
                             <ControlsWindow guildId={guildId ?? "1"} />
+                            <DiscordChannelsWindow guildId={guildId ?? "1"} />
                             <QuickEnableWindow
                                 guildId={guildId ?? "1"}
                                 enableCallback={quickEnableFilesCallback}

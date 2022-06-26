@@ -135,7 +135,7 @@ namespace KekovBot
                 else if (args.After.Channel == null && args.Before?.Channel.Type == ChannelType.Voice)
                 {
                     var customChannel = guildVoiceChannels.VoiceChannels[args.Before.Channel.Id];
-                    customChannel.RemoveMember(args.Before.Member);
+                    customChannel.RemoveMember(args.Before.User.Id);
                 }
                 // User switched channels
                 else
@@ -144,7 +144,7 @@ namespace KekovBot
                         args.Before?.Channel != null
                         ? guildVoiceChannels.VoiceChannels[args.Before.Channel.Id]
                         : throw new Exception("args.Before.Channel is null");
-                    customChannelBefore.RemoveMember(args.Before.Member);
+                    customChannelBefore.RemoveMember(args.Before.User.Id);
 
                     var customChannelAfter =
                         args.After.Channel != null
@@ -167,7 +167,7 @@ namespace KekovBot
         {
             var response = new SyncMessage(guildVoiceChannels, guildId);
             var responseJson = JsonConvert.SerializeObject(response);
-            Console.WriteLine(responseJson);
+            Log.Debug(responseJson);
             SyncWebsocket.Client.Send(responseJson);
         }
     }

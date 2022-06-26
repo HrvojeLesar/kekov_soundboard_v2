@@ -24,23 +24,32 @@ namespace KekovBot
     {
         private class User
         {
+            [JsonProperty("id")]
+            [JsonConverter(typeof(ToStringConverter))]
+            private ulong _id { get; set; }
+
             [JsonProperty("username")]
-            private string _username;
+            private string _username { get; set; }
 
             [JsonProperty("nickname")]
-            private string _nickname;
+            private string _nickname { get; set; }
 
             [JsonProperty("avatar_hash")]
-            private string _avatarHash;
+            private string _avatarHash { get; set; }
+
+            [JsonProperty("discriminator")]
+            private string _discriminator { get; set; }
 
             [JsonIgnore]
             public DiscordMember UserObject;
 
             public User(DiscordMember memberObject)
             {
+                _id = memberObject.Id;
                 _username = memberObject.Username;
                 _nickname = memberObject.Nickname;
                 _avatarHash = memberObject.AvatarHash;
+                _discriminator = memberObject.Discriminator;
                 UserObject = memberObject;
             }
         }
@@ -48,10 +57,14 @@ namespace KekovBot
         private DiscordChannel? _discordChannel;
 
         [JsonProperty("users")]
-        private List<User> _users;
+        private List<User> _users { get; set; }
 
         [JsonProperty("channel_name")]
         private string _channelName { get; set; }
+
+        [JsonProperty("id")]
+        [JsonConverter(typeof(ToStringConverter))]
+        private ulong _id { get; set; }
 
         [JsonIgnore]
         private DiscordChannel _channel { get; set; }
@@ -59,6 +72,7 @@ namespace KekovBot
         public CustomChannel(DiscordChannel channel)
         {
             _channelName = channel.Name;
+            _id = channel.Id;
             _channel = channel;
             _users = new List<User>();
             foreach (var user in channel.Users)
@@ -126,9 +140,9 @@ namespace KekovBot
             _channel = channel;
         }
 
-        public void RemoveMember(DiscordMember member)
+        public void RemoveMember(ulong id)
         {
-            Console.WriteLine(_users.Remove(_users.Where(user => user.UserObject.Id == member.Id).First()));
+            _users.Remove(_users.Where(user => user.UserObject.Id == id).First());
         }
     }
 }

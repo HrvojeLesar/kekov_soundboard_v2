@@ -4,6 +4,7 @@ import qs from "qs";
 import { Dispatch, SetStateAction } from "react";
 import { CookieSetOptions } from "universal-cookie";
 import {
+    API_URL,
     AuthRoute,
     ControlsRoute,
     DiscordRoutes,
@@ -78,10 +79,7 @@ export const convertClientErrorToString = (error: ClientErrorEnum) => {
 };
 
 const axiosInstance = axios.create({
-    baseURL:
-        process.env.NODE_ENV !== "production"
-            ? "http://localhost:8080/v1"
-            : "https://api.hrveklesarov.com/v1",
+    baseURL: API_URL,
 });
 
 const authorizationHeaders = (accessToken: string): AxiosRequestConfig => {
@@ -142,7 +140,7 @@ export type GuildFile = {
     guild_id: string;
     time_added: string;
     sound_file: SoundFile;
-}
+};
 
 export type QueueReponse = {
     id: string;
@@ -328,7 +326,9 @@ export const ApiRequest = {
             authorizationHeaders(accessToken)
         );
     },
-    getUserFiles: (accessToken: string): Promise<AxiosResponse<SoundFile[]>> => {
+    getUserFiles: (
+        accessToken: string
+    ): Promise<AxiosResponse<SoundFile[]>> => {
         return axiosInstance.get(
             UserRoute.getFiles,
             authorizationHeaders(accessToken)
@@ -348,7 +348,9 @@ export const ApiRequest = {
             }
         );
     },
-    getPublicFiles: (accessToken: string): Promise<AxiosResponse<SoundFile[]>> => {
+    getPublicFiles: (
+        accessToken: string
+    ): Promise<AxiosResponse<SoundFile[]>> => {
         return axiosInstance.get(
             FilesRoute.getPublic,
             authorizationHeaders(accessToken)

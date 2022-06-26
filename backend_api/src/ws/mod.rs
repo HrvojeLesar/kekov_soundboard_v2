@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::models::ids::{UserId, ChannelId};
+
 pub mod channels_client;
 pub mod channels_server;
 pub mod ws_server;
@@ -10,6 +12,8 @@ pub mod ws_sync;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct User {
+    id: UserId,
+    discriminator: String,
     username: String,
     nickname: Option<String>,
     avatar_hash: Option<String>,
@@ -17,6 +21,7 @@ struct User {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 struct Channel {
+    id: ChannelId,
     users: Vec<User>,
     channel_name: String,
 }

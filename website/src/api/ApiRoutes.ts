@@ -3,6 +3,11 @@ export const API_URL =
         ? "http://localhost:8080/v1"
         : "https://api.hrveklesarov.com/v1";
 
+export const WEBSOCKET_URL =
+    process.env.NODE_ENV !== "production"
+        ? "ws://localhost:8080/v1/ws/channels"
+        : "wss://api.hrveklesarov.com/v1/channels";
+
 export const DISCORD_CND_USER_AVATAR = (
     id?: string,
     icon?: string,

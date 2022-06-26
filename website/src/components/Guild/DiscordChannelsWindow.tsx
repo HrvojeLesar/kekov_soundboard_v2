@@ -50,6 +50,8 @@ const useStyle = createStyles((theme) => {
         channelTitleStyle: {
             display: "flex",
             alignItems: "center",
+            paddingTop: "5px",
+            paddingBottom: "5px",
 
             "&:hover": {
                 cursor: "default",
@@ -68,12 +70,13 @@ const useStyle = createStyles((theme) => {
             },
         },
         usersStyle: {
-            marginLeft: 24 + theme.spacing.xs,
+            marginLeft: 24,
+            paddingLeft: theme.spacing.xs,
             display: "flex",
             alignItems: "center",
             gap: 2,
-            paddingTop: 5,
-            paddingBottom: 5,
+            paddingTop: "5px",
+            paddingBottom: "5px",
 
             "&:hover": {
                 cursor: "default",
@@ -153,33 +156,28 @@ export default function DiscordChannelsWindow({
         }
         let newChannels = lastJsonMessage as ChannelsResponse;
         if (newChannels.channels) {
-                const sorted = Object.keys(newChannels.channels)
-                    .map((o) => {
-                        return newChannels.channels[o];
-                    })
-                    .filter((channel) => {
-                        if (channel.users.length > 0) {
-                            channel.users.sort((a, b) => {
-                                const usera = a.nickname ?? a.username;
-                                const userb = b.nickname ?? b.username;
-                                return usera === userb
-                                    ? 0
-                                    : usera > userb
-                                    ? 1
-                                    : -1;
-                            });
-                            return true;
-                        }
-                        return false;
-                    })
-                    .sort((a, b) => {
-                        return a.channel_name === b.channel_name
-                            ? 0
-                            : a.channel_name > b.channel_name
-                            ? 1
-                            : -1;
-                    });
-                    console.log(sorted);
+            const sorted = Object.keys(newChannels.channels)
+                .map((o) => {
+                    return newChannels.channels[o];
+                })
+                .filter((channel) => {
+                    if (channel.users.length > 0) {
+                        channel.users.sort((a, b) => {
+                            const usera = a.nickname ?? a.username;
+                            const userb = b.nickname ?? b.username;
+                            return usera === userb ? 0 : usera > userb ? 1 : -1;
+                        });
+                        return true;
+                    }
+                    return false;
+                })
+                .sort((a, b) => {
+                    return a.channel_name === b.channel_name
+                        ? 0
+                        : a.channel_name > b.channel_name
+                        ? 1
+                        : -1;
+                });
             setChannels(sorted);
         } else {
             console.log(lastMessage?.data);

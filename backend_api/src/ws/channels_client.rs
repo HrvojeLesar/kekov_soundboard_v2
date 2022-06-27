@@ -19,18 +19,31 @@ use uuid::Uuid;
 
 use crate::{
     models::ids::GuildId,
-    utils::{auth::AuthorizedUser, cache::UserGuildsCache},
+    utils::{
+        auth::{AccessToken, AuthorizedUser},
+        cache::UserGuildsCache,
+    },
     ws::channels_server::Unsubscribe,
 };
 
-use super::channels_server::{ChannelsServer, Subscribe, CacheClearing};
+use super::channels_server::{
+    CacheClearing, ChannelsServer, Identify, IdentifyResponse, Subscribe,
+};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(10);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(20);
 
-#[derive(Debug, Serialize, Deserialize)]
-struct ListenToGuild {
-    guild_id: GuildId,
+#[derive(Debug, Deserialize)]
+enum ChannelsClientOpCode {
+    Identify,
+    Subscribe,
+}
+
+#[derive(Debug, Deserialize)]
+struct ClientMessage {
+    op: ChannelsClientOpCode,
+    guild_id: Option<GuildId>,
+    access_token: Option<AccessToken>,
 }
 
 #[derive(Message)]
@@ -46,34 +59,24 @@ pub struct ChannelsMessage {
 }
 
 #[derive(Clone, Debug)]
-pub struct ChannelClientData {
-    pub server_address: Addr<ChannelsServer>,
-    // pub user: Arc<AuthorizedUser>,
-    // pub user_guilds_cache: Data<UserGuildsCache>,
-    pub current_guild: Option<GuildId>,
-}
-
 pub struct ChannelsClient {
-    pub id: u128,
-    pub heartbeat: Instant,
-    pub data: ChannelClientData,
+    id: u128,
+    heartbeat: Instant,
+    server_address: Addr<ChannelsServer>,
+    current_guild: Option<GuildId>,
+    access_token: Option<Arc<AccessToken>>,
+    identified: bool,
 }
 
 impl ChannelsClient {
-    pub fn new(
-        server_address: Addr<ChannelsServer>,
-        // user: Arc<AuthorizedUser>,
-        // user_guilds_cache: Data<UserGuildsCache>,
-    ) -> Self {
+    pub fn new(server_address: Addr<ChannelsServer>) -> Self {
         return Self {
             id: Uuid::new_v4().as_u128(),
             heartbeat: Instant::now(),
-            data: ChannelClientData {
-                server_address,
-                // user,
-                // user_guilds_cache,
-                current_guild: None,
-            },
+            server_address,
+            current_guild: None,
+            identified: false,
+            access_token: None,
         };
     }
 
@@ -88,15 +91,16 @@ impl ChannelsClient {
         });
     }
 
-    fn subscribe(id: u128, msg: ListenToGuild, data: ChannelClientData, addr: Addr<Self>) {
-        // validate that user is allowed in guild
-        // subscribe to that guild with server
-        data.server_address.do_send(Subscribe {
-            id,
-            guild: msg.guild_id,
-            client: addr,
-            old_guild: data.current_guild.clone(),
-        });
+    fn subscribe(&self, guild_id: GuildId, ctx: &mut <Self as Actor>::Context) {
+        if self.identified {
+            self.server_address.do_send(Subscribe {
+                id: self.id,
+                guild: guild_id,
+                old_guild: self.current_guild.clone(),
+                client: ctx.address(),
+                access_token: self.access_token.clone(),
+            });
+        }
     }
 }
 
@@ -109,9 +113,9 @@ impl Actor for ChannelsClient {
 
     fn stopping(&mut self, _: &mut Self::Context) -> actix::Running {
         info!("Stopping channels client!");
-        self.data.server_address.do_send(Unsubscribe {
+        self.server_address.do_send(Unsubscribe {
             id: self.id,
-            guild: self.data.current_guild.clone(),
+            guild: self.current_guild.clone(),
         });
         return actix::Running::Stop;
     }
@@ -122,7 +126,7 @@ impl Handler<SubscribeResponse> for ChannelsClient {
 
     fn handle(&mut self, msg: SubscribeResponse, _ctx: &mut Self::Context) -> Self::Result {
         debug!("SubscribeResponse");
-        self.data.current_guild = Some(msg.new_guild);
+        self.current_guild = Some(msg.new_guild);
     }
 }
 
@@ -140,8 +144,21 @@ impl Handler<CacheClearing> for ChannelsClient {
 
     fn handle(&mut self, _msg: CacheClearing, ctx: &mut Self::Context) -> Self::Result {
         debug!("CacheClearing");
-        self.data.current_guild = None;
+        self.current_guild = None;
         ctx.text("Disconnected");
+    }
+}
+
+impl Handler<IdentifyResponse> for ChannelsClient {
+    type Result = ();
+
+    fn handle(&mut self, msg: IdentifyResponse, ctx: &mut Self::Context) -> Self::Result {
+        if msg.success {
+            ctx.text("Identified");
+        } else {
+            ctx.stop();
+        }
+        self.identified = msg.success;
     }
 }
 
@@ -169,10 +186,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChannelsClient {
                 ctx.stop();
             }
             ws::Message::Text(msg) => {
-                let data = self.data.clone();
-                let id = self.id.clone();
-                let addr = ctx.address();
-                let message: ListenToGuild = match serde_json::from_str(&msg) {
+                let message: ClientMessage = match serde_json::from_str(&msg) {
                     Ok(c) => c,
                     Err(e) => {
                         error!("WsSession Error: {}", e);
@@ -180,7 +194,31 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChannelsClient {
                         return;
                     }
                 };
-                Self::subscribe(id, message, data, addr);
+
+                match &message.op {
+                    ChannelsClientOpCode::Identify => {
+                        if let Some(access_token) = message.access_token {
+                            self.access_token = Some(Arc::new(access_token));
+                            if let Some(access_token) = &self.access_token {
+                                self.server_address.do_send(Identify {
+                                    access_token: access_token.clone(),
+                                    client: ctx.address(),
+                                });
+                            } else {
+                                error!("This path should be unreachable!!!");
+                            }
+                        } else {
+                            error!("Error in Identify: access_token field is not set");
+                        }
+                    }
+                    ChannelsClientOpCode::Subscribe => {
+                        if let Some(guild_id) = message.guild_id {
+                            self.subscribe(guild_id, ctx);
+                        } else {
+                            error!("Error in Subscribe: guild_id field is not set");
+                        }
+                    }
+                }
             }
             _ => (),
         }

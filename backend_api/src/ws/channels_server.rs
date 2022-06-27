@@ -1,16 +1,31 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+};
 
 use actix::{
     Actor, Addr, AsyncContext, Context, ContextFutureSpawner, Handler, Message, Supervised,
     Supervisor, WrapFuture,
 };
 
+use actix_web::web::Data;
 use futures::FutureExt;
 use log::{debug, error, info};
 
 use tokio::sync::RwLock;
 
-use crate::models::ids::GuildId;
+use crate::{
+    middleware::{authorize_user, cache_authorized_user_guilds},
+    models::ids::GuildId,
+    utils::{
+        auth::AccessToken,
+        cache::{
+            AuthMiddlewareQueueCache, AuthorizedUsersCache, UserGuildsCache,
+            UserGuildsMiddlwareQueueCache,
+        },
+        validation::Validation,
+    },
+};
 
 use super::{
     channels_client::{ChannelsClient, ChannelsMessage, SubscribeResponse},
@@ -41,6 +56,7 @@ pub struct Subscribe {
     pub id: u128,
     pub guild: GuildId,
     pub old_guild: Option<GuildId>,
+    pub access_token: Option<Arc<AccessToken>>,
     pub client: Addr<ChannelsClient>,
 }
 
@@ -62,17 +78,43 @@ pub struct Update {
 #[rtype(result = "()")]
 pub struct CacheClearing {}
 
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct Identify {
+    pub client: Addr<ChannelsClient>,
+    pub access_token: Arc<AccessToken>,
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct IdentifyResponse {
+    pub success: bool,
+}
+
 pub struct ChannelsServer {
     channels_cache: ChannelsServerCache,
     sync_sessions: HashMap<u128, Addr<SyncSession>>,
+    authorized_users_cache: Data<AuthorizedUsersCache>,
+    authorized_users_queue_cache: Data<Mutex<AuthMiddlewareQueueCache>>,
+    user_guilds_cache: Data<UserGuildsCache>,
+    user_guilds_queue_cache: Data<Mutex<UserGuildsMiddlwareQueueCache>>,
 }
 
 impl ChannelsServer {
-    pub fn new() -> Addr<Self> {
+    pub fn new(
+        authorized_users_cache: Data<AuthorizedUsersCache>,
+        authorized_users_queue_cache: Data<Mutex<AuthMiddlewareQueueCache>>,
+        user_guilds_cache: Data<UserGuildsCache>,
+        user_guilds_queue_cache: Data<Mutex<UserGuildsMiddlwareQueueCache>>,
+    ) -> Addr<Self> {
         debug!("New Channels Server");
         let server = Self {
             channels_cache: HashMap::new(),
             sync_sessions: HashMap::new(),
+            authorized_users_cache,
+            authorized_users_queue_cache,
+            user_guilds_cache,
+            user_guilds_queue_cache,
         };
 
         return server.start_supervisor();
@@ -87,7 +129,6 @@ impl ChannelsServer {
             Some(o) => {
                 o.0.remove(id);
                 if o.0.len() == 0 {
-                    // WARN: Also notify bot of this
                     self.channels_cache.remove(guild_id);
                     for sync_client in self.sync_sessions.values() {
                         sync_client.do_send(RemoveGuild {
@@ -151,18 +192,33 @@ impl Handler<Subscribe> for ChannelsServer {
             return;
         }
 
+        if let Some(old) = &msg.old_guild {
+            self.remove_client(&msg.id, &old);
+        }
+
+        let access_token = match msg.access_token {
+            Some(at) => at,
+            None => return,
+        };
+
+        let authorized_user = match self.authorized_users_cache.get(&access_token) {
+            Some(au) => au,
+            None => return,
+        };
+
+        if let Err(e) =
+            Validation::is_user_in_guild(&authorized_user, &msg.guild, &self.user_guilds_cache)
+        {
+            error!("WsSession Error: {}", e);
+            return;
+        }
+
         debug!("Subscribe");
         let sync = self
             .sync_sessions
             .values()
             .map(|addr| addr.clone())
             .collect::<Vec<Addr<SyncSession>>>();
-
-        // Remove from cache if in cache
-        // Insert into new guild
-        if let Some(old) = &msg.old_guild {
-            self.remove_client(&msg.id, &old);
-        }
 
         let mut channels_message = None;
         if let Some(cache) = self.channels_cache.get_mut(&msg.guild) {
@@ -241,5 +297,52 @@ impl Handler<Update> for ChannelsServer {
                 return;
             }
         }
+    }
+}
+
+impl Handler<Identify> for ChannelsServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: Identify, ctx: &mut Self::Context) -> Self::Result {
+        let authorized_users_cache = self.authorized_users_cache.clone();
+        let authorized_users_queue_cache = self.authorized_users_queue_cache.clone();
+        let user_guilds_cache = self.user_guilds_cache.clone();
+        let user_guilds_queue_cache = self.user_guilds_queue_cache.clone();
+        async move {
+            let access_token = msg.access_token;
+            let authorized_user = match authorize_user(
+                access_token,
+                authorized_users_cache,
+                authorized_users_queue_cache,
+            )
+            .await
+            {
+                Ok(au) => au,
+                Err(e) => {
+                    error!("ChannelsServer Identify Error (authorize_user): {}", e);
+                    msg.client.do_send(IdentifyResponse { success: false });
+                    return;
+                }
+            };
+
+            match cache_authorized_user_guilds(
+                &authorized_user,
+                user_guilds_cache,
+                user_guilds_queue_cache,
+            )
+            .await
+            {
+                Ok(_) => msg.client.do_send(IdentifyResponse { success: true }),
+                Err(e) => {
+                    error!(
+                        "ChannelsServer Identify Error (cache_authorized_user_guilds): {}",
+                        e
+                    );
+                    msg.client.do_send(IdentifyResponse { success: false });
+                }
+            }
+        }
+        .into_actor(self)
+        .spawn(ctx);
     }
 }

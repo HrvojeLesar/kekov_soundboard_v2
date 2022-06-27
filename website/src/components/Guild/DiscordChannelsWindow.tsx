@@ -9,9 +9,11 @@ import {
 } from "@mantine/core";
 import { MdVolumeUp } from "react-icons/md";
 import { useEffect, useState } from "react";
-import useWebSocket from "react-use-websocket";
+import useWebSocket, { ReadyState } from "react-use-websocket";
 import { DISCORD_CND_USER_AVATAR, WEBSOCKET_URL } from "../../api/ApiRoutes";
 import { LOADINGOVERLAY_ZINDEX, primaryShade } from "../../utils/utils";
+import { useCookies } from "react-cookie";
+import { COOKIE_NAMES } from "../../auth/AuthProvider";
 
 type DiscordChannelsWindowProps = {
     guildId: string;
@@ -140,15 +142,37 @@ function DiscordChannel({ channel }: DiscordChannelProps) {
 export default function DiscordChannelsWindow({
     guildId,
 }: DiscordChannelsWindowProps) {
-    const [channels, setChannels] = useState<Channel[] | undefined>(undefined);
-    const { sendJsonMessage, lastJsonMessage, lastMessage } =
+    const { sendJsonMessage, lastJsonMessage, lastMessage, readyState } =
         useWebSocket(WEBSOCKET_URL);
+    const [cookies] = useCookies(COOKIE_NAMES);
+
+    const [channels, setChannels] = useState<Channel[] | undefined>(undefined);
+    const [isIdentified, setIsIdentified] = useState(false);
 
     const { classes } = useStyle();
 
     useEffect(() => {
-        sendJsonMessage({ guild_id: guildId });
+        if (isIdentified) {
+            sendJsonMessage({ op: "Subscribe", guild_id: guildId });
+        }
     }, [guildId]);
+
+    useEffect(() => {
+        console.log(readyState);
+        if (readyState === ReadyState.OPEN) {
+            sendJsonMessage({
+                op: "Identify",
+                access_token: cookies.access_token,
+            });
+        }
+    }, [readyState]);
+
+    useEffect(() => {
+        if (lastMessage?.data === "Identified") {
+            setIsIdentified(true);
+            sendJsonMessage({ op: "Subscribe", guild_id: guildId });
+        }
+    }, [lastMessage]);
 
     useEffect(() => {
         if (lastJsonMessage === null) {
@@ -187,13 +211,16 @@ export default function DiscordChannelsWindow({
 
     return (
         <Paper withBorder shadow="sm" p="sm" className={classes.paperStyle}>
-            <LoadingOverlay zIndex={LOADINGOVERLAY_ZINDEX} visible={false} />
+            <LoadingOverlay
+                zIndex={LOADINGOVERLAY_ZINDEX}
+                visible={readyState === ReadyState.CONNECTING}
+            />
             <Title title="Quick enable files" order={3} pb="xs">
                 Live voice channel preview
             </Title>
             <ScrollArea>
-                {channels !== undefined ? (
-                    channels.length > 0 ? (
+                {readyState !== ReadyState.CLOSED ? (
+                    channels && channels.length > 0 ? (
                         channels.map((channel) => {
                             return (
                                 <DiscordChannel

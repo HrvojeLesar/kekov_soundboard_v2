@@ -9,7 +9,7 @@ use actix_web::{
     web::Data,
     Error, HttpMessage,
 };
-use log::{debug};
+use log::debug;
 use tokio::sync::Notify;
 
 use crate::{
@@ -22,6 +22,8 @@ use crate::{
         cache::{AuthMiddlewareQueueCache, AuthorizedUsersCache},
     },
 };
+
+use super::authorize_user;
 
 pub struct AuthService;
 
@@ -71,54 +73,7 @@ where
             };
 
             let access_token = Arc::new(get_access_token(&req).await?);
-            let authorized_user;
-            if !cache.contains_key(&access_token) {
-                let lock = queue_cache.lock().unwrap();
-                let notify;
-                if let Some(n) = lock.0.get(&access_token) {
-                    drop(lock);
-                    notify = n;
-                    // wait
-                    notify.notified().await;
-                } else {
-                    notify = Arc::new(Notify::new());
-                    lock.0.insert(access_token.clone(), notify.clone()).await;
-                    drop(lock);
-                }
-
-                if !cache.contains_key(&access_token) {
-                    debug!("Auth");
-                    let user = match get_discord_user_from_token(&access_token).await {
-                        Ok(u) => u,
-                        Err(e) => {
-                            notify.notify_one();
-                            return Err(e.into());
-                        }
-                    };
-                    authorized_user = Arc::new(AuthorizedUser {
-                        access_token: Arc::clone(&access_token),
-                        discord_user: user,
-                    });
-
-                    cache
-                        .insert(access_token.clone(), Arc::clone(&authorized_user))
-                        .await;
-                    notify.notify_waiters();
-                    let lock = queue_cache.lock().unwrap();
-                    lock.0.invalidate(&access_token).await;
-                } else {
-                    authorized_user = match cache.get(&access_token) {
-                        Some(au) => au,
-                        None => return Err(KekServerError::UserNotInCacheError.into()),
-                    };
-                    debug!("Skip auth");
-                }
-            } else {
-                authorized_user = match cache.get(&access_token) {
-                    Some(au) => au,
-                    None => return Err(KekServerError::UserNotInCacheError.into()),
-                }
-            }
+            let authorized_user = authorize_user(access_token, cache, queue_cache).await?;
 
             let authorized_user: AuthorizedUserServiceType = Arc::clone(&authorized_user);
             req.extensions_mut().insert(Arc::clone(&authorized_user));

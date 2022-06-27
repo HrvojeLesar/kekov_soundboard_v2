@@ -20,6 +20,8 @@ use crate::{
     },
 };
 
+use super::cache_authorized_user_guilds;
+
 pub struct UserGuildsService;
 
 impl<S> Transform<S, ServiceRequest> for UserGuildsService
@@ -77,39 +79,7 @@ where
                     None => panic!("Queue cache should always be present!"),
                 };
 
-                let user_id = &authorized_user.discord_user.id;
-                if !cache.contains_key(user_id) {
-                    let lock = queue_cache.lock().unwrap();
-                    let notify;
-                    if let Some(n) = lock.0.get(&authorized_user.access_token) {
-                        drop(lock);
-                        notify = n;
-                        // wait
-                        notify.notified().await;
-                    } else {
-                        let token = authorized_user.access_token.clone();
-                        notify = Arc::new(Notify::new());
-                        lock.0.insert(token, notify.clone()).await;
-                        drop(lock);
-                    }
-                    if !cache.contains_key(user_id) {
-                        debug!("Getting guilds");
-                        let user_guilds = match authorized_user.get_guilds().await {
-                            Ok(g) => Arc::new(g),
-                            Err(e) => {
-                                notify.notify_one();
-                                return Err(e.into());
-                            }
-                        };
-                        // let user_guilds = Arc::new(authorized_user.get_guilds().await?);
-                        cache.insert(user_id.clone(), user_guilds).await;
-                        notify.notify_waiters();
-                        let lock = queue_cache.lock().unwrap();
-                        lock.0.invalidate(&authorized_user.access_token).await;
-                    } else {
-                        debug!("Skip guilds");
-                    }
-                }
+                cache_authorized_user_guilds(&authorized_user, cache, queue_cache).await?;
             }
 
             let resp = service.call(req).await?;

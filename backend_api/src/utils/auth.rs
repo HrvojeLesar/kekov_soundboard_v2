@@ -1,6 +1,7 @@
 use actix_http::StatusCode;
 use actix_web::{dev::ServiceRequest, http::header::AUTHORIZATION, FromRequest, HttpMessage};
 use log::debug;
+use serde::Deserialize;
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use crate::{error::errors::KekServerError, models::user::User};
@@ -15,7 +16,7 @@ pub struct AuthorizedUser {
     pub discord_user: User,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Deserialize)]
 pub struct AccessToken(pub String);
 
 impl From<String> for AccessToken {

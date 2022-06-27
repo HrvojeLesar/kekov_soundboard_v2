@@ -56,6 +56,8 @@ namespace KekovBot
             DiscordClient.GuildCreated += BotJoinedGuildEvent;
             DiscordClient.GuildDeleted += BotLeftGuildEvent;
 
+            DiscordClient.ChannelCreated += ChannelCreatedEvent;
+            DiscordClient.ChannelDeleted += ChannelDeletedEvent;
             DiscordClient.ChannelUpdated += ChannelUpdatedEvent;
             DiscordClient.VoiceStateUpdated += VoiceStateUpdatedEvent;
         }

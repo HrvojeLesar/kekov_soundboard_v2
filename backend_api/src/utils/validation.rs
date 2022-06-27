@@ -15,7 +15,7 @@ use super::{auth::AuthorizedUser, cache::UserGuildsCache};
 pub struct Validation;
 
 impl Validation {
-    pub async fn is_user_in_guild(
+    pub fn is_user_in_guild(
         authorized_user: &AuthorizedUser,
         guild_id: &GuildId,
         user_guilds_cache: &Data<UserGuildsCache>,
@@ -33,7 +33,7 @@ impl Validation {
         return Ok(());
     }
 
-    pub async fn is_user_in_provided_guilds(
+    pub fn is_user_in_provided_guilds(
         authorized_user: &AuthorizedUser,
         guild_ids: &[GuildId],
         user_guilds_cache: &Data<UserGuildsCache>,
@@ -51,7 +51,7 @@ impl Validation {
         return Ok(());
     }
 
-    pub async fn user_owns_provided_files(
+    pub fn user_owns_provided_files(
         file_ids: &[SoundFileId],
         user_owned_files: &[SoundFile],
     ) -> Result<(), KekServerError> {

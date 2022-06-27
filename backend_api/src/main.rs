@@ -18,8 +18,9 @@ use utils::cache::{
     create_user_guilds_middlware_queue_cache,
 };
 use ws::{
+    channels_server::ChannelsServer,
     ws_server::{self, ControlsServer},
-    ws_session::WsSessionCommChannels, channels_server::ChannelsServer,
+    ws_session::WsSessionCommChannels,
 };
 
 mod database;
@@ -77,19 +78,24 @@ async fn main() -> std::io::Result<()> {
     let users_guild_cache = Data::new(create_user_guilds_cache());
     let authorized_users_cache = Data::new(create_authorized_user_cache());
     let status = Data::new(RwLock::new(Status::new()));
-    let user_guilds_middlware_queue =
+    let user_guilds_middleware_queue =
         Data::new(Mutex::new(create_user_guilds_middlware_queue_cache()));
-    let auth_middlware_queue = Data::new(Mutex::new(create_auth_middlware_queue_cache()));
+    let auth_middleware_queue = Data::new(Mutex::new(create_auth_middlware_queue_cache()));
 
-    let channels_server = Data::new(ChannelsServer::new());
+    let channels_server = Data::new(ChannelsServer::new(
+        authorized_users_cache.clone(),
+        auth_middleware_queue.clone(),
+        users_guild_cache.clone(),
+        user_guilds_middleware_queue.clone(),
+    ));
 
     let mut scheduler = scheduler::Scheduler::new();
 
     let status_ref = status.clone();
     let ws_channels_ref = ws_channels.clone();
     let controls_server_ref = controls_server.clone();
-    let ugmq_ref = user_guilds_middlware_queue.clone();
-    let amq_ref = auth_middlware_queue.clone();
+    let ugmq_ref = user_guilds_middleware_queue.clone();
+    let amq_ref = auth_middleware_queue.clone();
     scheduler.run(std::time::Duration::from_secs(1), move || {
         let ws_channels_ref = ws_channels_ref.clone();
         let status_ref = status_ref.clone();
@@ -145,8 +151,8 @@ async fn main() -> std::io::Result<()> {
             .app_data(users_guild_cache.clone())
             .app_data(authorized_users_cache.clone())
             .app_data(status.clone())
-            .app_data(user_guilds_middlware_queue.clone())
-            .app_data(auth_middlware_queue.clone())
+            .app_data(user_guilds_middleware_queue.clone())
+            .app_data(auth_middleware_queue.clone())
             .app_data(snowflakes)
             .app_data(channels_server.clone())
             .configure(routes_config)

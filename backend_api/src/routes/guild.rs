@@ -39,7 +39,7 @@ pub async fn add_sound_to_guild(
     user_guilds_cache: Data<UserGuildsCache>,
 ) -> Result<HttpResponse, KekServerError> {
     let (guild_id, file_id) = path.into_inner();
-    Validation::is_user_in_guild(&authorized_user, &guild_id, &user_guilds_cache).await?;
+    Validation::is_user_in_guild(&authorized_user, &guild_id, &user_guilds_cache)?;
 
     let mut transaction = db_pool.begin().await?;
     Validation::are_guild_and_file_ids_valid(
@@ -62,7 +62,7 @@ pub async fn delete_sound_from_guild(
     user_guilds_cache: Data<UserGuildsCache>,
 ) -> Result<HttpResponse, KekServerError> {
     let (guild_id, file_id) = path.into_inner();
-    Validation::is_user_in_guild(&authorized_user, &guild_id, &user_guilds_cache).await?;
+    Validation::is_user_in_guild(&authorized_user, &guild_id, &user_guilds_cache)?;
 
     let mut transaction = db_pool.begin().await?;
     let guild_file = GuildFile::delete_guild_file(&guild_id, &file_id, &mut transaction).await?;
@@ -79,7 +79,7 @@ pub async fn get_guild_files(
     user_guilds_cache: Data<UserGuildsCache>,
 ) -> Result<HttpResponse, KekServerError> {
     let guild_id = guild_id.into_inner();
-    Validation::is_user_in_guild(&authorized_user, &guild_id, &user_guilds_cache).await?;
+    Validation::is_user_in_guild(&authorized_user, &guild_id, &user_guilds_cache)?;
 
     let mut transaction = db_pool.begin().await?;
     let files = GuildFile::get_guild_files(&guild_id, &mut transaction).await?;
@@ -105,13 +105,12 @@ pub async fn bulk_enable(
         &authorized_user,
         &bulk_payload.guilds,
         &user_guilds_cache,
-    )
-    .await?;
+    )?;
     let mut transaction = db_pool.begin().await?;
     {
         let files =
             SoundFile::get_user_files(&authorized_user.discord_user.id, &mut transaction).await?;
-        Validation::user_owns_provided_files(&bulk_payload.files, &files).await?;
+        Validation::user_owns_provided_files(&bulk_payload.files, &files)?;
     }
 
     GuildFile::bulk_insert(&bulk_payload.guilds, &bulk_payload.files, &mut transaction).await?;

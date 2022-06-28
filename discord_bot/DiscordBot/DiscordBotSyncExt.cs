@@ -26,6 +26,7 @@ namespace KekovBot
         private Task BotJoinedGuildEvent(DiscordClient c, GuildCreateEventArgs args)
         {
             Log.Warning($"Bot joined guild: {args.Guild.Id}");
+            SyncWebsocket.TrackedGuilds.Remove(args.Guild);
             var response = new SyncMessage(SyncOpCode.InvalidateGuildsCache, null, args.Guild.Id);
             var responseJson = JsonConvert.SerializeObject(response);
             SyncWebsocket.Client.Send(responseJson);

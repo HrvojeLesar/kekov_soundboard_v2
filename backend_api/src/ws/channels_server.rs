@@ -16,9 +16,9 @@ use tokio::sync::RwLock;
 
 use crate::{
     middleware::{authorize_user, cache_authorized_user_guilds},
-    models::ids::GuildId,
+    models::ids::{GuildId, UserId},
     utils::{
-        auth::AccessToken,
+        auth::{AccessToken, AuthorizedUser},
         cache::{
             AuthMiddlewareQueueCache, AuthorizedUsersCache, UserGuildsCache,
             UserGuildsMiddlwareQueueCache,
@@ -28,14 +28,19 @@ use crate::{
 };
 
 use super::{
-    channels_client::{ChannelsClient, ChannelsMessage, SubscribeResponse},
+    channels_client::{ChannelsClient, ChannelsMessage, Removed, SubscribeResponse},
     ws_sync::{AddGuild, RemoveGuild, SyncSession},
     GuildVoiceChannels,
 };
 
 // WARN: Wrap GuildVoiceChannels in Option
-type ChannelsServerCache =
-    HashMap<GuildId, (HashMap<u128, Addr<ChannelsClient>>, GuildVoiceChannels)>;
+type ChannelsServerCache = HashMap<
+    GuildId,
+    (
+        HashMap<u128, (Addr<ChannelsClient>, Arc<AuthorizedUser>)>,
+        GuildVoiceChannels,
+    ),
+>;
 
 #[derive(Message)]
 #[rtype(result = "()")]
@@ -83,6 +88,12 @@ pub struct CacheClearing {}
 pub struct Identify {
     pub client: Addr<ChannelsClient>,
     pub access_token: Arc<AccessToken>,
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct InvalidateClient {
+    pub user_id: UserId,
 }
 
 #[derive(Message)]
@@ -140,6 +151,46 @@ impl ChannelsServer {
             None => {}
         }
     }
+
+    fn remove_guild(&mut self, msg: RemoveGuild) {
+        match self.channels_cache.remove(&msg.guild_id) {
+            Some(entry) => {
+                let clients = entry.0;
+                for client in clients {
+                    (client.1).0.do_send(CacheClearing {});
+                }
+                for sync_client in self.sync_sessions.values() {
+                    sync_client.do_send(RemoveGuild {
+                        guild_id: msg.guild_id.clone(),
+                    });
+                }
+            }
+            None => {}
+        }
+    }
+
+    fn invalidate_client(&mut self, msg: InvalidateClient) {
+        let mut empty_guild_ids = Vec::new();
+        for (guild_id, guilds) in self.channels_cache.iter_mut() {
+            guilds.0.retain(|_, (c, authorized_user)| {
+                if authorized_user.discord_user.id == msg.user_id {
+                    c.do_send(Removed {});
+                    return false;
+                }
+                return true;
+            });
+            if guilds.0.len() == 0 {
+                empty_guild_ids.push(guild_id.clone());
+            }
+        }
+        for id in empty_guild_ids {
+            for sync_client in self.sync_sessions.iter() {
+                sync_client.1.do_send(RemoveGuild {
+                    guild_id: id.clone(),
+                });
+            }
+        }
+    }
 }
 
 impl Supervised for ChannelsServer {
@@ -175,7 +226,7 @@ impl Handler<DisconnectSyncSession> for ChannelsServer {
         if self.sync_sessions.len() == 0 {
             for guild in self.channels_cache.values() {
                 for client in guild.0.iter() {
-                    client.1.do_send(CacheClearing {});
+                    (client.1).0.do_send(CacheClearing {});
                 }
             }
             self.channels_cache.clear();
@@ -223,11 +274,13 @@ impl Handler<Subscribe> for ChannelsServer {
         let mut channels_message = None;
         if let Some(cache) = self.channels_cache.get_mut(&msg.guild) {
             // Subscribes new client
-            cache.0.insert(msg.id, msg.client.clone());
+            cache
+                .0
+                .insert(msg.id, (msg.client.clone(), authorized_user));
             channels_message = Some(cache.1.clone());
         } else {
             let mut new_client_map = HashMap::new();
-            new_client_map.insert(msg.id, msg.client.clone());
+            new_client_map.insert(msg.id, (msg.client.clone(), authorized_user));
             // Subscribes new client
             self.channels_cache.insert(
                 msg.guild.clone(),
@@ -282,7 +335,7 @@ impl Handler<Update> for ChannelsServer {
                 match serde_json::to_string(&gc.1) {
                     Ok(cm) => {
                         for client in gc.0.values() {
-                            client.do_send(ChannelsMessage {
+                            client.0.do_send(ChannelsMessage {
                                 channels: cm.clone(),
                             });
                         }
@@ -304,6 +357,7 @@ impl Handler<Identify> for ChannelsServer {
     type Result = ();
 
     fn handle(&mut self, msg: Identify, ctx: &mut Self::Context) -> Self::Result {
+        debug!("Identify");
         let authorized_users_cache = self.authorized_users_cache.clone();
         let authorized_users_queue_cache = self.authorized_users_queue_cache.clone();
         let user_guilds_cache = self.user_guilds_cache.clone();
@@ -344,5 +398,23 @@ impl Handler<Identify> for ChannelsServer {
         }
         .into_actor(self)
         .spawn(ctx);
+    }
+}
+
+impl Handler<RemoveGuild> for ChannelsServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: RemoveGuild, _ctx: &mut Self::Context) -> Self::Result {
+        debug!("RemoveGuild ChannelsServer");
+        self.remove_guild(msg);
+    }
+}
+
+impl Handler<InvalidateClient> for ChannelsServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: InvalidateClient, _ctx: &mut Self::Context) -> Self::Result {
+        debug!("InvalidateClient");
+        self.invalidate_client(msg);
     }
 }

@@ -58,6 +58,10 @@ pub struct ChannelsMessage {
     pub channels: String,
 }
 
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct Removed {}
+
 #[derive(Clone, Debug)]
 pub struct ChannelsClient {
     id: u128,
@@ -153,12 +157,23 @@ impl Handler<IdentifyResponse> for ChannelsClient {
     type Result = ();
 
     fn handle(&mut self, msg: IdentifyResponse, ctx: &mut Self::Context) -> Self::Result {
+        debug!("IndentifyResponse");
         if msg.success {
             ctx.text("Identified");
         } else {
             ctx.stop();
         }
         self.identified = msg.success;
+    }
+}
+
+impl Handler<Removed> for ChannelsClient {
+    type Result = ();
+
+    fn handle(&mut self, _msg: Removed, ctx: &mut Self::Context) -> Self::Result {
+        debug!("Removed");
+        self.current_guild = None;
+        ctx.text("Disconnected");
     }
 }
 
@@ -205,6 +220,16 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChannelsClient {
                                     client: ctx.address(),
                                 });
                             } else {
+                                error!("This path should be unreachable!!!");
+                                error!("This path should be unreachable!!!");
+                                error!("This path should be unreachable!!!");
+                                error!("This path should be unreachable!!!");
+                                error!("This path should be unreachable!!!");
+                                error!("This path should be unreachable!!!");
+                                error!("This path should be unreachable!!!");
+                                error!("This path should be unreachable!!!");
+                                error!("This path should be unreachable!!!");
+                                error!("This path should be unreachable!!!");
                                 error!("This path should be unreachable!!!");
                             }
                         } else {

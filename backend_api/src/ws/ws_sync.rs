@@ -10,7 +10,7 @@ use actix::{
 use actix_http::ws;
 use actix_web::web::Data;
 use actix_web_actors::ws::WebsocketContext;
-use log::{error, info, warn, debug};
+use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -18,7 +18,7 @@ use uuid::Uuid;
 use crate::{
     models::ids::{GuildId, UserId},
     utils::cache::UserGuildsCache,
-    ws::channels_server::DisconnectSyncSession,
+    ws::channels_server::{DisconnectSyncSession, InvalidateClient},
 };
 
 use super::{
@@ -117,7 +117,7 @@ impl Actor for SyncSession {
         // });
     }
 
-    fn stopping(&mut self, ctx: &mut Self::Context) -> actix::Running {
+    fn stopping(&mut self, _ctx: &mut Self::Context) -> actix::Running {
         info!("Stopping sync websocket");
         self.user_guilds_cache.invalidate_all();
         self.channels_server
@@ -204,16 +204,18 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for SyncSession {
 
                     match &message.op {
                         SyncOpCode::UpdateUserCache => {
-                            if let Some(id) = &message.user_id {
+                            if let Some(id) = message.user_id {
                                 info!("Trying to invalidate user with id: {}", &id.0);
-                                user_guilds_cache.invalidate(id).await;
+                                user_guilds_cache.invalidate(&id).await;
+                                channels_server.do_send(InvalidateClient { user_id: id });
                             }
                         }
                         SyncOpCode::InvalidateGuildsCache => {
-                            if let Some(id) = &message.guild_id {
+                            if let Some(id) = message.guild_id {
                                 info!("Invalidating guilds cache");
                                 info!("Bot joined/left guild with id: {:?}", &id.0);
                                 user_guilds_cache.invalidate_all();
+                                channels_server.do_send(RemoveGuild { guild_id: id });
                             }
                         }
                         SyncOpCode::UpdateGuildChannels => {

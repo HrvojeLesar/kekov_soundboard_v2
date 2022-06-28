@@ -158,7 +158,6 @@ export default function DiscordChannelsWindow({
     }, [guildId]);
 
     useEffect(() => {
-        console.log(readyState);
         if (readyState === ReadyState.OPEN) {
             sendJsonMessage({
                 op: "Identify",
@@ -204,7 +203,6 @@ export default function DiscordChannelsWindow({
                 });
             setChannels(sorted);
         } else {
-            console.log(lastMessage?.data);
             setChannels(undefined);
         }
     }, [lastJsonMessage]);

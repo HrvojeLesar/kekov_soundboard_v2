@@ -14,7 +14,7 @@ use oauth2::{
     PkceCodeVerifier, RefreshToken, StandardRevocableToken, StandardTokenResponse, TokenResponse,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool};
+use sqlx::PgPool;
 
 use crate::{
     error::errors::KekServerError,

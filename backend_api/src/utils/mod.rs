@@ -100,14 +100,12 @@ pub mod test_utils {
     use sqlx::{Postgres, Transaction};
     use uuid::Uuid;
 
-    use crate::{
-        models::{
-            guild::Guild,
-            guild_file::GuildFile,
-            ids::{GuildId, SoundFileId, UserId},
-            sound_file::{SoundFile},
-            user::User,
-        },
+    use crate::models::{
+        guild::Guild,
+        guild_file::GuildFile,
+        ids::{GuildId, SoundFileId, UserId},
+        sound_file::SoundFile,
+        user::User,
     };
 
     pub struct PublicDeleted {

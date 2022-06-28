@@ -11,8 +11,7 @@ use sqlx::PgPool;
 
 use crate::{
     error::errors::KekServerError,
-    middleware::{auth_middleware::AuthService, user_guilds_middleware::UserGuildsService},
-    utils::{auth::AuthorizedUserExt, cache::UserGuildsCache},
+    utils::cache::UserGuildsCache,
     ws::{
         channels_client::ChannelsClient,
         channels_server::ChannelsServer,
@@ -83,9 +82,5 @@ pub async fn channels_ws(
 ) -> Result<HttpResponse, KekServerError> {
     info!("New connection on channels websocket");
     let address = server_address.get_ref().clone();
-    return Ok(ws::start(
-        ChannelsClient::new(address),
-        &request,
-        stream,
-    )?);
+    return Ok(ws::start(ChannelsClient::new(address), &request, stream)?);
 }

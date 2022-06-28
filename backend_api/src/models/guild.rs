@@ -102,7 +102,7 @@ impl Guild {
 
 #[cfg(test)]
 mod tests {
-    use chrono::{Utc};
+    use chrono::Utc;
     use sqlx::Connection;
     use uuid::Uuid;
 

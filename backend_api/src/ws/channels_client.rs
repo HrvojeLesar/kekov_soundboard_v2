@@ -1,30 +1,18 @@
 use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
+    sync::Arc,
     time::{Duration, Instant},
 };
 
-use actix::{
-    Actor, ActorContext, Addr, AsyncContext, ContextFutureSpawner, Handler, Message, StreamHandler,
-    WrapFuture,
-};
+use actix::{Actor, ActorContext, Addr, AsyncContext, Handler, Message, StreamHandler};
 use actix_http::ws;
 
-use actix_web::web::Data;
 use actix_web_actors::ws::WebsocketContext;
 use log::{debug, error, info, warn};
-use serde::{Deserialize, Serialize};
-use tokio::sync::{oneshot::Sender, RwLock};
+use serde::Deserialize;
+
 use uuid::Uuid;
 
-use crate::{
-    models::ids::GuildId,
-    utils::{
-        auth::{AccessToken, AuthorizedUser},
-        cache::UserGuildsCache,
-    },
-    ws::channels_server::Unsubscribe,
-};
+use crate::{models::ids::GuildId, utils::auth::AccessToken, ws::channels_server::Unsubscribe};
 
 use super::channels_server::{
     CacheClearing, ChannelsServer, Identify, IdentifyResponse, Subscribe,

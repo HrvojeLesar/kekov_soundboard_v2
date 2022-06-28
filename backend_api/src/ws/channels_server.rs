@@ -12,8 +12,6 @@ use actix_web::web::Data;
 use futures::FutureExt;
 use log::{debug, error, info};
 
-use tokio::sync::RwLock;
-
 use crate::{
     middleware::{authorize_user, cache_authorized_user_guilds},
     models::ids::{GuildId, UserId},

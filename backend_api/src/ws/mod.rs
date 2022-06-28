@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::models::ids::{UserId, ChannelId};
+use crate::models::ids::{ChannelId, UserId};
 
 pub mod channels_client;
 pub mod channels_server;

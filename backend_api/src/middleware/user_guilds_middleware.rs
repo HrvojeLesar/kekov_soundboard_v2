@@ -1,7 +1,7 @@
 use std::{
     future::{ready, Ready},
     rc::Rc,
-    sync::{Arc, Mutex},
+    sync::Mutex,
 };
 
 use actix_web::{
@@ -9,8 +9,7 @@ use actix_web::{
     web::Data,
     Error, HttpMessage,
 };
-use log::{debug, warn};
-use tokio::sync::Notify;
+use log::warn;
 
 use crate::{
     error::errors::KekServerError,

@@ -9,18 +9,10 @@ use actix_web::{
     web::Data,
     Error, HttpMessage,
 };
-use log::debug;
-use tokio::sync::Notify;
 
-use crate::{
-    error::errors::KekServerError,
-    utils::{
-        auth::{
-            get_access_token, get_discord_user_from_token, AuthorizedUser,
-            AuthorizedUserServiceType,
-        },
-        cache::{AuthMiddlewareQueueCache, AuthorizedUsersCache},
-    },
+use crate::utils::{
+    auth::{get_access_token, AuthorizedUserServiceType},
+    cache::{AuthMiddlewareQueueCache, AuthorizedUsersCache},
 };
 
 use super::authorize_user;

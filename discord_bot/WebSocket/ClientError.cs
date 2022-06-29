@@ -1,4 +1,6 @@
-namespace KekovBot
+using KekovBot.Exceptions;
+
+namespace KekovBot.WebSocket
 {
     public enum ClientError
     {
@@ -11,6 +13,7 @@ namespace KekovBot
         FileLoadingFailed,
         InvalidFileId,
         NotPlaying,
+        QueueFull,
         Unknown,
     }
 
@@ -27,6 +30,7 @@ namespace KekovBot
             FileLoadingFailedException => ClientError.FileLoadingFailed,
             InvalidFileIdException => ClientError.InvalidFileId,
             NotPlayingExpcetion => ClientError.NotPlaying,
+            QueueFullException => ClientError.QueueFull,
             _ => ClientError.Unknown,
         };
     }

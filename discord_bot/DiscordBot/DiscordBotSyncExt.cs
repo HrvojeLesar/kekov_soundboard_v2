@@ -1,9 +1,10 @@
 using DSharpPlus;
 using DSharpPlus.EventArgs;
+using KekovBot.WebSocket;
 using Newtonsoft.Json;
 using Serilog;
 
-namespace KekovBot
+namespace KekovBot.Bot
 {
     public partial class DiscordBot
     {

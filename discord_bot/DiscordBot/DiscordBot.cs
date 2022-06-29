@@ -4,8 +4,9 @@ using DSharpPlus.Net;
 using DSharpPlus.Lavalink;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using KekovBot.WebSocket;
 
-namespace KekovBot
+namespace KekovBot.Bot
 {
     public partial class DiscordBot
     {

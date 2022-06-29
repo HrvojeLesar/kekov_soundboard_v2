@@ -140,6 +140,8 @@ pub enum ClientError {
     FileLoadingFailed,
     #[error("Invalid file id error")]
     InvalidFileId,
+    #[error("Queue is full")]
+    QueueFull,
     #[error("Nothing playing")]
     NotPlaying,
     #[serde(other)]

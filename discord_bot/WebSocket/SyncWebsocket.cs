@@ -1,10 +1,12 @@
 using System.Reactive.Linq;
 using DSharpPlus.Entities;
+using KekovBot.Bot;
+using KekovBot.Exceptions;
 using Newtonsoft.Json;
 using Serilog;
 using Websocket.Client;
 
-namespace KekovBot
+namespace KekovBot.WebSocket
 {
     public class SyncWebsocket : WebsocketController
     {

@@ -1,4 +1,4 @@
-﻿using KekovBot;
+﻿using KekovBot.Bot;
 
 MainAsync().GetAwaiter().GetResult();
 

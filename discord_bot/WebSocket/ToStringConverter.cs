@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace KekovBot
+namespace KekovBot.WebSocket
 {
     public class ToStringConverter : JsonConverter
     {

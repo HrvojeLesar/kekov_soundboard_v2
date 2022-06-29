@@ -1,7 +1,8 @@
 using dotenv.net;
+using KekovBot.WebSocket;
 using Newtonsoft.Json;
 
-namespace KekovBot
+namespace KekovBot.Control
 {
     public class Sound
     {

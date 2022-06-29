@@ -54,17 +54,17 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                             ? "Queue is empty!"
                             : data.map((q, index) => {
                                   return index === 0 ? (
-                                      <>
-                                          <Text weight="bold">
-                                              Currently playing:
-                                              <Text
-                                                  weight={500}
-                                                  component="span"
-                                              >{` ${q.display_name}`}</Text>
-                                          </Text>
-                                      </>
+                                      <Text weight="bold" key={index}>
+                                          Currently playing:
+                                          <Text
+                                              weight={500}
+                                              component="span"
+                                          >{` ${q.display_name}`}</Text>
+                                      </Text>
                                   ) : (
-                                      <Text>{`${index}. ${q.display_name}`}</Text>
+                                      <Text
+                                          key={index}
+                                      >{`${index}. ${q.display_name}`}</Text>
                                   );
                               }),
                     autoClose: 5000,

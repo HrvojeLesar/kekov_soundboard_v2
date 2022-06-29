@@ -1,4 +1,4 @@
-namespace KekovBot
+namespace KekovBot.WebSocket
 {
     public enum OpCode
     {

@@ -2,7 +2,7 @@ using System.Net.WebSockets;
 using dotenv.net;
 using Websocket.Client;
 
-namespace KekovBot
+namespace KekovBot.WebSocket
 {
     public class WebsocketController
     {

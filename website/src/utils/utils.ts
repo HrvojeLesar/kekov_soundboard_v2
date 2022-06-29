@@ -44,6 +44,7 @@ export enum ClientErrorEnum {
     FileLoadingFailed = "FileLoadingFailed",
     InvalidFileId = "InvalidFileId",
     NotPlaying = "NotPlaying",
+    QueueFull = "QueueFull",
     Unknown = "Unknown",
 }
 
@@ -73,6 +74,8 @@ export const convertClientErrorToString = (error: ClientErrorEnum) => {
             return "Invalid file id!";
         case ClientErrorEnum.NotPlaying:
             return "Nothing is playing!";
+        case ClientErrorEnum.QueueFull:
+            return "Queue is full!";
         case ClientErrorEnum.Unknown:
             return "Unknown error!";
     }

@@ -1,8 +1,9 @@
 using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
+using KekovBot.Exceptions;
 using Serilog;
 
-namespace KekovBot
+namespace KekovBot.Control
 {
     public static class LavalinkGuildConnectionExt
     {

@@ -2,7 +2,7 @@ using DSharpPlus;
 using DSharpPlus.Entities;
 using Newtonsoft.Json;
 
-namespace KekovBot
+namespace KekovBot.WebSocket
 {
     public class GuildVoiceChannels
     {

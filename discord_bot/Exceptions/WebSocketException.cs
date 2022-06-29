@@ -1,4 +1,4 @@
-namespace KekovBot
+namespace KekovBot.Exceptions
 {
     public class WebSocketException : Exception
     {
@@ -49,5 +49,10 @@ namespace KekovBot
     public class NotPlayingExpcetion : WebSocketException
     {
         public NotPlayingExpcetion() : base("Nothing is playing") { }
+    }
+
+    public class QueueFullException : WebSocketException
+    {
+        public QueueFullException() : base("Queue is full") { }
     }
 }

@@ -1,8 +1,11 @@
 using DSharpPlus;
 using DSharpPlus.Entities;
 using DSharpPlus.Lavalink;
+using KekovBot.Bot;
+using KekovBot.Exceptions;
+using KekovBot.WebSocket;
 
-namespace KekovBot
+namespace KekovBot.Control
 {
     public static class Controls
     {
@@ -52,6 +55,10 @@ namespace KekovBot
             if (connection == null)
             {
                 connection = await node.ConnectAsync(channel);
+            }
+
+            if (!PlayQueueDict.ContainsKey(guild))
+            {
                 var newPlayQueue = new PlayQueue(connection);
                 PlayQueueDict.Add(guild, newPlayQueue);
                 CancelationTokenDict.Add(guild, new CancellationTokenSource());
@@ -74,7 +81,7 @@ namespace KekovBot
             }
             else
             {
-                playQueue.Queue.Enqueue(sound);
+                playQueue.Enqueue(sound);
                 return true;
             }
         }

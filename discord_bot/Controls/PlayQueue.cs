@@ -1,17 +1,20 @@
 using DSharpPlus.Lavalink;
+using KekovBot.Exceptions;
 
-namespace KekovBot
+namespace KekovBot.Control
 {
     public class PlayQueue
     {
+        private static int _queue_limit = 10;
         public Sound? CurrentlyPlaying { get; set; }
-        public Queue<Sound> Queue { get; set; }
         public LavalinkGuildConnection GuildConnection { get; set; }
+
+        private Queue<Sound> _queue { get; set; }
 
         public PlayQueue(LavalinkGuildConnection guildConnection)
         {
             CurrentlyPlaying = null;
-            Queue = new Queue<Sound>();
+            _queue = new Queue<Sound>();
             GuildConnection = guildConnection;
         }
 
@@ -19,7 +22,7 @@ namespace KekovBot
         {
             try {
                 CurrentlyPlaying = startSound;
-                Queue.Clear();
+                _queue.Clear();
                 var track = await GuildConnection.GetTrack(CurrentlyPlaying.FileInfo);
                 await GuildConnection.PlayAsync(track);
             } catch (FileLoadingFailedException e) {
@@ -31,9 +34,9 @@ namespace KekovBot
         // Returns `true` when successfully playing next item `false` otherwise
         public async Task<bool> PlayNext()
         {
-            if (Queue.Count > 0)
+            if (_queue.Count > 0)
             {
-                CurrentlyPlaying = Queue.Dequeue();
+                CurrentlyPlaying = _queue.Dequeue();
                 var track = await GuildConnection.GetTrack(CurrentlyPlaying.FileInfo);
                 await GuildConnection.PlayAsync(track);
                 return true;
@@ -50,10 +53,18 @@ namespace KekovBot
                 if (CurrentlyPlaying != null)
                 {
                     queue.Add(CurrentlyPlaying);
-                    queue.AddRange(Queue.ToList());
+                    queue.AddRange(_queue.ToList());
                 }
                 return queue;
             });
+        }
+
+        public void Enqueue(Sound sound) {
+            if (_queue.Count < _queue_limit) {
+                _queue.Enqueue(sound);
+            } else {
+                throw new QueueFullException();
+            }
         }
     }
 }

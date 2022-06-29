@@ -1,9 +1,11 @@
 using System.Reactive.Linq;
+using KekovBot.Control;
+using KekovBot.Exceptions;
 using Newtonsoft.Json;
 using Serilog;
 using Websocket.Client;
 
-namespace KekovBot
+namespace KekovBot.WebSocket
 {
     public class ControlsWebsocket : WebsocketController
     {

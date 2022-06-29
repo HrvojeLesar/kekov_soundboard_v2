@@ -1,8 +1,9 @@
 using System.Numerics;
+using KekovBot.Control;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
-namespace KekovBot
+namespace KekovBot.WebSocket
 {
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore)]
     public class ControlMessage

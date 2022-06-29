@@ -17,6 +17,10 @@ pub type AuthorizedUsersCache = Cache<Arc<AccessToken>, Arc<AuthorizedUser>>;
 pub struct UserGuildsMiddlwareQueueCache(pub Cache<Arc<AccessToken>, Arc<Notify>>);
 pub struct AuthMiddlewareQueueCache(pub Cache<Arc<AccessToken>, Arc<Notify>>);
 
+pub const USER_GUILDS_CACHE_TTL: u64 = 60 * 60;
+pub const AUTHORIZED_USER_CACHE_TTL: u64 = 60 * 5;
+pub const QUEUE_CACHE_TTL: u64 = 60 * 5;
+
 #[derive(Clone, Debug, Serialize, Deserialize, Hash, PartialEq, Eq)]
 pub struct DiscordGuild {
     pub id: GuildId,
@@ -29,7 +33,7 @@ pub fn create_user_guilds_cache() -> UserGuildsCache {
     return Cache::builder()
         .max_capacity(1000)
         .initial_capacity(100)
-        .time_to_live(Duration::from_secs(60 * 60))
+        .time_to_live(Duration::from_secs(USER_GUILDS_CACHE_TTL))
         .build();
 }
 
@@ -37,7 +41,7 @@ pub fn create_authorized_user_cache() -> AuthorizedUsersCache {
     return Cache::builder()
         .max_capacity(1000)
         .initial_capacity(200)
-        .time_to_live(Duration::from_secs(60 * 5))
+        .time_to_live(Duration::from_secs(AUTHORIZED_USER_CACHE_TTL))
         .build();
 }
 
@@ -46,7 +50,7 @@ pub fn create_user_guilds_middlware_queue_cache() -> UserGuildsMiddlwareQueueCac
         Cache::builder()
             .max_capacity(1000)
             .initial_capacity(200)
-            .time_to_live(Duration::from_secs(60 * 5))
+            .time_to_live(Duration::from_secs(QUEUE_CACHE_TTL))
             .build(),
     );
 }
@@ -56,7 +60,7 @@ pub fn create_auth_middlware_queue_cache() -> AuthMiddlewareQueueCache {
         Cache::builder()
             .max_capacity(1000)
             .initial_capacity(200)
-            .time_to_live(Duration::from_secs(60 * 5))
+            .time_to_live(Duration::from_secs(QUEUE_CACHE_TTL))
             .build(),
     );
 }

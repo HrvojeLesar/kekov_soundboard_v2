@@ -3,8 +3,11 @@ use std::{
     time::{Duration, Instant},
 };
 
-use actix::{Actor, ActorContext, Addr, AsyncContext, Handler, Message, StreamHandler};
-use actix_http::ws;
+use actix::{
+    fut, Actor, ActorContext, ActorFutureExt, Addr, AsyncContext, ContextFutureSpawner, Handler,
+    Message, SpawnHandle, StreamHandler, WrapFuture,
+};
+use actix_http::ws::{self, CloseCode, CloseReason};
 
 use actix_web_actors::ws::WebsocketContext;
 use log::{debug, error, info, warn};
@@ -12,14 +15,18 @@ use serde::Deserialize;
 
 use uuid::Uuid;
 
-use crate::{models::ids::GuildId, utils::auth::AccessToken, ws::channels_server::Unsubscribe};
-
-use super::channels_server::{
-    CacheClearing, ChannelsServer, Identify, IdentifyResponse, Subscribe,
+use crate::{
+    models::ids::GuildId,
+    utils::{auth::AccessToken, cache::AUTHORIZED_USER_CACHE_TTL},
+    ws::channels_server::Unsubscribe,
 };
+
+use super::channels_server::{CacheClearing, ChannelsServer, Identify, Subscribe};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(10);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(20);
+const REIDENTIFY_INTERVAL: Duration = Duration::from_secs(AUTHORIZED_USER_CACHE_TTL);
+const TIME_TO_IDENTIFY: Duration = Duration::from_secs(20);
 
 #[derive(Debug, Deserialize)]
 enum ChannelsClientOpCode {
@@ -58,6 +65,7 @@ pub struct ChannelsClient {
     current_guild: Option<GuildId>,
     access_token: Option<Arc<AccessToken>>,
     identified: bool,
+    reidentify_handle: Option<SpawnHandle>,
 }
 
 impl ChannelsClient {
@@ -69,6 +77,7 @@ impl ChannelsClient {
             current_guild: None,
             identified: false,
             access_token: None,
+            reidentify_handle: None,
         };
     }
 
@@ -83,6 +92,24 @@ impl ChannelsClient {
         });
     }
 
+    fn terminate(&self, ctx: &mut <Self as Actor>::Context) {
+        ctx.text("TERMINATED");
+        ctx.close(Some(CloseReason {
+            code: CloseCode::Policy,
+            description: Some("Terminated".to_string()),
+        }));
+        ctx.stop();
+    }
+
+    fn reidentify_watcher(&self, ctx: &mut <Self as Actor>::Context) {
+        ctx.run_interval(REIDENTIFY_INTERVAL, |actor, context| {
+            actor.request_reidentify(context);
+            actor.reidentify_handle = Some(context.run_later(TIME_TO_IDENTIFY, |a, c| {
+                a.terminate(c);
+            }));
+        });
+    }
+
     fn subscribe(&self, guild_id: GuildId, ctx: &mut <Self as Actor>::Context) {
         if self.identified {
             self.server_address.do_send(Subscribe {
@@ -94,6 +121,15 @@ impl ChannelsClient {
             });
         }
     }
+
+    fn request_reidentify(&self, ctx: &mut <Self as Actor>::Context) {
+        ctx.text("Reidentify");
+    }
+
+    fn disconnect(&mut self, ctx: &mut <Self as Actor>::Context) {
+        self.current_guild = None;
+        ctx.text("Disconnected");
+    }
 }
 
 impl Actor for ChannelsClient {
@@ -101,6 +137,7 @@ impl Actor for ChannelsClient {
 
     fn started(&mut self, ctx: &mut Self::Context) {
         self.heartbeat(ctx);
+        self.reidentify_watcher(ctx);
     }
 
     fn stopping(&mut self, _: &mut Self::Context) -> actix::Running {
@@ -136,22 +173,7 @@ impl Handler<CacheClearing> for ChannelsClient {
 
     fn handle(&mut self, _msg: CacheClearing, ctx: &mut Self::Context) -> Self::Result {
         debug!("CacheClearing");
-        self.current_guild = None;
-        ctx.text("Disconnected");
-    }
-}
-
-impl Handler<IdentifyResponse> for ChannelsClient {
-    type Result = ();
-
-    fn handle(&mut self, msg: IdentifyResponse, ctx: &mut Self::Context) -> Self::Result {
-        debug!("IndentifyResponse");
-        if msg.success {
-            ctx.text("Identified");
-        } else {
-            ctx.stop();
-        }
-        self.identified = msg.success;
+        self.disconnect(ctx);
     }
 }
 
@@ -160,8 +182,7 @@ impl Handler<Removed> for ChannelsClient {
 
     fn handle(&mut self, _msg: Removed, ctx: &mut Self::Context) -> Self::Result {
         debug!("Removed");
-        self.current_guild = None;
-        ctx.text("Disconnected");
+        self.disconnect(ctx);
     }
 }
 
@@ -192,7 +213,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChannelsClient {
                 let message: ClientMessage = match serde_json::from_str(&msg) {
                     Ok(c) => c,
                     Err(e) => {
-                        error!("WsSession Error: {}", e);
+                        error!("ChannelsClient Error: {}", e);
                         debug!("{:#?}", &msg);
                         return;
                     }
@@ -203,10 +224,35 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChannelsClient {
                         if let Some(access_token) = message.access_token {
                             self.access_token = Some(Arc::new(access_token));
                             if let Some(access_token) = &self.access_token {
-                                self.server_address.do_send(Identify {
-                                    access_token: access_token.clone(),
-                                    client: ctx.address(),
-                                });
+                                self.server_address
+                                    .send(Identify {
+                                        access_token: access_token.clone(),
+                                        client: ctx.address(),
+                                    })
+                                    .into_actor(self)
+                                    .then(|resp, act, ctx| {
+                                        match resp {
+                                            Ok(identified) => {
+                                                if identified {
+                                                    if let Some(handle) = act.reidentify_handle {
+                                                        ctx.cancel_future(handle);
+                                                        act.reidentify_handle = None;
+                                                    } else {
+                                                        ctx.text("Identified");
+                                                    }
+                                                } else {
+                                                    act.terminate(ctx);
+                                                }
+                                                act.identified = identified;
+                                            }
+                                            Err(e) => {
+                                                error!("ChannelsClient Identify Error: {}", e);
+                                                act.terminate(ctx);
+                                            }
+                                        }
+                                        return fut::ready(());
+                                    })
+                                    .wait(ctx);
                             } else {
                                 error!("This path should be unreachable!!!");
                                 error!("This path should be unreachable!!!");

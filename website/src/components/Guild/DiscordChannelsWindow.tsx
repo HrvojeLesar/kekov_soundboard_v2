@@ -1,6 +1,5 @@
 import {
     Box,
-    Center,
     createStyles,
     LoadingOverlay,
     Paper,
@@ -129,7 +128,7 @@ function DiscordChannel({ channel }: DiscordChannelProps) {
                                 user.avatar_hash,
                                 user.discriminator
                             )}
-                            alt={`${user?.username}'s profile image`}
+                            alt={`${user?.username}'s profile`}
                         />
                         {user.nickname ?? user.username}
                     </Box>
@@ -155,7 +154,7 @@ export default function DiscordChannelsWindow({
         if (isIdentified) {
             sendJsonMessage({ op: "Subscribe", guild_id: guildId });
         }
-    }, [guildId]);
+    }, [guildId, sendJsonMessage, isIdentified]);
 
     useEffect(() => {
         if (readyState === ReadyState.OPEN) {
@@ -164,17 +163,29 @@ export default function DiscordChannelsWindow({
                 access_token: cookies.access_token,
             });
         }
-    }, [readyState]);
+    }, [readyState, cookies.access_token, sendJsonMessage]);
 
     useEffect(() => {
-        if (lastMessage?.data === "Identified") {
-            setIsIdentified(true);
-            sendJsonMessage({ op: "Subscribe", guild_id: guildId });
+        switch (lastMessage?.data) {
+            case "Identified": {
+                setIsIdentified(true);
+                break;
+            }
+            case "Reidentify": {
+                sendJsonMessage({
+                    op: "Identify",
+                    access_token: cookies.access_token,
+                });
+                break;
+            }
         }
-    }, [lastMessage]);
+    }, [lastMessage, cookies.access_token, sendJsonMessage]);
 
     useEffect(() => {
-        if (lastJsonMessage === null) {
+        if (
+            lastJsonMessage === null ||
+            !(lastJsonMessage as ChannelsResponse)?.channels
+        ) {
             return;
         }
         let newChannels = lastJsonMessage as ChannelsResponse;

@@ -3,13 +3,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use actix::{
-    Actor, Addr, AsyncContext, Context, ContextFutureSpawner, Handler, Message, Supervised,
-    Supervisor, WrapFuture,
-};
+use actix::{Actor, Addr, Context, Handler, Message, ResponseFuture, Supervised, Supervisor};
 
 use actix_web::web::Data;
-use futures::FutureExt;
 use log::{debug, error, info};
 
 use crate::{
@@ -82,7 +78,7 @@ pub struct Update {
 pub struct CacheClearing {}
 
 #[derive(Message)]
-#[rtype(result = "()")]
+#[rtype(result = "bool")]
 pub struct Identify {
     pub client: Addr<ChannelsClient>,
     pub access_token: Arc<AccessToken>,
@@ -352,15 +348,15 @@ impl Handler<Update> for ChannelsServer {
 }
 
 impl Handler<Identify> for ChannelsServer {
-    type Result = ();
+    type Result = ResponseFuture<bool>;
 
-    fn handle(&mut self, msg: Identify, ctx: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, msg: Identify, _ctx: &mut Self::Context) -> Self::Result {
         debug!("Identify");
         let authorized_users_cache = self.authorized_users_cache.clone();
         let authorized_users_queue_cache = self.authorized_users_queue_cache.clone();
         let user_guilds_cache = self.user_guilds_cache.clone();
         let user_guilds_queue_cache = self.user_guilds_queue_cache.clone();
-        async move {
+        return Box::pin(async move {
             let access_token = msg.access_token;
             let authorized_user = match authorize_user(
                 access_token,
@@ -372,8 +368,7 @@ impl Handler<Identify> for ChannelsServer {
                 Ok(au) => au,
                 Err(e) => {
                     error!("ChannelsServer Identify Error (authorize_user): {}", e);
-                    msg.client.do_send(IdentifyResponse { success: false });
-                    return;
+                    return false;
                 }
             };
 
@@ -384,18 +379,16 @@ impl Handler<Identify> for ChannelsServer {
             )
             .await
             {
-                Ok(_) => msg.client.do_send(IdentifyResponse { success: true }),
+                Ok(_) => return true,
                 Err(e) => {
                     error!(
                         "ChannelsServer Identify Error (cache_authorized_user_guilds): {}",
                         e
                     );
-                    msg.client.do_send(IdentifyResponse { success: false });
+                    return false;
                 }
             }
-        }
-        .into_actor(self)
-        .spawn(ctx);
+        });
     }
 }
 

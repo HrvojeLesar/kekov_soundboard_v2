@@ -169,8 +169,7 @@ impl GuildFile {
                 is_deleted,
                 guild.id,
                 guild.name,
-                guild.icon,
-                guild.icon_hash,
+                guild.active,
                 guild.time_added as guild_time_added 
             FROM guild_file
             INNER JOIN guild ON id = guild_file.guild_id
@@ -190,8 +189,7 @@ impl GuildFile {
                 id: r.guild_id.into(),
                 name: r.name,
                 time_added: r.guild_time_added,
-                icon: None,
-                icon_hash: None,
+                active: r.active,
             })
             .collect();
         return Ok(guilds);

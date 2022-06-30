@@ -16,7 +16,10 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::{
-    models::ids::{GuildId, UserId},
+    models::{
+        guild::Guild,
+        ids::{GuildId, UserId},
+    },
     utils::cache::UserGuildsCache,
     ws::channels_server::{DisconnectSyncSession, InvalidateClient},
 };
@@ -194,9 +197,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for SyncSession {
             ws::Message::Text(msg) => {
                 let user_guilds_cache = Arc::clone(&self.user_guilds_cache);
                 let channels_server = self.channels_server.clone();
+                let pool = self.db_pool.clone();
                 async move {
-                    // TODO: remove user from cache on guild join/leave/kick/ban
-                    // TODO: do something similar when bot gets joined/kicked/banned
                     let message: SyncMessage = match serde_json::from_str(&msg) {
                         Ok(m) => m,
                         Err(e) => return error!("WsSync message error: {}", e),
@@ -215,7 +217,31 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for SyncSession {
                                 info!("Invalidating guilds cache");
                                 info!("Bot joined/left guild with id: {:?}", &id.0);
                                 user_guilds_cache.invalidate_all();
-                                channels_server.do_send(RemoveGuild { guild_id: id });
+                                channels_server.do_send(RemoveGuild { guild_id: id.clone() });
+                                let mut transaction = match pool.begin().await {
+                                    Ok(t) => t,
+                                    Err(e) => {
+                                        error!("Failed to start transaction: {}", e);
+                                        return;
+                                    }
+                                };
+                                match Guild::remove_guild(&id, &mut transaction).await {
+                                    Ok(_) => {}
+                                    Err(e) => {
+                                        error!(
+                                            "Failed to remove guild with id: [{}], error: {}",
+                                            &id.0, e
+                                            );
+                                        return;
+                                    }
+                                }
+                                match transaction.commit().await {
+                                    Ok(_) => info!("Finished deleting guild from database!"),
+                                    Err(e) => error!(
+                                        "Failed to commit transaction deleting database with id: [{}], error: {}",
+                                        &id.0, e
+                                        ),
+                                }
                             }
                         }
                         SyncOpCode::UpdateGuildChannels => {

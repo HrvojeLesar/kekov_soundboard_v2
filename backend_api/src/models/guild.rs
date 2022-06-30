@@ -10,9 +10,8 @@ use super::ids::GuildId;
 pub struct Guild {
     pub id: GuildId,
     pub name: String,
-    pub icon: Option<String>,
-    pub icon_hash: Option<String>,
     pub time_added: NaiveDateTime,
+    pub active: bool,
 }
 
 impl Guild {
@@ -23,7 +22,7 @@ impl Guild {
         match sqlx::query!(
             "
             SELECT * FROM guild
-            WHERE id = $1
+            WHERE id = $1 AND active = true
             ",
             id.0 as i64
         )
@@ -35,8 +34,7 @@ impl Guild {
                     id: r.id.into(),
                     name: r.name,
                     time_added: r.time_added,
-                    icon: None,
-                    icon_hash: None,
+                    active: r.active,
                 }));
             }
             None => return Ok(None),
@@ -52,6 +50,9 @@ impl Guild {
             "
             INSERT INTO guild (id, name)
             VALUES ($1, $2)
+            ON CONFLICT (id)
+            DO UPDATE
+            SET active = true
             RETURNING *
             ",
             id.0 as i64,
@@ -63,13 +64,12 @@ impl Guild {
         return Ok(Self {
             id: r.id.into(),
             name: r.name,
-            icon: None,
-            icon_hash: None,
             time_added: r.time_added,
+            active: r.active,
         });
     }
 
-    pub async fn get_existing_guilds(
+    pub async fn get_intercepting_user_and_bot_guilds(
         guilds: &[DiscordGuild],
         transaction: &mut Transaction<'_, Postgres>,
     ) -> Result<Vec<Self>, KekServerError> {
@@ -80,7 +80,7 @@ impl Guild {
         let records = sqlx::query!(
             "
             SELECT * FROM guild
-            WHERE id = ANY($1)
+            WHERE id = ANY($1) AND active = true
             ",
             &ids
         )
@@ -92,54 +92,69 @@ impl Guild {
                 id: r.id.into(),
                 name: r.name,
                 time_added: r.time_added,
-                icon: None,
-                icon_hash: None,
+                active: r.active
             })
             .collect::<Vec<Self>>();
         return Ok(guilds);
+    }
+
+    pub async fn remove_guild(
+        id: &GuildId,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Option<Self>, KekServerError> {
+        match sqlx::query!(
+            "
+            UPDATE guild
+            SET active = false
+            WHERE id = $1 AND active = true
+            RETURNING *
+            ",
+            id.0 as i64
+        )
+        .fetch_optional(&mut *transaction)
+        .await?
+        {
+            Some(r) => {
+                return Ok(Some(Self {
+                    id: r.id.into(),
+                    name: r.name,
+                    time_added: r.time_added,
+                    active: r.active,
+                }));
+            }
+            None => return Ok(None),
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use chrono::Utc;
     use sqlx::Connection;
     use uuid::Uuid;
 
     use crate::{
         database::tests_db_helper::db_connection,
         models::ids::GuildId,
-        utils::{cache::DiscordGuild, test_utils::insert_guild_test_util},
+        utils::{cache::DiscordGuild, test_utils::{insert_guild_test_util, self}},
     };
 
     use super::Guild;
 
     #[actix_web::test]
     async fn test_get_guild_from_id() {
-        let guild_id = GuildId(Uuid::new_v4().as_u128() as u64);
-        let now = Utc::now().naive_utc();
         let mut connection = db_connection().await;
         let mut transaction = connection.begin().await.unwrap();
-        sqlx::query!(
-            "
-            INSERT INTO guild (id, name, icon, icon_hash, time_added)
-            VALUES ($1, 'Test', 'icon', 'icon_hash', $2)
-            ",
-            guild_id.0 as i64,
-            now,
-        )
-        .execute(&mut transaction)
-        .await
-        .unwrap();
+        let inserted_guild = test_utils::insert_guild_test_util(&mut transaction).await;
 
-        let guild = Guild::get_guild_from_id(&guild_id, &mut transaction)
+        let guild = Guild::get_guild_from_id(&inserted_guild.id, &mut transaction)
             .await
             .unwrap()
             .unwrap();
         transaction.commit().await.unwrap();
 
-        assert_eq!(guild.id, guild_id);
-        assert_eq!(guild.time_added.timestamp(), now.timestamp());
+        assert_eq!(guild.id, inserted_guild.id);
+        assert_eq!(guild.time_added.timestamp(), inserted_guild.time_added.timestamp());
+        assert!(guild.active);
     }
 
     #[actix_web::test]
@@ -158,7 +173,7 @@ mod tests {
     }
 
     #[actix_web::test]
-    async fn test_get_existing_guilds() {
+    async fn test_get_intercepting_user_and_bot_guilds() {
         let mut connection = db_connection().await;
         let mut transaction = connection.begin().await.unwrap();
 
@@ -168,13 +183,13 @@ mod tests {
             let dguild = DiscordGuild {
                 id: guild.id,
                 name: guild.name,
-                icon: guild.icon,
-                icon_hash: guild.icon_hash,
+                icon: None,
+                icon_hash: None,
             };
             test_guilds.push(dguild);
         }
 
-        let guilds = Guild::get_existing_guilds(&test_guilds, &mut transaction)
+        let guilds = Guild::get_intercepting_user_and_bot_guilds(&test_guilds, &mut transaction)
             .await
             .unwrap();
         transaction.commit().await.unwrap();
@@ -183,5 +198,19 @@ mod tests {
             assert!(test_guilds.iter().find(|tg| &tg.id == &guild.id).is_some());
         }
         assert_eq!(test_guilds.len(), guilds.len());
+    }
+
+    #[actix_web::test]
+    async fn test_remove_guild() {
+        let mut connection = db_connection().await;
+        let mut transaction = connection.begin().await.unwrap();
+        let inserted_guild = test_utils::insert_guild_test_util(&mut transaction).await;
+        let guild = Guild::remove_guild(&inserted_guild.id, &mut transaction)
+            .await
+            .unwrap()
+            .unwrap();
+        transaction.commit().await.unwrap();
+        assert_eq!(guild.id, inserted_guild.id);
+        assert_ne!(guild.active, inserted_guild.active);
     }
 }

@@ -1,4 +1,4 @@
-use crate::{discord_client_config::DiscordClientConfig, models::guild::Guild};
+use crate::{discord_client_config::DiscordClientConfig, utils::cache::DiscordGuild};
 use oauth2::{
     basic::{
         BasicErrorResponse, BasicRevocationErrorResponse, BasicTokenIntrospectionResponse,
@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GuildTokenField {
-    pub guild: Option<Guild>,
+    pub guild: Option<DiscordGuild>,
 }
 
 impl ExtraTokenFields for GuildTokenField {}

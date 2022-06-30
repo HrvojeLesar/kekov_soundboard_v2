@@ -3,6 +3,7 @@ use actix_web::{
     web::{scope, Data, Json, Path, ServiceConfig},
     HttpResponse,
 };
+use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
@@ -17,7 +18,7 @@ use crate::{
     },
     utils::{
         auth::AuthorizedUserExt,
-        cache::{UserGuildsCache, UserGuildsCacheUtil},
+        cache::{UserGuildsCache, UserGuildsCacheUtil, DiscordGuild},
     },
 };
 
@@ -110,6 +111,13 @@ pub async fn delete_multiple_user_files(
         .json(serde_json::json!({ "count": deleted_files.len(), "files": deleted_files })));
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct UserGuilds {
+    #[serde(flatten)]
+    guild: DiscordGuild,
+    time_added: NaiveDateTime,
+}
+
 #[get("/guilds", wrap = "UserGuildsService")]
 pub async fn get_user_guilds(
     AuthorizedUserExt(authorized_user): AuthorizedUserExt,
@@ -119,24 +127,21 @@ pub async fn get_user_guilds(
     let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
     let mut transaction = db_pool.begin().await?;
-    let guilds = Guild::get_existing_guilds(&*user_guilds, &mut transaction).await?;
+    let guilds = Guild::get_intercepting_user_and_bot_guilds(&*user_guilds, &mut transaction).await?;
     transaction.commit().await?;
 
     let guilds = guilds
         .into_iter()
-        .map(|mut guild| {
+        .filter_map(|guild| {
             if let Some(g) = user_guilds.iter().find(|g| g.id == guild.id) {
-                guild = Guild {
-                    id: g.id.clone(),
-                    name: g.name.clone(),
+                return Some(UserGuilds {
+                    guild: g.clone(),
                     time_added: guild.time_added,
-                    icon: g.icon.clone(),
-                    icon_hash: g.icon_hash.clone(),
-                }
+                });
             }
-            return guild;
+            return None;
         })
-        .collect::<Vec<Guild>>();
+        .collect::<Vec<UserGuilds>>();
 
     return Ok(HttpResponse::Ok().json(guilds));
 }
@@ -157,7 +162,7 @@ pub async fn get_guilds_with_file(
     let user_guilds = UserGuildsCacheUtil::get_user_guilds(&authorized_user, &user_guilds_cache)?;
 
     let mut transaction = db_pool.begin().await?;
-    let guilds = Guild::get_existing_guilds(&*user_guilds, &mut transaction).await?;
+    let guilds = Guild::get_intercepting_user_and_bot_guilds(&*user_guilds, &mut transaction).await?;
     let guilds_with_file =
         GuildFile::get_matching_guilds_for_file(&guilds, &file_id, &mut transaction).await?;
     transaction.commit().await?;

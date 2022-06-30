@@ -1,0 +1,2 @@
+ALTER TABLE guild
+ALTER COLUMN active SET NOT NULL;

@@ -32,9 +32,8 @@ CREATE TABLE IF NOT EXISTS files (
 CREATE TABLE IF NOT EXISTS guild (
     id BIGINT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
-    icon VARCHAR(50),
-    icon_hash VARCHAR(50),
-    time_added timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+    time_added timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    active bool DEFAULT true NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS guild_file(

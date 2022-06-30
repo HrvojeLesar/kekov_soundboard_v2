@@ -13,6 +13,7 @@ import { DISCORD_CND_USER_AVATAR, WEBSOCKET_URL } from "../../api/ApiRoutes";
 import { LOADINGOVERLAY_ZINDEX, primaryShade } from "../../utils/utils";
 import { useCookies } from "react-cookie";
 import { COOKIE_NAMES } from "../../auth/AuthProvider";
+import { windowTitleOverflow } from "../../GlobalStyles";
 
 type DiscordChannelsWindowProps = {
     guildId: string;
@@ -102,6 +103,9 @@ const useStyle = createStyles((theme) => {
             borderRadius: "50%",
             width: 24,
             height: 24,
+        },
+        titleStyle: {
+            ...windowTitleOverflow,
         },
     };
 });
@@ -224,9 +228,16 @@ export default function DiscordChannelsWindow({
                 zIndex={LOADINGOVERLAY_ZINDEX}
                 visible={readyState === ReadyState.CONNECTING}
             />
-            <Title title="Quick enable files" order={3} pb="xs">
-                Live voice channel preview
-            </Title>
+            <Box>
+                <Title
+                    title="Live voice channel preview"
+                    order={3}
+                    pb="xs"
+                    className={classes.titleStyle}
+                >
+                    Live voice channel preview
+                </Title>
+            </Box>
             <ScrollArea>
                 {readyState !== ReadyState.CLOSED ? (
                     channels && channels.length > 0 ? (

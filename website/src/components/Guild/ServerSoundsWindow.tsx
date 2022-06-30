@@ -27,7 +27,10 @@ type ServerSoundsWindowProps = {
     guildFiles: GuildFile[];
     setGuildFiles: Dispatch<SetStateAction<GuildFile[]>>;
     classes: Record<
-        "serverSoundsPaper" | "scollAreaStyle" | "sideWindowsStyle",
+        | "serverSoundsPaper"
+        | "scollAreaStyle"
+        | "sideWindowsStyle"
+        | "titleStyle",
         string
     >;
     adminMode: boolean;
@@ -57,8 +60,9 @@ export default function ServerSoundsWindow({
             return guildFiles.filter((file) => {
                 if (file.sound_file.display_name) {
                     return (
-                        file.sound_file.display_name.toLowerCase().indexOf(filterTerm) !==
-                        -1
+                        file.sound_file.display_name
+                            .toLowerCase()
+                            .indexOf(filterTerm) !== -1
                     );
                 } else {
                     return false;
@@ -82,9 +86,16 @@ export default function ServerSoundsWindow({
                     visible={isUpdating}
                 />
                 <Group position="apart" direction="row">
-                    <Title title="Server sounds" order={3} pb="xs">
-                        Server sounds
-                    </Title>
+                    <Box>
+                        <Title
+                            title="Server sounds"
+                            order={3}
+                            pb="xs"
+                            className={classes.titleStyle}
+                        >
+                            Server sounds
+                        </Title>
+                    </Box>
                     <Button
                         onClick={() => {
                             toggleAdminMode();

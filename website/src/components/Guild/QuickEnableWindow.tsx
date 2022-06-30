@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { TbX } from "react-icons/tb";
 import { COOKIE_NAMES } from "../../auth/AuthProvider";
+import { windowTitleOverflow } from "../../GlobalStyles";
 import {
     ApiRequest,
     GuildFile,
@@ -31,6 +32,9 @@ const useStyle = createStyles((_theme) => {
             overflow: "hidden",
             flexGrow: 1,
             position: "relative",
+        },
+        titleStyle: {
+            ...windowTitleOverflow,
         },
     };
 });
@@ -165,9 +169,16 @@ export default function QuickEnableWindow({
                 zIndex={LOADINGOVERLAY_ZINDEX}
                 visible={isFetchingFiles}
             />
-            <Title title="Quick enable files" order={3} pb="xs">
-                Quick enable files
-            </Title>
+            <Box>
+                <Title
+                    title="Quick enable files"
+                    order={3}
+                    pb="xs"
+                    className={classes.titleStyle}
+                >
+                    Quick enable files
+                </Title>
+            </Box>
             <Box py="sm">
                 <SearchBar
                     filterCallback={(searchValue) => {

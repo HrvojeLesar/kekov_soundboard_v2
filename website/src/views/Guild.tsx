@@ -9,6 +9,7 @@ import ControlsWindow from "../components/Guild/ControlsWindow";
 import DiscordChannelsWindow from "../components/Guild/DiscordChannelsWindow";
 import QuickEnableWindow from "../components/Guild/QuickEnableWindow";
 import ServerSoundsWindow from "../components/Guild/ServerSoundsWindow";
+import { windowTitleOverflow } from "../GlobalStyles";
 import { ApiRequest, GuildFile } from "../utils/utils";
 
 export const guildMaximumWindowHeight: CSSProperties = {
@@ -41,6 +42,9 @@ const useStyles = createStyles((theme) => {
             justifyContent: "center",
             flexDirection: "column",
         },
+        titleStyle: {
+            ...windowTitleOverflow,
+        }
     };
 });
 

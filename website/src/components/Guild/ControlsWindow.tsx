@@ -1,4 +1,4 @@
-import { Button, createStyles, Group, Paper, Title, Text } from "@mantine/core";
+import { Button, createStyles, Group, Paper, Title, Text, Box } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useState } from "react";
 import { useCookies } from "react-cookie";
@@ -10,6 +10,7 @@ import {
     TbX,
 } from "react-icons/tb";
 import { COOKIE_NAMES } from "../../auth/AuthProvider";
+import { windowTitleOverflow } from "../../GlobalStyles";
 import {
     ApiRequest,
     convertClientErrorToString,
@@ -21,9 +22,7 @@ const useStyles = createStyles((_theme) => {
             width: "100%",
         },
         titleStyle: {
-            textOverflow: "ellipsis",
-            overflow: "hidden",
-            whiteSpace: "nowrap",
+            ...windowTitleOverflow,
         },
         buttonWidth: {
             width: "120px",
@@ -152,14 +151,16 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
 
     return (
         <Paper withBorder shadow="sm" p="sm" className={classes.paperStyle}>
-            <Title
-                order={3}
-                pb="xs"
-                title="Controls"
-                className={classes.titleStyle}
-            >
-                Controls
-            </Title>
+            <Box>
+                <Title
+                    order={3}
+                    pb="xs"
+                    title="Controls"
+                    className={classes.titleStyle}
+                >
+                    Controls
+                </Title>
+            </Box>
             <Group position="center">
                 <Button
                     title="Get Queue"

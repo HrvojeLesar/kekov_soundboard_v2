@@ -7,7 +7,7 @@ use std::{
 use actix_cors::Cors;
 use actix_web::{web::Data, App, HttpServer};
 use env::check_required_env_variables;
-use log::warn;
+use log::{info, warn, error};
 use routes::{not_found::not_found, routes_config, status::Status};
 
 use dotenv::dotenv;
@@ -18,7 +18,7 @@ use utils::cache::{
     create_user_guilds_middlware_queue_cache,
 };
 use ws::{
-    channels_server::ChannelsServer,
+    channels_server::{self, ChannelsServer},
     ws_server::{self, ControlsServer},
     ws_session::WsSessionCommChannels,
 };
@@ -96,17 +96,19 @@ async fn main() -> std::io::Result<()> {
     let controls_server_ref = controls_server.clone();
     let ugmq_ref = user_guilds_middleware_queue.clone();
     let amq_ref = auth_middleware_queue.clone();
+    let channels_server_ref = channels_server.clone();
     scheduler.run(std::time::Duration::from_secs(1), move || {
         let ws_channels_ref = ws_channels_ref.clone();
         let status_ref = status_ref.clone();
         let controls_server_ref = controls_server_ref.clone();
         let ugmq_ref = ugmq_ref.clone();
         let amq_ref = amq_ref.clone();
+        let channels_server_ref = channels_server_ref.clone();
         async move {
             let mut status = status_ref.write().await;
-            status.ws_channel_num = ws_channels_ref.read().await.len();
+            status.ws_control_message_channels = ws_channels_ref.read().await.len();
             match controls_server_ref.send(ws_server::Status {}).await {
-                Ok(n) => status.ws_clients_num = n,
+                Ok(n) => status.ws_control_clients = n,
                 Err(e) => {
                     warn!(
                         "Failed to fetch control server websocket status! Error: {}",
@@ -117,6 +119,60 @@ async fn main() -> std::io::Result<()> {
             {
                 status.auth_queue_cache = ugmq_ref.lock().unwrap().0.entry_count() as usize;
                 status.guilds_queue_cache = amq_ref.lock().unwrap().0.entry_count() as usize;
+            }
+            match channels_server_ref.send(channels_server::Status {}).await {
+                Ok(n) => {
+                    status.ws_sync_sessions = n.ws_sync_sessions;
+                    status.ws_guilds_cached = n.ws_guilds_cached;
+                    status.ws_active_connections = n.ws_active_connections;
+                    status.channels_server_cache_capacity = n.channels_server_cache_capacity;
+                }
+                Err(e) => {
+                    warn!(
+                        "Failed to fetch control server websocket status! Error: {}",
+                        e
+                    );
+                }
+            }
+        }
+    });
+
+    let pool_ref = pool.clone();
+    scheduler.run(std::time::Duration::from_secs(15 * 60), move || {
+        let pool_ref = pool_ref.clone();
+
+        info!("Deleting stale login states");
+
+        async move {
+            let mut transaction = match pool_ref.begin().await {
+                Ok(t) => t,
+                Err(e) => {
+                    error!("Failed to start a database transaction: {}", e);
+                    return;
+                }
+            };
+            match sqlx::query!(
+                "
+                DELETE FROM state
+                WHERE expires < CURRENT_TIMESTAMP
+                "
+            )
+            .execute(&mut transaction)
+            .await
+            {
+                Ok(_) => {},
+                Err(e) => {
+                    error!("Failed to delete stale state records: {}", e);
+                    return;
+                }
+            }
+
+            match transaction.commit().await {
+                Ok(_) => info!("Finished deleting stale state records"),
+                Err(e) => error!(
+                    "Failed to commit transaction deleting stale state records: {}",
+                    e
+                ),
             }
         }
     });

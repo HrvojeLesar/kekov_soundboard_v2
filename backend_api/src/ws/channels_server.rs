@@ -3,7 +3,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use actix::{Actor, Addr, Context, Handler, Message, ResponseFuture, Supervised, Supervisor};
+use actix::{
+    Actor, Addr, Context, Handler, Message, MessageResult, ResponseFuture, Supervised, Supervisor,
+};
 
 use actix_web::web::Data;
 use log::{debug, error, info};
@@ -36,6 +38,17 @@ type ChannelsServerCache = HashMap<
     ),
 >;
 
+pub struct ChannelsServerStatus {
+    pub ws_sync_sessions: usize,
+    pub ws_guilds_cached: usize,
+    pub ws_active_connections: usize,
+    pub channels_server_cache_capacity: usize,
+}
+
+#[derive(Message)]
+#[rtype(result = "ChannelsServerStatus")]
+pub struct Status;
+
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct ConnectSyncSession {
@@ -63,7 +76,7 @@ pub struct Subscribe {
 #[rtype(result = "()")]
 pub struct Unsubscribe {
     pub id: u128,
-    pub guild: Option<GuildId>,
+    pub guild: GuildId,
 }
 
 #[derive(Message)]
@@ -312,9 +325,7 @@ impl Handler<Unsubscribe> for ChannelsServer {
 
     fn handle(&mut self, msg: Unsubscribe, _ctx: &mut Self::Context) -> Self::Result {
         debug!("Unsubscribe");
-        if let Some(old) = &msg.guild {
-            self.remove_client(&msg.id, &old);
-        }
+        self.remove_client(&msg.id, &msg.guild);
     }
 }
 
@@ -407,5 +418,24 @@ impl Handler<InvalidateClient> for ChannelsServer {
     fn handle(&mut self, msg: InvalidateClient, _ctx: &mut Self::Context) -> Self::Result {
         debug!("InvalidateClient");
         self.invalidate_client(msg);
+    }
+}
+
+impl Handler<Status> for ChannelsServer {
+    type Result = MessageResult<Status>;
+
+    fn handle(&mut self, _msg: Status, _ctx: &mut Self::Context) -> Self::Result {
+        return MessageResult(ChannelsServerStatus {
+            ws_sync_sessions: self.sync_sessions.len(),
+            ws_guilds_cached: self.channels_cache.len(),
+            ws_active_connections: self
+                .channels_cache
+                .iter()
+                .map(|(_, clients)| {
+                    return clients.0.len();
+                })
+                .sum(),
+            channels_server_cache_capacity: self.channels_cache.capacity(),
+        });
     }
 }

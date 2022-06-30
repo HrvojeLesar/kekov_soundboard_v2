@@ -142,10 +142,12 @@ impl Actor for ChannelsClient {
 
     fn stopping(&mut self, _: &mut Self::Context) -> actix::Running {
         info!("Stopping channels client!");
-        self.server_address.do_send(Unsubscribe {
-            id: self.id,
-            guild: self.current_guild.clone(),
-        });
+        if let Some(current_guild) = self.current_guild.as_ref() {
+            self.server_address.do_send(Unsubscribe {
+                id: self.id,
+                guild: current_guild.clone(),
+            });
+        }
         return actix::Running::Stop;
     }
 }

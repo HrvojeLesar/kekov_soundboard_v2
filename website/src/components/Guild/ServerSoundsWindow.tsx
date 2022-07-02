@@ -149,7 +149,6 @@ export default function ServerSoundsWindow({
                     zIndex={MODAL_ZINDEX}
                     opened={isModalOpen}
                     withCloseButton={false}
-                    closeOnClickOutside={false}
                     closeOnEscape={false}
                     centered
                     onClose={() => setIsModalOpen(false)}

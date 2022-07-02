@@ -4,8 +4,11 @@ import {
     UnstyledButton,
     Text,
     createStyles,
+    LoadingOverlay,
+    Box,
 } from "@mantine/core";
-import { primaryShade } from "../../utils/utils";
+import { useState } from "react";
+import { LOADINGOVERLAY_ZINDEX, primaryShade } from "../../utils/utils";
 import { EnabledUserFile } from "./QuickEnableWindow";
 
 const useStyles = createStyles((theme, { checked }: { checked: boolean }) => {
@@ -15,7 +18,6 @@ const useStyles = createStyles((theme, { checked }: { checked: boolean }) => {
             alignItems: "center",
             width: "100%",
             transition: "background-color 150ms ease, border-color 150ms ease",
-            position: "relative",
             border: `1px solid ${
                 checked
                     ? theme.colors[theme.primaryColor][shade]
@@ -39,11 +41,14 @@ const useStyles = createStyles((theme, { checked }: { checked: boolean }) => {
             textOverflow: "ellipsis",
             overflow: "hidden",
         },
+        boxStyle: {
+            position: "relative",
+        },
     };
 });
 
 type QuickEnableCheckboxProps = {
-    onChange: (state: boolean, file: EnabledUserFile) => void;
+    onChange: (state: boolean, file: EnabledUserFile) => Promise<void>;
     file: EnabledUserFile;
 };
 
@@ -52,31 +57,41 @@ export default function QuickEnableCheckbox({
     file,
 }: QuickEnableCheckboxProps) {
     const { classes } = useStyles({ checked: file.enabled });
+    const [isLoading, setIsLoading] = useState(false);
 
     return (
-        <UnstyledButton
-            className={classes.button}
-            onClick={() => {
-                onChange(!file.enabled, file);
-            }}
-        >
-            <Group position="apart" className={classes.groupStyle} noWrap>
-                <Group>
-                    <Text
-                        title={file.sound_file.display_name}
-                        className={classes.textStyle}
-                        lineClamp={1}
-                    >
-                        {file.sound_file.display_name}
-                    </Text>
+        <Box className={classes.boxStyle}>
+            <LoadingOverlay
+                zIndex={LOADINGOVERLAY_ZINDEX}
+                visible={isLoading}
+            />
+            <UnstyledButton
+                className={classes.button}
+                onClick={() => {
+                    setIsLoading(true);
+                    onChange(!file.enabled, file).finally(() => {
+                        setIsLoading(false);
+                    });
+                }}
+            >
+                <Group position="apart" className={classes.groupStyle} noWrap>
+                    <Group>
+                        <Text
+                            title={file.sound_file.display_name}
+                            className={classes.textStyle}
+                            lineClamp={1}
+                        >
+                            {file.sound_file.display_name}
+                        </Text>
+                    </Group>
+                    <Checkbox
+                        checked={file.enabled}
+                        onChange={() => {}}
+                        tabIndex={-1}
+                        styles={{ input: { cursor: "pointer" } }}
+                    />
                 </Group>
-                <Checkbox
-                    checked={file.enabled}
-                    onChange={() => {}}
-                    tabIndex={-1}
-                    styles={{ input: { cursor: "pointer" } }}
-                />
-            </Group>
-        </UnstyledButton>
+            </UnstyledButton>
+        </Box>
     );
 }

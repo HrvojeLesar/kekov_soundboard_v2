@@ -96,6 +96,24 @@ namespace KekovBot.Control
                 try
                 {
                     voiceChannel = guild.GetChannel((ulong)msg.VoiceChannelId);
+
+                    if (voiceChannel.Type != ChannelType.Voice)
+                    {
+                        throw new Exception();
+                    }
+
+                    if (voiceChannel.Users.Count == 0)
+                    {
+                        throw new ChannelsEmptyException();
+                    }
+                }
+                catch (ChannelNotFoundException)
+                {
+                    throw;
+                }
+                catch (ChannelsEmptyException)
+                {
+                    throw;
                 }
                 catch (Exception)
                 {

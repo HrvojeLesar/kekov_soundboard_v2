@@ -94,9 +94,10 @@ const useStyles = createStyles((theme) => {
 type PlayControlProps = {
     file: GuildFile;
     guildId: string;
+    selectedChannelId: string | undefined;
 };
 
-export function PlayControl({ file, guildId }: PlayControlProps) {
+export function PlayControl({ file, guildId, selectedChannelId }: PlayControlProps) {
     const { classes } = useStyles();
     const [cookies] = useCookies(COOKIE_NAMES);
     const [isSendingReq, setIsSendingReq] = useState(false);
@@ -105,9 +106,11 @@ export function PlayControl({ file, guildId }: PlayControlProps) {
         if (cookies.access_token && guildId) {
             try {
                 setIsSendingReq(true);
+                console.log(selectedChannelId);
                 let payload: PlayPayload = {
                     guild_id: guildId,
                     file_id: fileId,
+                    channel_id: selectedChannelId,
                 };
                 const resp = await ApiRequest.controlsPlay(
                     payload,

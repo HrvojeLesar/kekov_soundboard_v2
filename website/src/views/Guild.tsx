@@ -1,7 +1,12 @@
 import { Box, createStyles, Grid, Paper, Title } from "@mantine/core";
 import { useDocumentTitle } from "@mantine/hooks";
 import axios, { AxiosError, CanceledError } from "axios";
-import { CSSProperties, useContext, useEffect, useState } from "react";
+import {
+    CSSProperties,
+    useContext,
+    useEffect,
+    useState,
+} from "react";
 import { useCookies } from "react-cookie";
 import { useParams } from "react-router-dom";
 import { AuthContext, COOKIE_NAMES } from "../auth/AuthProvider";
@@ -44,7 +49,7 @@ const useStyles = createStyles((theme) => {
         },
         titleStyle: {
             ...windowTitleOverflow,
-        }
+        },
     };
 });
 
@@ -60,7 +65,14 @@ export default function Guild() {
     const [adminMode, setAdminMode] = useState(false);
     const { classes } = useStyles();
     const [invalidServer, setInvalidServer] = useState(false);
-    useDocumentTitle(`KSv2 - ${guilds.find((g) => g.id === guildId)?.name}`);
+
+    const [selectedChannelId, setSelectedChannelId] = useState<
+        string | undefined
+    >(undefined);
+
+    useDocumentTitle(
+        `KSv2 - ${guilds.find((g) => g.id === guildId)?.name ?? ""}`
+    );
 
     const quickEnableFilesCallback = (file: GuildFile) => {
         const foundFile = guildFiles.find((f) => {
@@ -147,6 +159,7 @@ export default function Guild() {
                         guildFiles={guildFiles}
                         classes={classes}
                         setGuildFiles={setGuildFiles}
+                        selectedChannelId={selectedChannelId}
                     />
                 </Grid.Col>
                 <Grid.Col xs={3}>
@@ -155,7 +168,13 @@ export default function Guild() {
                     ) : (
                         <Box className={classes.sideWindowsStyle}>
                             <ControlsWindow guildId={guildId ?? "1"} />
-                            <DiscordChannelsWindow guildId={guildId ?? "1"} />
+                            <DiscordChannelsWindow
+                                guildId={guildId ?? "1"}
+                                selectChannelCallback={(channelId) => {
+                                    setSelectedChannelId(channelId);
+                                }}
+                                selectedChannelId={selectedChannelId}
+                            />
                             <QuickEnableWindow
                                 guildId={guildId ?? "1"}
                                 enableCallback={quickEnableFilesCallback}

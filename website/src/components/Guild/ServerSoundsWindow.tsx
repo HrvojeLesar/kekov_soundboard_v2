@@ -36,6 +36,7 @@ type ServerSoundsWindowProps = {
     adminMode: boolean;
     toggleAdminMode: () => void;
     isUpdating: boolean;
+    selectedChannelId: string | undefined;
 };
 
 export default function ServerSoundsWindow({
@@ -46,6 +47,7 @@ export default function ServerSoundsWindow({
     setGuildFiles,
     toggleAdminMode,
     isUpdating,
+    selectedChannelId,
 }: ServerSoundsWindowProps) {
     const [filterTerm, setFilterTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -121,6 +123,7 @@ export default function ServerSoundsWindow({
                                               key={file.file_id}
                                               file={file}
                                               guildId={guildId}
+                                              selectedChannelId={selectedChannelId}
                                           />
                                       );
                                   })

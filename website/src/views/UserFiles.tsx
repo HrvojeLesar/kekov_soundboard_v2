@@ -239,31 +239,37 @@ export default function UserFiles() {
                             p="sm"
                             className={classes.userFilesPaperStyle}
                         >
-                            <Title
-                                order={3}
-                                pb="xs"
-                                title={getEditTitle()}
-                                className={classes.userFilesTitleStyle}
-                            >
-                                {getEditTitle()}
-                            </Title>
-                            {/*TODO: Add delete, toggle public, private*/}
-                            {selectedFile !== undefined ? (
-                                <>
+                            <Group noWrap position="apart" pb="xs">
+                                <Title
+                                    order={3}
+                                    title={getEditTitle()}
+                                    className={classes.userFilesTitleStyle}
+                                >
+                                    {getEditTitle()}
+                                </Title>
+                                {selectedFile && (
                                     <DeleteFile
                                         deleteCallback={() =>
                                             deleteFile(selectedFile)
                                         }
                                         file={selectedFile}
                                     />
-                                    <Checkbox
-                                        label="Public"
-                                        checked={selectedFile.is_public}
-                                        onChange={() => {
-                                            toggleFileVisibility(selectedFile);
-                                        }}
-                                    />
-                                </>
+                                )}
+                            </Group>
+                            {/*TODO: Add delete, toggle public, private*/}
+                            {selectedFile !== undefined ? (
+                            <Group>
+                            <Text>
+                                Set file visibility: 
+                            </Text>
+                                <Checkbox
+                                    label="Public"
+                                    checked={selectedFile.is_public}
+                                    onChange={() => {
+                                        toggleFileVisibility(selectedFile);
+                                    }}
+                                />
+                            </Group>
                             ) : (
                                 "No file selected"
                             )}

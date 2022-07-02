@@ -123,7 +123,9 @@ export default function ServerSoundsWindow({
                                               key={file.file_id}
                                               file={file}
                                               guildId={guildId}
-                                              selectedChannelId={selectedChannelId}
+                                              selectedChannelId={
+                                                  selectedChannelId
+                                              }
                                           />
                                       );
                                   })
@@ -158,8 +160,9 @@ export default function ServerSoundsWindow({
                     title={lastClickedFile?.sound_file.display_name}
                     styles={{
                         title: {
-                            maxWidth: "15ch",
+                            overflow: "hidden",
                             textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
                         },
                     }}
                 >

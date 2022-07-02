@@ -25,8 +25,9 @@ export default function DeleteFile({ file, deleteCallback }: DeleteFileProps) {
                 title={file.display_name}
                 styles={{
                     title: {
-                        maxWidth: "15ch",
+                        whiteSpace: "nowrap",
                         textOverflow: "ellipsis",
+                        overflow: "hidden",
                     },
                 }}
             >

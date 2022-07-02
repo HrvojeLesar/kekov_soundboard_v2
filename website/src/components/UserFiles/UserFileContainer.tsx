@@ -5,12 +5,13 @@ import {
     UnstyledButton,
     createStyles,
 } from "@mantine/core";
+import { MdVolumeUp } from "react-icons/md";
 import { primaryShade, SoundFile } from "../../utils/utils";
 
 type UserFileContainerProps = {
     isSelected: boolean;
     file: SoundFile | SoundFile;
-    onClickCallback: (file: SoundFile | SoundFile ) => void;
+    onClickCallback: (file: SoundFile | SoundFile) => void;
 };
 
 const useStyles = createStyles(
@@ -63,10 +64,12 @@ const useStyles = createStyles(
             },
             unstyledButtonStyle: { width: "100%", height: "100%" },
             textStyle: {
-                maxWidth: "150px",
+                overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
-                overflow: "hidden",
+            },
+            iconStyle: {
+                flexShrink: 0,
             },
         };
     }
@@ -88,7 +91,8 @@ export default function SelectableFileContainer({
                     onClickCallback(file);
                 }}
             >
-                <Group spacing="sm">
+                <Group noWrap>
+                    <MdVolumeUp size={24} className={classes.iconStyle} />
                     <Text
                         className={classes.textStyle}
                         title={file.display_name}

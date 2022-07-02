@@ -59,8 +59,6 @@ const useStyles = createStyles((theme) => {
         textStyle: {
             textOverflow: "ellipsis",
             overflow: "hidden",
-            whiteSpace: "nowrap",
-            maxWidth: "19ch",
         },
     };
 });
@@ -152,7 +150,7 @@ export const FileUploadContainer = forwardRef<
 
     return (
         <Paper withBorder shadow="xs" p="sm" className={classes.paperStyle}>
-            <Group position="apart" mb="xs" className={classes.groupStyle}>
+            <Group position="apart" mb="xs" noWrap className={classes.groupStyle}>
                 <Text
                     lineClamp={1}
                     weight="bold"

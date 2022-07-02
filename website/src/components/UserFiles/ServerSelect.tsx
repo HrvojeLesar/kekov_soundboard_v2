@@ -18,6 +18,7 @@ import {
     LOADINGOVERLAY_ZINDEX,
     SoundFile,
 } from "../../utils/utils";
+import { userFilesMaximumWindowHeight } from "../../views/UserFiles";
 
 type ServerSelectProps = {
     file?: SoundFile;
@@ -32,6 +33,7 @@ const useStyle = createStyles((_theme) => {
             flexDirection: "column",
             overflow: "hidden",
             position: "relative",
+            height: "calc(100vh - 34px)",
         },
     };
 });

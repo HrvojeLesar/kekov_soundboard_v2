@@ -64,7 +64,6 @@ const useStyles = createStyles((theme, { checked }: { checked: boolean }) => {
             flexGrow: 1,
         },
         textStyle: {
-            maxWidth: "19ch",
             textOverflow: "ellipsis",
             overflow: "hidden",
         },

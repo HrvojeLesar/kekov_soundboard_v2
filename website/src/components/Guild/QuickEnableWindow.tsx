@@ -51,7 +51,6 @@ type QuickEnableWindowProps = {
 
 let abortController: AbortController | undefined = undefined;
 
-// TODO: add loading display for slow connections
 export default function QuickEnableWindow({
     guildId,
     enableCallback,
@@ -72,6 +71,14 @@ export default function QuickEnableWindow({
                     abortController,
                     cookies.access_token
                 );
+                console.log(data);
+                data.sort((a, b) => {
+                    return (
+                        Date.parse(a.sound_file.time_added) -
+                        Date.parse(b.sound_file.time_added)
+                    );
+                });
+                console.log(data);
                 setUserFiles(data);
                 setIsFetchingFiles(false);
             } catch (e) {

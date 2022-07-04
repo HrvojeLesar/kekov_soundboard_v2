@@ -85,6 +85,9 @@ export default function UserFiles() {
                 const { data } = await ApiRequest.getUserFiles(
                     cookies.access_token
                 );
+                data.sort((a, b) => {
+                    return Date.parse(a.time_added) - Date.parse(b.time_added);
+                });
                 setIsFetching(false);
                 setFiles(data);
             } catch (e) {
@@ -258,18 +261,16 @@ export default function UserFiles() {
                             </Group>
                             {/*TODO: Add delete, toggle public, private*/}
                             {selectedFile !== undefined ? (
-                            <Group>
-                            <Text>
-                                Set file visibility: 
-                            </Text>
-                                <Checkbox
-                                    label="Public"
-                                    checked={selectedFile.is_public}
-                                    onChange={() => {
-                                        toggleFileVisibility(selectedFile);
-                                    }}
-                                />
-                            </Group>
+                                <Group>
+                                    <Text>Set file visibility:</Text>
+                                    <Checkbox
+                                        label="Public"
+                                        checked={selectedFile.is_public}
+                                        onChange={() => {
+                                            toggleFileVisibility(selectedFile);
+                                        }}
+                                    />
+                                </Group>
                             ) : (
                                 "No file selected"
                             )}

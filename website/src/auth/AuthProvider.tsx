@@ -33,6 +33,7 @@ export type Guild = {
     name: string;
     icon?: string;
     icon_hash?: string;
+    time_added: string;
 };
 
 type AuthContextType = {
@@ -124,6 +125,9 @@ function AuthProvider({ children }: { children: ReactNode }) {
                 let { data } = await ApiRequest.fetchGuilds(
                     cookies.access_token
                 );
+                data.sort((a, b) => {
+                    return Date.parse(a.time_added) - Date.parse(b.time_added);
+                });
                 setIsFetchingGuilds(false);
                 setGuilds(data);
             }

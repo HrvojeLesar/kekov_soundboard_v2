@@ -1,6 +1,6 @@
 import {
+    ActionIcon,
     Box,
-    Button,
     Group,
     LoadingOverlay,
     Modal,
@@ -8,9 +8,13 @@ import {
     ScrollArea,
     Text,
     Title,
+    Tooltip,
+    UnstyledButton,
 } from "@mantine/core";
 import { Dispatch, SetStateAction, useState } from "react";
 import { useCookies } from "react-cookie";
+import { FaHatWizard } from "react-icons/fa";
+import { MdVolumeUp } from "react-icons/md";
 import { COOKIE_NAMES } from "../../auth/AuthProvider";
 import {
     ApiRequest,
@@ -30,7 +34,11 @@ type ServerSoundsWindowProps = {
         | "serverSoundsPaper"
         | "scollAreaStyle"
         | "sideWindowsStyle"
-        | "titleStyle",
+        | "titleStyle"
+        | "button"
+        | "unstyledButtonStyle"
+        | "textStyle"
+        | "iconStyle",
         string
     >;
     adminMode: boolean;
@@ -87,7 +95,7 @@ export default function ServerSoundsWindow({
                     zIndex={LOADINGOVERLAY_ZINDEX}
                     visible={isUpdating}
                 />
-                <Group position="apart" direction="row">
+                <Group position="apart" direction="row" noWrap>
                     <Box>
                         <Title
                             title="Server sounds"
@@ -98,13 +106,19 @@ export default function ServerSoundsWindow({
                             Server sounds
                         </Title>
                     </Box>
-                    <Button
-                        onClick={() => {
-                            toggleAdminMode();
-                        }}
+                    <Tooltip
+                        label="Toggle admin mode"
+                        position={adminMode ? "left" : undefined}
+                        withArrow
                     >
-                        Toggle admin mode...
-                    </Button>
+                        <ActionIcon
+                            onClick={() => {
+                                toggleAdminMode();
+                            }}
+                        >
+                            <FaHatWizard size={18} />
+                        </ActionIcon>
+                    </Tooltip>
                 </Group>
                 <Box py="sm">
                     <SearchBar
@@ -131,14 +145,51 @@ export default function ServerSoundsWindow({
                                   })
                                 : filterFiles().map((file) => {
                                       return (
-                                          <Button
-                                              onClick={() => {
-                                                  setLastClickedFile(file);
-                                                  setIsModalOpen(true);
-                                              }}
-                                          >
-                                              {file.sound_file.display_name}
-                                          </Button>
+                                          <>
+                                              <Paper
+                                                  withBorder
+                                                  shadow="xs"
+                                                  className={classes.button}
+                                              >
+                                                  <UnstyledButton
+                                                      p="sm"
+                                                      className={
+                                                          classes.unstyledButtonStyle
+                                                      }
+                                                      onClick={() => {
+                                                          setLastClickedFile(
+                                                              file
+                                                          );
+                                                          setIsModalOpen(true);
+                                                      }}
+                                                  >
+                                                      <Group noWrap>
+                                                          <MdVolumeUp
+                                                              size={24}
+                                                              className={
+                                                                  classes.iconStyle
+                                                              }
+                                                          />
+                                                          <Text
+                                                              className={
+                                                                  classes.textStyle
+                                                              }
+                                                              title={
+                                                                  file
+                                                                      .sound_file
+                                                                      .display_name
+                                                              }
+                                                          >
+                                                              {
+                                                                  file
+                                                                      .sound_file
+                                                                      .display_name
+                                                              }
+                                                          </Text>
+                                                      </Group>
+                                                  </UnstyledButton>
+                                              </Paper>
+                                          </>
                                       );
                                   })
                             : isUpdating && (

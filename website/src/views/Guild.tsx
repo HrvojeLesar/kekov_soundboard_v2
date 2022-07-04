@@ -1,12 +1,7 @@
 import { Box, createStyles, Grid, Paper, Title } from "@mantine/core";
 import { useDocumentTitle } from "@mantine/hooks";
 import axios, { AxiosError, CanceledError } from "axios";
-import {
-    CSSProperties,
-    useContext,
-    useEffect,
-    useState,
-} from "react";
+import { CSSProperties, useContext, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { useParams } from "react-router-dom";
 import { AuthContext, COOKIE_NAMES } from "../auth/AuthProvider";
@@ -15,13 +10,14 @@ import DiscordChannelsWindow from "../components/Guild/DiscordChannelsWindow";
 import QuickEnableWindow from "../components/Guild/QuickEnableWindow";
 import ServerSoundsWindow from "../components/Guild/ServerSoundsWindow";
 import { windowTitleOverflow } from "../GlobalStyles";
-import { ApiRequest, GuildFile } from "../utils/utils";
+import { ApiRequest, GuildFile, primaryShade } from "../utils/utils";
 
 export const guildMaximumWindowHeight: CSSProperties = {
     height: "calc(100vh - 34px)",
 };
 
 const useStyles = createStyles((theme) => {
+    const shade = primaryShade(theme);
     return {
         serverSoundsPaper: {
             display: "flex",
@@ -49,6 +45,47 @@ const useStyles = createStyles((theme) => {
         },
         titleStyle: {
             ...windowTitleOverflow,
+        },
+        button: {
+            width: "250px",
+            overflow: "hidden",
+            display: "flex",
+            alignItems: "center",
+            transition: "background-color 150ms ease, border-color 150ms ease",
+            border: `1px solid ${
+                    theme.colorScheme === "dark"
+                    ? theme.colors.dark[shade]
+                    : theme.colors.gray[shade]
+            }`,
+            borderRadius: theme.radius.sm,
+            padding: 0,
+            backgroundColor: 
+                theme.colorScheme === "dark"
+                ? theme.colors.dark[8]
+                : theme.white,
+
+            "&:hover": {
+                transition: "150ms ease",
+                backgroundColor:
+                    theme.colorScheme === "dark"
+                        ? theme.fn.rgba(
+                              theme.colors[theme.primaryColor][shade],
+                              0.3
+                          )
+                        : theme.fn.rgba(
+                              theme.colors[theme.primaryColor][shade],
+                              0.3
+                          ),
+            },
+        },
+        unstyledButtonStyle: { width: "100%", height: "100%" },
+        textStyle: {
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+        },
+        iconStyle: {
+            flexShrink: 0,
         },
     };
 });
@@ -150,7 +187,7 @@ export default function Guild() {
     ) : (
         <>
             <Grid>
-                <Grid.Col xs={9}>
+                <Grid.Col xs={!adminMode ? 9 : 12}>
                     <ServerSoundsWindow
                         isUpdating={isUpdating}
                         adminMode={adminMode}
@@ -162,10 +199,10 @@ export default function Guild() {
                         selectedChannelId={selectedChannelId}
                     />
                 </Grid.Col>
-                <Grid.Col xs={3}>
-                    {adminMode ? (
+                {adminMode ? (
                         <></>
                     ) : (
+                        <Grid.Col xs={3}>
                         <Box className={classes.sideWindowsStyle}>
                             <ControlsWindow guildId={guildId ?? "1"} />
                             <DiscordChannelsWindow
@@ -180,8 +217,8 @@ export default function Guild() {
                                 enableCallback={quickEnableFilesCallback}
                             />
                         </Box>
-                    )}
                 </Grid.Col>
+                )}
             </Grid>
         </>
     );

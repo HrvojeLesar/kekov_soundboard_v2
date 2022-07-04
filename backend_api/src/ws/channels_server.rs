@@ -4,7 +4,8 @@ use std::{
 };
 
 use actix::{
-    Actor, Addr, Context, Handler, Message, MessageResult, ResponseFuture, Supervised, Supervisor,
+    Actor, Addr, Context, Handler, Message, MessageResult, ResponseFuture,
+    Supervised, Supervisor,
 };
 
 use actix_web::web::Data;
@@ -68,7 +69,7 @@ pub struct Subscribe {
     pub id: u128,
     pub guild: GuildId,
     pub old_guild: Option<GuildId>,
-    pub access_token: Option<Arc<AccessToken>>,
+    pub access_token: Arc<AccessToken>,
     pub client: Addr<ChannelsClient>,
 }
 
@@ -254,12 +255,7 @@ impl Handler<Subscribe> for ChannelsServer {
             self.remove_client(&msg.id, &old);
         }
 
-        let access_token = match msg.access_token {
-            Some(at) => at,
-            None => return,
-        };
-
-        let authorized_user = match self.authorized_users_cache.get(&access_token) {
+        let authorized_user = match self.authorized_users_cache.get(&msg.access_token) {
             Some(au) => au,
             None => return,
         };

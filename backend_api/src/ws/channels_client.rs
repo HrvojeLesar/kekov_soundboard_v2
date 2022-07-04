@@ -112,13 +112,42 @@ impl ChannelsClient {
 
     fn subscribe(&self, guild_id: GuildId, ctx: &mut <Self as Actor>::Context) {
         if self.identified {
-            self.server_address.do_send(Subscribe {
-                id: self.id,
-                guild: guild_id,
-                old_guild: self.current_guild.clone(),
-                client: ctx.address(),
-                access_token: self.access_token.clone(),
-            });
+            if let Some(access_token) = &self.access_token {
+                self.server_address
+                    .send(Identify {
+                        access_token: access_token.clone(),
+                        client: ctx.address(),
+                    })
+                    .into_actor(self)
+                    .then(|resp, actor, context| {
+                        match resp {
+                            Ok(r) => {
+                                if r {
+                                    if let Some(access_token) = &actor.access_token {
+                                        actor.server_address.do_send(Subscribe {
+                                            id: actor.id,
+                                            guild: guild_id,
+                                            old_guild: actor.current_guild.clone(),
+                                            client: context.address(),
+                                            access_token: access_token.clone(),
+                                        });
+                                    } else {
+                                        error!("Client has no access_token set!");
+                                        actor.terminate(context);
+                                    }
+                                } else {
+                                    error!("Identify response returned as false!");
+                                }
+                            }
+                            Err(e) => {
+                                error!("Error identifying websocket user! Error: {}", e);
+                                actor.terminate(context);
+                            }
+                        }
+                        return fut::ready(());
+                    })
+                    .wait(ctx);
+            }
         }
     }
 

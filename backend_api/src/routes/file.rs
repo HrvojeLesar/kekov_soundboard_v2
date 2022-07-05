@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use actix_multipart::{Field, Multipart};
 use actix_web::{
     get, post,
-    web::{self, scope, Data, Query, ServiceConfig},
+    web::{self, scope, Data, Path, Query, ServiceConfig},
     HttpResponse,
 };
 use futures_util::TryStreamExt;

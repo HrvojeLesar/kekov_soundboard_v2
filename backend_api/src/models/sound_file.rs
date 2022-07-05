@@ -1,6 +1,6 @@
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{Postgres, Transaction};
+use sqlx::{Execute, Postgres, Transaction};
 
 use crate::error::errors::KekServerError;
 
@@ -25,6 +25,13 @@ pub struct SoundFile {
 pub struct SoundFilePartial {
     pub id: SoundFileId,
     pub display_name: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct FilesAndCount {
+    pub count: i64,
+    pub max: i64,
+    pub files: Vec<SoundFile>,
 }
 
 impl SoundFile {
@@ -221,7 +228,7 @@ impl SoundFile {
         limit: i64,
         page: i64,
         transaction: &mut Transaction<'_, Postgres>,
-    ) -> Result<Vec<Self>, KekServerError> {
+    ) -> Result<FilesAndCount, KekServerError> {
         let offset = if page < 1 { 0 } else { page - 1 };
         let records = sqlx::query!(
             "
@@ -235,6 +242,17 @@ impl SoundFile {
         .fetch_all(&mut *transaction)
         .await?;
 
+        let count = sqlx::query!(
+            "
+            SELECT COUNT(*) as count FROM files
+            WHERE is_public = true AND is_deleted = false
+            "
+        )
+        .fetch_one(&mut *transaction)
+        .await?
+        .count
+        .unwrap_or(0);
+
         let files = records
             .into_iter()
             .map(|r| Self {
@@ -246,7 +264,7 @@ impl SoundFile {
                 is_deleted: r.is_deleted.unwrap_or(false),
             })
             .collect();
-        return Ok(files);
+        return Ok(FilesAndCount { count, files, max: MAX_LIMIT });
     }
 }
 
@@ -482,22 +500,23 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(public_files_page_0, public_files_page_1);
-        assert_ne!(public_files_page_0, public_files_page_2);
-        assert_eq!(public_files_limit_100.len(), 100usize);
-        assert_eq!(public_files_over_max.len(), MAX_LIMIT as usize);
+        assert_eq!(public_files_page_0.files, public_files_page_1.files);
+        assert_ne!(public_files_page_0.files, public_files_page_2.files);
+        assert_eq!(public_files_limit_100.files.len(), 100usize);
+        assert_eq!(public_files_over_max.files.len(), MAX_LIMIT as usize);
 
-        assert_eq!(public_files_limit_100_page_2.len(), 100usize);
+        assert_eq!(public_files_limit_100_page_2.files.len(), 100usize);
         assert_eq!(
-            public_files_limit_100_page_2,
+            public_files_limit_100_page_2.files,
             public_files_page_1
                 .clone()
+                .files
                 .into_iter()
                 .skip(100)
                 .collect::<Vec<SoundFile>>()
         );
 
-        for pf in &public_files_page_0 {
+        for pf in &public_files_page_0.files {
             assert_eq!(pf.is_public, true);
             assert_eq!(pf.is_deleted, false);
         }

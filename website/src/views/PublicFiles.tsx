@@ -1,8 +1,10 @@
 import {
+    Center,
     createStyles,
     Grid,
     Group,
     LoadingOverlay,
+    Pagination,
     Paper,
     ScrollArea,
     Text,
@@ -11,6 +13,8 @@ import {
 import { useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { useQuery } from "react-query";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { URLSearchParams } from "url";
 import { COOKIE_NAMES } from "../auth/AuthProvider";
 import ServerSelect from "../components/UserFiles/ServerSelect";
 import SelectableFileContainer from "../components/UserFiles/UserFileContainer";
@@ -18,6 +22,7 @@ import {
     ApiRequest,
     LOADINGOVERLAY_ZINDEX,
     primaryShade,
+    PublicFiles as PublicFilesType,
     SoundFile,
 } from "../utils/utils";
 
@@ -90,40 +95,68 @@ const useStyle = createStyles(
     }
 );
 
+const getPageNumber = (initialPage: string | null) => {
+    const page = Number(initialPage ?? 1);
+    return page !== NaN ? page : 1;
+};
+
+let abortController: AbortController | undefined = undefined;
+
 export default function PublicFiles() {
     const [cookies] = useCookies(COOKIE_NAMES);
     const { classes } = useStyle({ isSelected: false });
-    const [files, setFiles] = useState<SoundFile[]>([]);
     const [selectedFile, setSelectedFile] = useState<SoundFile | undefined>(
         undefined
     );
+    const [total, setTotal] = useState(1);
+    const [searchParams, setSearchParams] = useSearchParams();
     const [isFetching, setIsFetching] = useState(true);
-
-    // const {
-    //     isLoading: isFetching,
-    //     data: files,
-    // } = useQuery(["files", "public"], async () => {
-    //     return (await ApiRequest.getPublicFiles(cookies.access_token)).data;
-    // });
+    const [publicFiles, setPublicFiles] = useState<PublicFilesType | undefined>(
+        undefined
+    );
 
     const fetchFiles = async () => {
         if (cookies.access_token) {
             try {
+                abortController = new AbortController();
                 const { data } = await ApiRequest.getPublicFiles(
-                    cookies.access_token
+                    searchParams.get("page"),
+                    searchParams.get("limit"),
+                    cookies.access_token,
+                    abortController
                 );
-                setIsFetching(false);
-                setFiles(data);
+                setPublicFiles(data);
             } catch (e) {
-                // TODO: Handle
                 console.log(e);
+            } finally {
+                setIsFetching(false);
             }
         }
     };
 
     useEffect(() => {
+        abortController?.abort();
+        setIsFetching(true);
         fetchFiles();
-    }, []);
+        setSelectedFile(undefined);
+    }, [searchParams.get("page")]);
+
+    useEffect(() => {
+        setTotal((old) => {
+            if (publicFiles === undefined) {
+                return old;
+            }
+            const paramsNumCalc = Number(searchParams.get("limit") ?? "NaN");
+            let limit = Number.isNaN(paramsNumCalc)
+                ? publicFiles
+                    ? publicFiles.max
+                    : 50
+                : paramsNumCalc > publicFiles.max
+                ? publicFiles.max
+                : paramsNumCalc;
+            return Math.ceil(publicFiles?.count / limit);
+        });
+    }, [publicFiles]);
 
     return (
         <Grid>
@@ -141,11 +174,11 @@ export default function PublicFiles() {
                         zIndex={LOADINGOVERLAY_ZINDEX}
                         visible={isFetching}
                     />
-                    <ScrollArea className={classes.scollAreaStyle}>
+                    <ScrollArea mb="xs" className={classes.scollAreaStyle}>
                         <Group>
-                            {files.length > 0
+                            {publicFiles && publicFiles.files.length > 0
                                 ? !isFetching &&
-                                  files.map((f) => {
+                                  publicFiles.files.map((f) => {
                                       return (
                                           <SelectableFileContainer
                                               key={f.id}
@@ -166,6 +199,30 @@ export default function PublicFiles() {
                                   )}
                         </Group>
                     </ScrollArea>
+                    <Center>
+                        <Pagination
+                            page={getPageNumber(searchParams.get("page"))}
+                            onChange={(page) => {
+                                if (
+                                    !searchParams.get("limit") ||
+                                    searchParams.get("limit")?.trim() === ""
+                                ) {
+                                    setSearchParams({
+                                        page: page.toString(),
+                                    });
+                                } else {
+                                    setSearchParams({
+                                        page: page.toString(),
+                                        limit:
+                                            searchParams.get("limit") ??
+                                            publicFiles?.max.toString() ??
+                                            "100",
+                                    });
+                                }
+                            }}
+                            total={total}
+                        />
+                    </Center>
                 </Paper>
             </Grid.Col>
             <Grid.Col xs={3}>

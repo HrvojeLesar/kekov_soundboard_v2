@@ -116,6 +116,7 @@ export default function BaseSidebarButton({ children, route, label }: Props) {
     const [isActive, setIsActive] = useState(false);
 
     useEffect(() => {
+        console.log(match);
         if (match != null) {
             setIsActive(true);
         } else {

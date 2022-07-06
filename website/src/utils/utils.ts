@@ -159,7 +159,7 @@ export type PublicFiles = {
     count: number;
     max: number;
     files: SoundFile[];
-}
+};
 
 export const ApiRequest = {
     revokeToken: (
@@ -360,15 +360,18 @@ export const ApiRequest = {
     getPublicFiles: (
         page: string | null,
         limit: string | null,
+        search_query: string | null,
         accessToken: string,
-        abortController: AbortController | undefined,
+        abortController: AbortController | undefined
     ): Promise<AxiosResponse<PublicFiles>> => {
         return axiosInstance.get(
-            `${FilesRoute.getPublic}?page=${page ?? "0"}${limit ? "&limit=" + limit : ""}`,
-                {
-                    ...authorizationHeaders(accessToken),
-                    signal: abortController?.signal,
-                }
+            `${FilesRoute.getPublic}?page=${page ?? "0"}${
+                limit ? "&limit=" + limit : ""
+            }${search_query ? "&search_query=" + search_query : ""}`,
+            {
+                ...authorizationHeaders(accessToken),
+                signal: abortController?.signal,
+            }
         );
     },
 };
@@ -377,6 +380,6 @@ export const primaryShade = (theme: MantineTheme): number => {
     return typeof theme.primaryShade === "number"
         ? theme.primaryShade
         : theme.colorScheme === "dark"
-            ? theme.primaryShade.dark
-            : theme.primaryShade.light;
+        ? theme.primaryShade.dark
+        : theme.primaryShade.light;
 };

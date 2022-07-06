@@ -3,7 +3,7 @@ use std::sync::Mutex;
 use actix_multipart::{Field, Multipart};
 use actix_web::{
     get, post,
-    web::{self, scope, Data, Path, Query, ServiceConfig},
+    web::{self, scope, Data, Query, ServiceConfig},
     HttpResponse,
 };
 use futures_util::TryStreamExt;
@@ -180,6 +180,7 @@ pub async fn upload_file(
 pub struct PublicFilesQueryParams {
     limit: Option<i64>,
     page: Option<i64>,
+    search_query: Option<String>,
 }
 
 #[get("/public")]
@@ -188,12 +189,23 @@ pub async fn get_public_files(
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
     let mut transaction = db_pool.begin().await?;
-    let files = SoundFile::get_public_files(
-        query.limit.unwrap_or(MAX_LIMIT),
-        query.page.unwrap_or(1),
-        &mut transaction,
-    )
-    .await?;
+    let files;
+    if let Some(search_query) = query.search_query {
+        files = SoundFile::get_public_files_search(
+            query.limit.unwrap_or(MAX_LIMIT),
+            query.page.unwrap_or(1),
+            search_query,
+            &mut transaction,
+        )
+        .await?;
+    } else {
+        files = SoundFile::get_public_files(
+            query.limit.unwrap_or(MAX_LIMIT),
+            query.page.unwrap_or(1),
+            &mut transaction,
+        )
+        .await?;
+    }
     transaction.commit().await?;
     return Ok(HttpResponse::Ok().json(files));
 }

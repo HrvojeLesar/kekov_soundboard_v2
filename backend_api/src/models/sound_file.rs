@@ -1,10 +1,10 @@
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{Execute, Postgres, Transaction};
+use sqlx::{Postgres, Transaction};
 
 use crate::error::errors::KekServerError;
 
-use super::ids::{SoundFileId, UserId};
+use super::{ids::{SoundFileId, UserId}, postgres_like_escape};
 
 pub const MAX_LIMIT: i64 = 200;
 
@@ -247,6 +247,58 @@ impl SoundFile {
             SELECT COUNT(*) as count FROM files
             WHERE is_public = true AND is_deleted = false
             "
+        )
+        .fetch_one(&mut *transaction)
+        .await?
+        .count
+        .unwrap_or(0);
+
+        let files = records
+            .into_iter()
+            .map(|r| Self {
+                id: SoundFileId(r.id as u64),
+                owner: r.owner.map(|o| UserId(o as u64)),
+                display_name: r.display_name,
+                time_added: r.time_added,
+                is_public: r.is_public.unwrap_or(true),
+                is_deleted: r.is_deleted.unwrap_or(false),
+            })
+            .collect();
+        return Ok(FilesAndCount { count, files, max: MAX_LIMIT });
+    }
+
+    pub async fn get_public_files_search(
+        limit: i64,
+        page: i64,
+        search: String,
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<FilesAndCount, KekServerError> {
+        let offset = if page < 1 { 0 } else { page - 1 };
+
+        let mut search = postgres_like_escape(search);
+        search.push('%');
+        search.insert(0, '%');
+
+        let records = sqlx::query!(
+            "
+            SELECT * FROM files
+            WHERE is_public = true AND is_deleted = false
+            AND display_name ILIKE $3
+            LIMIT $1 OFFSET $2
+            ",
+            if limit > MAX_LIMIT { MAX_LIMIT } else { limit },
+            limit * offset,
+            &search
+        )
+        .fetch_all(&mut *transaction)
+        .await?;
+        let count = sqlx::query!(
+            "
+            SELECT COUNT(*) as count FROM files
+            WHERE is_public = true AND is_deleted = false
+            AND display_name ILIKE $1
+            ",
+            &search
         )
         .fetch_one(&mut *transaction)
         .await?

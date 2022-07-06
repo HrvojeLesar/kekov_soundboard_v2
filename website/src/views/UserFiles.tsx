@@ -196,7 +196,7 @@ export default function UserFiles() {
                         </Title>
                         <Box py="sm">
                             <SearchBar
-                                filterCallback={(searchValue) => {
+                                onSearch={(searchValue) => {
                                     setSelectedFile(undefined);
                                     setFilterTerm(searchValue);
                                 }}

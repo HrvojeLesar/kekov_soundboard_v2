@@ -122,7 +122,7 @@ export default function ServerSoundsWindow({
                 </Group>
                 <Box py="sm">
                     <SearchBar
-                        filterCallback={(searchValue) => {
+                        onSearch={(searchValue) => {
                             setFilterTerm(searchValue);
                         }}
                     />

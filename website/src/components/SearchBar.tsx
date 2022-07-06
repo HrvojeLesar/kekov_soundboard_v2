@@ -1,23 +1,30 @@
 import { TextInput } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TbSearch } from "react-icons/tb";
 
 type SearchBarProps = {
-    filterCallback: (searchValue: string) => void;
+    onSearch: (searchValue: string) => void;
+    value?: string;
 };
 
-export default function SearchBar({ filterCallback }: SearchBarProps) {
-    const [searchValue, setSearchValue] = useState("");
+export default function SearchBar({ onSearch, value }: SearchBarProps) {
+    const [searchValue, setSearchValue] = useState(value ?? "");
+    const isMounted = useRef(false);
 
     useEffect(() => {
-        const filterDelay = setTimeout(() => {
-            filterCallback(searchValue.toLowerCase());
-        }, 200);
+        let filterDelay: NodeJS.Timeout;
+        if (isMounted.current) {
+            filterDelay = setTimeout(() => {
+                onSearch(searchValue.toLowerCase());
+            }, 200);
+        } else {
+            isMounted.current = true;
+        }
 
         return () => {
             clearTimeout(filterDelay);
         };
-    }, [searchValue]);
+    }, [searchValue, onSearch]);
 
     return (
         <TextInput

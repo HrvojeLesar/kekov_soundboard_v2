@@ -1,8 +1,6 @@
-import axios from "axios";
 import { useEffect } from "react";
 import { useCookies } from "react-cookie";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { API_URL, AuthRoute } from "./api/ApiRoutes";
 import { COOKIE_NAMES } from "./auth/AuthProvider";
 import { loginContainerUseStyle } from "./Login";
 import { ApiRequest, cookieOptions } from "./utils/utils";
@@ -39,7 +37,7 @@ function LoginCallback() {
             console.log(error_description);
             navigate("/", { replace: true });
         }
-    }, []);
+    }, [navigate, searchParams, setCookie]);
 
     return <div className={classes.loginContainer}>Logging you in...</div>;
 }

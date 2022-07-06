@@ -158,6 +158,8 @@ export default function Upload() {
     const theme = useMantineTheme();
     useDocumentTitle("KSv2 - Upload");
 
+    console.log("Upload");
+
     const addFiles = (selectedFiles: File[]) => {
         let newFiles = selectedFiles.map((file) => {
             return { id: uuidv4(), file: file };

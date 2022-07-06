@@ -193,8 +193,6 @@ pub async fn auth_callback(
                 .await?;
             }
 
-            // Adds guild to database
-            // TODO: If guild exists mark as active (if bot was previously in guild)
             if let Some(guild) = &access_token.extra_fields().guild {
                 Guild::insert_guild(&guild.id, &guild.name, &mut transaction).await?;
             }

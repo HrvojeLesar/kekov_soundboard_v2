@@ -71,8 +71,6 @@ impl State {
         oauth_client_url_fn: impl Fn(PkceCodeChallenge) -> (Url, CsrfToken),
     ) -> Result<(), KekServerError> {
         while sqlx::query!(
-            // TODO: Expire or cleanup old states
-            // Replace or update old state if key matches (csrf_token)
             "
             SELECT * FROM state
             WHERE csrf_token = $1

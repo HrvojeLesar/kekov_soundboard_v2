@@ -186,7 +186,7 @@ export default function QuickEnableWindow({
             </Box>
             <Box py="sm">
                 <SearchBar
-                    filterCallback={(searchValue) => {
+                    onSearch={(searchValue) => {
                         setFilterTerm(searchValue);
                     }}
                 />

@@ -1,4 +1,5 @@
 import {
+    Box,
     Center,
     createStyles,
     Grid,
@@ -10,12 +11,11 @@ import {
     Text,
     Title,
 } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
-import { useQuery } from "react-query";
-import { useLocation, useSearchParams } from "react-router-dom";
-import { URLSearchParams } from "url";
+import { useSearchParams } from "react-router-dom";
 import { COOKIE_NAMES } from "../auth/AuthProvider";
+import SearchBar from "../components/SearchBar";
 import ServerSelect from "../components/UserFiles/ServerSelect";
 import SelectableFileContainer from "../components/UserFiles/UserFileContainer";
 import {
@@ -47,41 +47,40 @@ const useStyle = createStyles(
                 alignItems: "center",
                 transition:
                     "background-color 150ms ease, border-color 150ms ease",
-                border: `1px solid ${
-                    isSelected
-                        ? theme.colors[theme.primaryColor][shade]
-                        : theme.colorScheme === "dark"
+                border: `1px solid ${isSelected
+                    ? theme.colors[theme.primaryColor][shade]
+                    : theme.colorScheme === "dark"
                         ? theme.colors.dark[shade]
                         : theme.colors.gray[shade]
-                }`,
+                    }`,
                 borderRadius: theme.radius.sm,
                 padding: 0,
                 backgroundColor: isSelected
                     ? theme.colorScheme === "dark"
                         ? theme.fn.rgba(
-                              theme.colors[theme.primaryColor][shade],
-                              0.3
-                          )
+                            theme.colors[theme.primaryColor][shade],
+                            0.3
+                        )
                         : theme.fn.rgba(
-                              theme.colors[theme.primaryColor][shade],
-                              0.3
-                          )
+                            theme.colors[theme.primaryColor][shade],
+                            0.3
+                        )
                     : theme.colorScheme === "dark"
-                    ? theme.colors.dark[8]
-                    : theme.white,
+                        ? theme.colors.dark[8]
+                        : theme.white,
 
                 "&:hover": {
                     transition: "150ms ease",
                     backgroundColor:
                         theme.colorScheme === "dark"
                             ? theme.fn.rgba(
-                                  theme.colors[theme.primaryColor][shade],
-                                  0.3
-                              )
+                                theme.colors[theme.primaryColor][shade],
+                                0.3
+                            )
                             : theme.fn.rgba(
-                                  theme.colors[theme.primaryColor][shade],
-                                  0.3
-                              ),
+                                theme.colors[theme.primaryColor][shade],
+                                0.3
+                            ),
                 },
             },
             unstyledButtonStyle: { width: "100%", height: "100%" },
@@ -97,7 +96,7 @@ const useStyle = createStyles(
 
 const getPageNumber = (initialPage: string | null) => {
     const page = Number(initialPage ?? 1);
-    return page !== NaN ? page : 1;
+    return !Number.isNaN(page) ? page : 1;
 };
 
 let abortController: AbortController | undefined = undefined;
@@ -115,48 +114,63 @@ export default function PublicFiles() {
         undefined
     );
 
-    const fetchFiles = async () => {
-        if (cookies.access_token) {
-            try {
-                abortController = new AbortController();
-                const { data } = await ApiRequest.getPublicFiles(
-                    searchParams.get("page"),
-                    searchParams.get("limit"),
-                    cookies.access_token,
-                    abortController
-                );
-                setPublicFiles(data);
-            } catch (e) {
-                console.log(e);
-            } finally {
-                setIsFetching(false);
-            }
-        }
-    };
+    const paramsPage = searchParams.get("page");
+    const paramsLimit = searchParams.get("limit");
+    const paramsSearchQuery = searchParams.get("search_query");
+
+    const handleSearch = useCallback((search: string) => {
+        searchParams.set("page", "1");
+        searchParams.set("search_query", search);
+        setSearchParams(searchParams);
+    }, [searchParams, setSearchParams]);
 
     useEffect(() => {
+        const fetchFiles = async () => {
+            if (cookies.access_token) {
+                try {
+                    abortController = new AbortController();
+                    const { data } = await ApiRequest.getPublicFiles(
+                        paramsPage,
+                        paramsLimit,
+                        paramsSearchQuery,
+                        cookies.access_token,
+                        abortController
+                    );
+                    setPublicFiles(data);
+                } catch (e) {
+                    console.log(e);
+                } finally {
+                    setIsFetching(false);
+                }
+            }
+        };
         abortController?.abort();
         setIsFetching(true);
         fetchFiles();
         setSelectedFile(undefined);
-    }, [searchParams.get("page")]);
+    }, [
+        cookies.access_token,
+        paramsPage,
+        paramsLimit,
+        paramsSearchQuery
+    ]);
 
     useEffect(() => {
         setTotal((old) => {
             if (publicFiles === undefined) {
                 return old;
             }
-            const paramsNumCalc = Number(searchParams.get("limit") ?? "NaN");
+            const paramsNumCalc = Number(paramsLimit ?? "NaN");
             let limit = Number.isNaN(paramsNumCalc)
                 ? publicFiles
                     ? publicFiles.max
                     : 50
                 : paramsNumCalc > publicFiles.max
-                ? publicFiles.max
-                : paramsNumCalc;
+                    ? publicFiles.max
+                    : paramsNumCalc;
             return Math.ceil(publicFiles?.count / limit);
         });
-    }, [publicFiles]);
+    }, [publicFiles, paramsLimit]);
 
     return (
         <Grid>
@@ -174,51 +188,43 @@ export default function PublicFiles() {
                         zIndex={LOADINGOVERLAY_ZINDEX}
                         visible={isFetching}
                     />
+                    <Box py="sm">
+                        <SearchBar
+                            onSearch={handleSearch}
+                            value={paramsSearchQuery ?? ""}
+                        />
+                    </Box>
                     <ScrollArea mb="xs" className={classes.scollAreaStyle}>
                         <Group>
                             {publicFiles && publicFiles.files.length > 0
                                 ? !isFetching &&
-                                  publicFiles.files.map((f) => {
-                                      return (
-                                          <SelectableFileContainer
-                                              key={f.id}
-                                              file={f}
-                                              isSelected={
-                                                  selectedFile?.id === f.id
-                                              }
-                                              onClickCallback={(f) => {
-                                                  setSelectedFile(f);
-                                              }}
-                                          />
-                                      );
-                                  })
+                                publicFiles.files.map((f) => {
+                                    return (
+                                        <SelectableFileContainer
+                                            key={f.id}
+                                            file={f}
+                                            isSelected={
+                                                selectedFile?.id === f.id
+                                            }
+                                            onClickCallback={(f) => {
+                                                setSelectedFile(f);
+                                            }}
+                                        />
+                                    );
+                                })
                                 : !isFetching && (
-                                      <Text size="xl" weight="bold">
-                                          There is no public sounds.
-                                      </Text>
-                                  )}
+                                    <Text size="xl" weight="bold">
+                                        There is no public sounds.
+                                    </Text>
+                                )}
                         </Group>
                     </ScrollArea>
                     <Center>
                         <Pagination
-                            page={getPageNumber(searchParams.get("page"))}
+                            page={getPageNumber(paramsPage)}
                             onChange={(page) => {
-                                if (
-                                    !searchParams.get("limit") ||
-                                    searchParams.get("limit")?.trim() === ""
-                                ) {
-                                    setSearchParams({
-                                        page: page.toString(),
-                                    });
-                                } else {
-                                    setSearchParams({
-                                        page: page.toString(),
-                                        limit:
-                                            searchParams.get("limit") ??
-                                            publicFiles?.max.toString() ??
-                                            "100",
-                                    });
-                                }
+                                searchParams.set("page", page.toString());
+                                setSearchParams(searchParams);
                             }}
                             total={total}
                         />

@@ -18,7 +18,6 @@ import {
     LOADINGOVERLAY_ZINDEX,
     SoundFile,
 } from "../../utils/utils";
-import { userFilesMaximumWindowHeight } from "../../views/UserFiles";
 
 type ServerSelectProps = {
     file?: SoundFile;
@@ -48,50 +47,50 @@ export default function ServerSelect({ file }: ServerSelectProps) {
 
     const { classes } = useStyle();
 
-    const fetchGuilds = async () => {
-        if (cookies.access_token && file) {
-            try {
-                abortController = new AbortController();
-                const { data } = await ApiRequest.fetchGuildsWithFile(
-                    file.id,
-                    abortController,
-                    cookies.access_token
-                );
-                setGuilds(
-                    data.map((guild) => {
-                        const globalGuild = globalGuilds.find(
-                            (g) => g.id === guild.guild.id
-                        );
-                        if (globalGuild) {
-                            guild.guild.icon = globalGuild.icon;
-                            guild.guild.icon_hash = globalGuild.icon_hash;
-                        }
-                        return guild;
-                    })
-                );
-                setIsFetchingGuilds(false);
-            } catch (e) {
-                // TODO: Handle
-                if (e instanceof CanceledError) {
-                    return;
-                } else {
+    useEffect(() => {
+        const fetchGuilds = async () => {
+            if (cookies.access_token && file) {
+                try {
+                    abortController = new AbortController();
+                    const { data } = await ApiRequest.fetchGuildsWithFile(
+                        file.id,
+                        abortController,
+                        cookies.access_token
+                    );
+                    setGuilds(
+                        data.map((guild) => {
+                            const globalGuild = globalGuilds.find(
+                                (g) => g.id === guild.guild.id
+                            );
+                            if (globalGuild) {
+                                guild.guild.icon = globalGuild.icon;
+                                guild.guild.icon_hash = globalGuild.icon_hash;
+                            }
+                            return guild;
+                        })
+                    );
                     setIsFetchingGuilds(false);
+                } catch (e) {
+                    // TODO: Handle
+                    if (e instanceof CanceledError) {
+                        return;
+                    } else {
+                        setIsFetchingGuilds(false);
+                    }
                 }
             }
-        }
-    };
+        };
 
-    const handleFetch = async () => {
-        abortController?.abort();
-        setIsFetchingGuilds(true);
-        await fetchGuilds();
-    };
+        const handleFetch = async () => {
+            abortController?.abort();
+            setIsFetchingGuilds(true);
+            await fetchGuilds();
+        };
 
-    useEffect(() => {
         if (file) {
             handleFetch();
         }
-    }, [file]);
+    }, [file, cookies.access_token, globalGuilds]);
 
     return (
         <Paper

@@ -1,5 +1,4 @@
-import { CSSObject, MantineTheme } from "@mantine/core";
-import { primaryShade } from "./utils/utils";
+import { CSSObject } from "@mantine/core";
 
 export const windowTitleOverflow: CSSObject = {
     overflow: "hidden",

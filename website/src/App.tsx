@@ -90,7 +90,6 @@ export default function App() {
                                             path="/"
                                             element={<Paper>Landing page</Paper>}
                                         />
-                                        {/* TODO: check if route is valid, guild exists, user is in guild... */}
                                         <Route
                                             path="/guilds/:guildId"
                                             element={<Guild />}

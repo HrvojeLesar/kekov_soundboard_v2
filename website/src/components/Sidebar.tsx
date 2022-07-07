@@ -139,7 +139,6 @@ export default function Sidebar() {
                 mx="-xs"
             >
                 <Group direction="column" align="center" spacing="xs">
-                    {/*TODO: Handle a situation when there is no guilds to show*/}
                     {!isFetchingGuilds ? (
                         guilds.length > 0 ? (
                             guilds.map((guild) => {

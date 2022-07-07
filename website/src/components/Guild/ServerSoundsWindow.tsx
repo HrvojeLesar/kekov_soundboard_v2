@@ -112,6 +112,7 @@ export default function ServerSoundsWindow({
                         withArrow
                     >
                         <ActionIcon
+                            pb="xs"
                             onClick={() => {
                                 toggleAdminMode();
                             }}

@@ -1,4 +1,4 @@
-import { Button, createStyles, Group, Paper, Title, Text, Box } from "@mantine/core";
+import { Button, createStyles, Group, Paper, Title, Box } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { useState } from "react";
 import { useCookies } from "react-cookie";
@@ -15,7 +15,9 @@ import {
     ApiRequest,
     convertClientErrorToString,
     PlayOpCodeEnum,
+    QueueReponse,
 } from "../../utils/utils";
+import Queue from "../Queue";
 const useStyles = createStyles((_theme) => {
     return {
         paperStyle: {
@@ -39,36 +41,25 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
     const [isQueueLoading, setIsQueueLoading] = useState(false);
     const [isSkipLoading, setIsSkipLoading] = useState(false);
     const [isStopLoading, setIsStopLoading] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [queueData, setQueueData] = useState<QueueReponse[]>([]);
     const { classes } = useStyles();
 
-    // WARN: A longer queue can overflow out of element
     const handleGetQueue = () => {
         setIsQueueLoading(true);
         ApiRequest.controlsGetQueue(guildId, cookies.access_token)
             .then(({ data }) => {
-                showNotification({
-                    title: "Queue",
-                    message:
-                        data.length === 0
-                            ? "Queue is empty!"
-                            : data.map((q, index) => {
-                                  return index === 0 ? (
-                                      <Text weight="bold" key={index}>
-                                          Currently playing:
-                                          <Text
-                                              weight={500}
-                                              component="span"
-                                          >{` ${q.display_name}`}</Text>
-                                      </Text>
-                                  ) : (
-                                      <Text
-                                          key={index}
-                                      >{`${index}. ${q.display_name}`}</Text>
-                                  );
-                              }),
-                    autoClose: 5000,
-                    color: "green",
-                });
+                if (data.length === 0) {
+                    showNotification({
+                        title: "Queue",
+                        message: "Queue is empty!",
+                        autoClose: 3000,
+                        color: "green",
+                    });
+                } else {
+                    setQueueData(data);
+                    setIsModalOpen(true);
+                }
             })
             .catch((e) => {
                 showNotification({
@@ -151,6 +142,11 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
 
     return (
         <Paper withBorder shadow="sm" p="sm" className={classes.paperStyle}>
+            <Queue
+                isModalOpen={isModalOpen}
+                setIsModalOpen={setIsModalOpen}
+                queueData={queueData}
+            />
             <Box>
                 <Title
                     order={3}

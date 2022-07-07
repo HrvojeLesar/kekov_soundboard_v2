@@ -39,7 +39,7 @@ export const baseSidebarButtonStyle = (theme: MantineTheme): CSSObject => {
 
 export const baseSidebarButtonStyles = createStyles(
     (theme, _params, getRef) => {
-        const shade = primaryShade(theme);
+        // const shade = primaryShade(theme);
         return {
             baseLinkButton: {
                 ref: getRef("baseLinkButton"),

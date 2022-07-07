@@ -79,24 +79,6 @@ export default function UserFiles() {
     const { classes } = useStyle();
     useDocumentTitle("KSv2 - Your files");
 
-    const fetchFiles = async () => {
-        if (cookies.access_token) {
-            try {
-                const { data } = await ApiRequest.getUserFiles(
-                    cookies.access_token
-                );
-                data.sort((a, b) => {
-                    return Date.parse(a.time_added) - Date.parse(b.time_added);
-                });
-                setIsFetching(false);
-                setFiles(data);
-            } catch (e) {
-                // TODO: Handle
-                console.log(e);
-            }
-        }
-    };
-
     const getEditTitle = () => {
         return selectedFile !== undefined
             ? `Edit: ${selectedFile.display_name}`
@@ -174,8 +156,28 @@ export default function UserFiles() {
     };
 
     useEffect(() => {
+        const fetchFiles = async () => {
+            if (cookies.access_token) {
+                try {
+                    const { data } = await ApiRequest.getUserFiles(
+                        cookies.access_token
+                    );
+                    data.sort((a, b) => {
+                        return (
+                            Date.parse(a.time_added) - Date.parse(b.time_added)
+                        );
+                    });
+                    setIsFetching(false);
+                    setFiles(data);
+                } catch (e) {
+                    // TODO: Handle
+                    console.log(e);
+                }
+            }
+        };
+
         fetchFiles();
-    }, []);
+    }, [cookies.access_token]);
 
     useEffect(() => {
         abortController?.abort();
@@ -259,7 +261,6 @@ export default function UserFiles() {
                                     />
                                 )}
                             </Group>
-                            {/*TODO: Add delete, toggle public, private*/}
                             {selectedFile !== undefined ? (
                                 <Group>
                                     <Text>Set file visibility:</Text>

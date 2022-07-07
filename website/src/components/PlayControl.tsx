@@ -1,8 +1,6 @@
 import {
     Text,
     createStyles,
-    CSSObject,
-    MantineTheme,
     Paper,
     UnstyledButton,
     LoadingOverlay,
@@ -21,26 +19,6 @@ import {
     PlayPayload,
     primaryShade,
 } from "../utils/utils";
-
-const playButtonStyle = (theme: MantineTheme): CSSObject => ({
-    width: "50px",
-    height: "50px",
-    borderRadius: "50%",
-    display: "flex",
-    textAlign: "center",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: theme.colors.blue[6],
-    color: theme.colors.gray[0],
-
-    "&:hover": {
-        backgroundColor: theme.colors.blue[7],
-    },
-
-    "&:active": {
-        transform: "translateY(1px)",
-    },
-});
 
 const useStyles = createStyles((theme) => {
     const shade = primaryShade(theme);

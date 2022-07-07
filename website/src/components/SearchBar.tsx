@@ -24,7 +24,7 @@ export default function SearchBar({ onSearch, value }: SearchBarProps) {
         return () => {
             clearTimeout(filterDelay);
         };
-    }, [searchValue]);
+    }, [searchValue, onSearch]);
 
     return (
         <TextInput

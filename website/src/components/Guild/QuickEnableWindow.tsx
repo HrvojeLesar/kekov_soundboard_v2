@@ -9,7 +9,7 @@ import {
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { CanceledError } from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { TbX } from "react-icons/tb";
 import { COOKIE_NAMES } from "../../auth/AuthProvider";
@@ -62,34 +62,12 @@ export default function QuickEnableWindow({
 
     const { classes } = useStyle();
 
-    const fetchUserFiles = async () => {
-        if (cookies.access_token) {
-            try {
-                abortController = new AbortController();
-                const { data } = await ApiRequest.fetchEnabledUserFiles(
-                    guildId,
-                    abortController,
-                    cookies.access_token
-                );
-                data.sort((a, b) => {
-                    return (
-                        Date.parse(a.sound_file.time_added) -
-                        Date.parse(b.sound_file.time_added)
-                    );
-                });
-                setUserFiles(data);
-                setIsFetchingFiles(false);
-            } catch (e) {
-                // TODO: Handle
-                console.log(e);
-                if (e instanceof CanceledError) {
-                    return;
-                } else {
-                    setIsFetchingFiles(false);
-                }
-            }
-        }
-    };
+    const handleSearch = useCallback(
+        (searchValue: string) => {
+            setFilterTerm(searchValue);
+        },
+        [setFilterTerm]
+    );
 
     const handleToggle = async (state: boolean, file: EnabledUserFile) => {
         const foundFile = userFiles.find((f) => {
@@ -158,10 +136,39 @@ export default function QuickEnableWindow({
     };
 
     useEffect(() => {
+        const fetchUserFiles = async () => {
+            if (cookies.access_token) {
+                try {
+                    abortController = new AbortController();
+                    const { data } = await ApiRequest.fetchEnabledUserFiles(
+                        guildId,
+                        abortController,
+                        cookies.access_token
+                    );
+                    data.sort((a, b) => {
+                        return (
+                            Date.parse(a.sound_file.time_added) -
+                            Date.parse(b.sound_file.time_added)
+                        );
+                    });
+                    setUserFiles(data);
+                    setIsFetchingFiles(false);
+                } catch (e) {
+                    // TODO: Handle
+                    console.log(e);
+                    if (e instanceof CanceledError) {
+                        return;
+                    } else {
+                        setIsFetchingFiles(false);
+                    }
+                }
+            }
+        };
+
         abortController?.abort();
         setIsFetchingFiles(true);
         fetchUserFiles();
-    }, [guildId]);
+    }, [guildId, cookies.access_token]);
 
     return (
         <Paper
@@ -185,11 +192,7 @@ export default function QuickEnableWindow({
                 </Title>
             </Box>
             <Box py="sm">
-                <SearchBar
-                    onSearch={(searchValue) => {
-                        setFilterTerm(searchValue);
-                    }}
-                />
+                <SearchBar onSearch={handleSearch} />
             </Box>
             <ScrollArea>
                 {userFiles.length > 0

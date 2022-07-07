@@ -11,7 +11,7 @@ import {
     Tooltip,
     UnstyledButton,
 } from "@mantine/core";
-import { Dispatch, SetStateAction, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useState } from "react";
 import { useCookies } from "react-cookie";
 import { FaHatWizard } from "react-icons/fa";
 import { MdVolumeUp } from "react-icons/md";
@@ -64,6 +64,13 @@ export default function ServerSoundsWindow({
     >(undefined);
 
     const [cookies] = useCookies(COOKIE_NAMES);
+
+    const handleSearch = useCallback(
+        (searchValue: string) => {
+            setFilterTerm(searchValue);
+        },
+        [setFilterTerm]
+    );
 
     const filterFiles = () => {
         if (filterTerm !== "") {
@@ -122,11 +129,7 @@ export default function ServerSoundsWindow({
                     </Tooltip>
                 </Group>
                 <Box py="sm">
-                    <SearchBar
-                        onSearch={(searchValue) => {
-                            setFilterTerm(searchValue);
-                        }}
-                    />
+                    <SearchBar onSearch={handleSearch} />
                 </Box>
                 <ScrollArea className={classes.scollAreaStyle}>
                     <Group>

@@ -1,6 +1,7 @@
 import {
     ComponentProps,
     CSSProperties,
+    useCallback,
     useContext,
     useEffect,
     useMemo,
@@ -158,8 +159,6 @@ export default function Upload() {
     const theme = useMantineTheme();
     useDocumentTitle("KSv2 - Upload");
 
-    console.log("Upload");
-
     const addFiles = (selectedFiles: File[]) => {
         let newFiles = selectedFiles.map((file) => {
             return { id: uuidv4(), file: file };
@@ -180,13 +179,13 @@ export default function Upload() {
         }
     };
 
-    const calcSize = () => {
+    const calcSize = useCallback(() => {
         let size = 0;
         files.forEach((f) => {
             size += f.file.size;
         });
         return size;
-    };
+    }, [files]);
 
     const compareUploaded: (uploadedFiles: SoundFile[]) => FileWithId[] = (
         uploadedFiles: SoundFile[]
@@ -299,7 +298,7 @@ export default function Upload() {
 
     useEffect(() => {
         setTotalSize(calcSize());
-    }, [files]);
+    }, [files, calcSize]);
 
     const handleInputErrors = (inputError: boolean) => {
         if (inputError) {
@@ -328,7 +327,7 @@ export default function Upload() {
         } else if (files.length === 0 && !isUploadDisabled) {
             setIsUploadDisabled(true);
         }
-    }, [files]);
+    }, [files, isUploadDisabled]);
 
     return (
         <>

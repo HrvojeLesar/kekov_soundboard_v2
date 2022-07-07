@@ -8,7 +8,7 @@ import {
     Checkbox,
     createStyles,
 } from "@mantine/core";
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import { TbTrash } from "react-icons/tb";
 
 const MAXLEN = 50;
@@ -104,7 +104,7 @@ export const FileUploadContainer = forwardRef<
 
     const [value, setValue] = useState(removeExtension(file.name));
 
-    const calculateCharCount = () => {
+    const calculateCharCount = useCallback(() => {
         const percent = Math.ceil((value.length / MAXLEN) * 100);
         let set = { value: percent, color: "violet" };
         if (MAXLEN - value.length <= 20) {
@@ -114,7 +114,7 @@ export const FileUploadContainer = forwardRef<
             set = { value: 100, color: "red" };
         }
         return set;
-    };
+    }, [value.length]);
 
     const showNum = () => {
         const len = MAXLEN - value.length;
@@ -141,7 +141,7 @@ export const FileUploadContainer = forwardRef<
             inputErrorCallback(false);
             setIsNameLenghtExceeded(false);
         }
-    }, [value]);
+    }, [value, calculateCharCount, inputErrorCallback, isNameLenghtExceeded]);
 
     useImperativeHandle(ref, () => ({
         fileName: value,

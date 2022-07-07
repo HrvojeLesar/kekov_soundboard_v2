@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useState } from "react";
 import { ReactNode } from "react";
 import { useCookies } from "react-cookie";
 import { useNavigate } from "react-router-dom";
@@ -69,13 +69,13 @@ function AuthProvider({ children }: { children: ReactNode }) {
             });
     };
 
-    const revokeAccess = () => {
+    const revokeAccess = useCallback(() => {
         const options = cookieOptions();
         removeCookie("access_token", options);
         removeCookie("refresh_token", options);
         removeCookie("expires", options);
         setUser(undefined);
-    };
+    }, [removeCookie]);
 
     const login = async (data: LoginResponse) => {
         await fetchUserInfo(data.access_token);
@@ -98,15 +98,15 @@ function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const refreshAccess = (newData: LoginResponse) => {
+    const refreshAccess = useCallback((newData: LoginResponse) => {
         const options = cookieOptions(newData);
         setCookie("access_token", newData.access_token, options);
         setCookie("refresh_token", newData.refresh_token, options);
         setCookie("expires", Date.now() + newData.expires_in * 1000, options);
         return newData.access_token;
-    };
+    }, [setCookie]);
 
-    const refreshToken = async () => {
+    const refreshToken = useCallback(async () => {
         return ApiRequest.refreshToken(cookies.refresh_token)
             .then(({ data }) => {
                 return refreshAccess(data);
@@ -117,9 +117,9 @@ function AuthProvider({ children }: { children: ReactNode }) {
                 navigate("/login");
                 return undefined;
             });
-    };
+    }, [cookies.refresh_token, navigate, refreshAccess, revokeAccess]);
 
-    const fetchGuilds = async () => {
+    const fetchGuilds = useCallback(async () => {
         try {
             if (cookies.access_token) {
                 let { data } = await ApiRequest.fetchGuilds(
@@ -135,7 +135,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
             // TODO: HANDLE
             console.log(e);
         }
-    };
+    }, [cookies.access_token]);
 
     const handleRefresh = async () => {
         if (cookies.access_token && cookies.refresh_token) {
@@ -143,20 +143,23 @@ function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const handleLoad = async () => {
-        if (cookies.access_token && cookies.refresh_token && cookies.expires) {
-            const now = Date.now() + 24 * 3600 * 1000;
-            if (now > cookies.expires) {
-                var newAccessToken = await refreshToken();
-            }
-            await fetchUserInfo(newAccessToken ?? cookies.access_token);
-        }
-        setIsFetching(false);
-    };
-
     useEffect(() => {
+        const handleLoad = async () => {
+            if (
+                cookies.access_token &&
+                cookies.refresh_token &&
+                cookies.expires
+            ) {
+                const now = Date.now() + 24 * 3600 * 1000;
+                if (now > cookies.expires) {
+                    var newAccessToken = await refreshToken();
+                }
+                await fetchUserInfo(newAccessToken ?? cookies.access_token);
+            }
+            setIsFetching(false);
+        };
         handleLoad();
-    }, []);
+    }, [cookies.access_token, cookies.refresh_token, cookies.expires, refreshToken]);
 
     const value: AuthContextType = {
         user: user,

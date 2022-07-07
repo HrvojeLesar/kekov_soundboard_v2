@@ -257,7 +257,7 @@ export default function DiscordChannelsWindow({
         if (channel === undefined || channel.users.length === 0) {
             selectChannelCallback(undefined);
         }
-    }, [channels]);
+    }, [channels, selectChannelCallback, selectedChannelId]);
 
     return (
         <Paper withBorder shadow="sm" p="sm" className={classes.paperStyle}>

@@ -170,7 +170,7 @@ export default function Guild() {
         abortController?.abort();
         setIsUpdating(true);
         fetchGuildFiles();
-    }, [guildId]);
+    }, [guildId, cookies.access_token]);
 
     return invalidServer ? (
         <Paper

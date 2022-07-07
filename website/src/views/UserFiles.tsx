@@ -12,7 +12,7 @@ import {
 } from "@mantine/core";
 import { useDocumentTitle } from "@mantine/hooks";
 import { showNotification } from "@mantine/notifications";
-import { CSSProperties, useEffect, useState } from "react";
+import { CSSProperties, useCallback, useEffect, useState } from "react";
 import { useCookies } from "react-cookie";
 import { TbX } from "react-icons/tb";
 import { COOKIE_NAMES } from "../auth/AuthProvider";
@@ -78,6 +78,11 @@ export default function UserFiles() {
     const [filterTerm, setFilterTerm] = useState("");
     const { classes } = useStyle();
     useDocumentTitle("KSv2 - Your files");
+
+    const handleSearch = useCallback((searchValue: string) => {
+        setSelectedFile(undefined);
+        setFilterTerm(searchValue);
+    }, []);
 
     const getEditTitle = () => {
         return selectedFile !== undefined
@@ -197,12 +202,7 @@ export default function UserFiles() {
                             Your files
                         </Title>
                         <Box py="sm">
-                            <SearchBar
-                                onSearch={(searchValue) => {
-                                    setSelectedFile(undefined);
-                                    setFilterTerm(searchValue);
-                                }}
-                            />
+                            <SearchBar onSearch={handleSearch} />
                         </Box>
                         <LoadingOverlay
                             zIndex={LOADINGOVERLAY_ZINDEX}

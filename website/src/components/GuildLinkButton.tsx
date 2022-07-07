@@ -19,6 +19,7 @@ export default function GuildLinkButton({ guild }: { guild: Guild }) {
                 <img
                     className={classes.guildLinkImage}
                     src={`https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}`}
+                    alt={guild.name}
                 />
             ) : (
                 <Text weight="bold">{nameToInitials(guild.name)}</Text>

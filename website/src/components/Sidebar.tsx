@@ -105,7 +105,7 @@ export default function Sidebar() {
 
     useEffect(() => {
         fetchGuilds();
-    }, []);
+    }, [fetchGuilds]);
 
     return (
         <Navbar height="100vh" width={{ base: 80 }} p="sm">
@@ -118,7 +118,7 @@ export default function Sidebar() {
                             user?.avatar,
                             user?.discriminator
                         )}
-                        alt={`${user?.username}'s profile image`}
+                        alt={`${user?.username}'s profile`}
                     />
                 </BaseSidebarButton>
                 <BaseSidebarButton label="Upload" route="/upload">

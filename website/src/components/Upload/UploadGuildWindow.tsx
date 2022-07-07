@@ -8,7 +8,7 @@ import {
     createStyles,
 } from "@mantine/core";
 import { useListState } from "@mantine/hooks";
-import { forwardRef, useEffect, useImperativeHandle } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo } from "react";
 import { Guild } from "../../auth/AuthProvider";
 import { uploadMaximumWindowHeight } from "../../views/Upload";
 import UploadGuildCheckbox from "./UploadGuildCheckbox";
@@ -39,9 +39,11 @@ export const UploadGuildWindow = forwardRef<
     const { guilds } = props;
     const { classes } = useStyles();
 
-    const mappedGuilds = guilds.map((guild) => {
-        return { key: guild.id, checked: false };
-    });
+    const mappedGuilds = useMemo(() => {
+        return guilds.map((guild) => {
+            return { key: guild.id, checked: false };
+        })
+    }, [guilds]);
 
     const [values, handlers] = useListState<{ key: string; checked: boolean }>(
         mappedGuilds
@@ -52,7 +54,7 @@ export const UploadGuildWindow = forwardRef<
 
     useEffect(() => {
         handlers.setState(mappedGuilds);
-    }, [guilds]);
+    }, [mappedGuilds]);
 
     useImperativeHandle(
         ref,

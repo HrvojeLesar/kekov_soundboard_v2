@@ -7,9 +7,9 @@ import { ApiRequest, cookieOptions } from "./utils/utils";
 
 function LoginCallback() {
     const { classes } = loginContainerUseStyle();
-    let [searchParams] = useSearchParams();
-    let [, setCookie] = useCookies(COOKIE_NAMES);
-    let navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const [, setCookie] = useCookies(COOKIE_NAMES);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const code = searchParams.get("code");

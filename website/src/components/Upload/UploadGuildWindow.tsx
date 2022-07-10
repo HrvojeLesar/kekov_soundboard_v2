@@ -7,8 +7,13 @@ import {
     Title,
     createStyles,
 } from "@mantine/core";
-import { useListState } from "@mantine/hooks";
-import { forwardRef, useImperativeHandle, useMemo } from "react";
+import {
+    forwardRef,
+    useEffect,
+    useImperativeHandle,
+    useMemo,
+    useState,
+} from "react";
 import { Guild } from "../../auth/AuthProvider";
 import { uploadMaximumWindowHeight } from "../../views/Upload";
 import UploadGuildCheckbox from "./UploadGuildCheckbox";
@@ -27,10 +32,16 @@ const useStyles = createStyles((_theme) => {
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
+            position: "relative",
             ...uploadMaximumWindowHeight,
         },
     };
 });
+
+type CheckedGuild = {
+    key: string;
+    checked: boolean;
+};
 
 export const UploadGuildWindow = forwardRef<
     UploadGuildWindowRef,
@@ -42,26 +53,29 @@ export const UploadGuildWindow = forwardRef<
     const mappedGuilds = useMemo(() => {
         return guilds.map((guild) => {
             return { key: guild.id, checked: false };
-        })
+        });
     }, [guilds]);
 
-    const [values, handlers] = useListState<{ key: string; checked: boolean }>(
-        mappedGuilds
-    );
+    const [checkedGuilds, setCheckedGuilds] = useState<CheckedGuild[]>([]);
 
-    const allChecked = values.every((value) => value.checked);
-    const indeterminate = values.some((value) => value.checked) && !allChecked;
+    useEffect(() => {
+        setCheckedGuilds([...mappedGuilds]);
+    }, [mappedGuilds]);
+
+    const allChecked = checkedGuilds.every((value) => value.checked);
+    const indeterminate =
+        checkedGuilds.some((value) => value.checked) && !allChecked;
 
     useImperativeHandle(
         ref,
         () => {
             return {
-                selectedGuildIds: values
+                selectedGuildIds: checkedGuilds
                     .filter((val) => val.checked)
                     .map((val) => val.key),
             };
         },
-        [values]
+        [checkedGuilds]
     );
 
     return (
@@ -69,7 +83,7 @@ export const UploadGuildWindow = forwardRef<
             <Title order={3} pb="xs">
                 Add to server
             </Title>
-            {values.length > 0 ? (
+            {checkedGuilds.length > 0 ? (
                 <>
                     <Checkbox
                         mb="sm"
@@ -78,12 +92,12 @@ export const UploadGuildWindow = forwardRef<
                         label="Add to all servers"
                         transitionDuration={0}
                         onChange={() =>
-                            handlers.setState((current) =>
-                                current.map((value) => ({
+                            setCheckedGuilds((current) => {
+                                return current.map((value) => ({
                                     ...value,
                                     checked: !allChecked,
-                                }))
-                            )
+                                }));
+                            })
                         }
                     />
                     <ScrollArea>
@@ -92,13 +106,13 @@ export const UploadGuildWindow = forwardRef<
                                 <Box m="sm" key={guild.id}>
                                     <UploadGuildCheckbox
                                         guild={guild}
-                                        isChecked={values[index].checked}
+                                        isChecked={checkedGuilds[index].checked}
                                         onChange={(checked: boolean) => {
-                                            handlers.setItemProp(
-                                                index,
-                                                "checked",
-                                                checked
-                                            );
+                                            checkedGuilds[index].checked =
+                                                checked;
+                                            setCheckedGuilds([
+                                                ...checkedGuilds,
+                                            ]);
                                         }}
                                     />
                                 </Box>

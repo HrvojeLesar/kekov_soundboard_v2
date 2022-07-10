@@ -8,7 +8,7 @@ import {
     Checkbox,
     createStyles,
 } from "@mantine/core";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { TbTrash } from "react-icons/tb";
 
 const MAXLEN = 50;
@@ -65,8 +65,7 @@ const useStyles = createStyles((theme) => {
 
 type FileContainerProps = {
     file: File;
-    deleteCallback: (file: File, error: boolean) => void;
-    disabled: boolean;
+    deleteCallback: (file: File) => void;
     inputErrorCallback: (inputError: boolean) => void;
 };
 
@@ -79,13 +78,13 @@ export const FileUploadContainer = forwardRef<
     FileContainerRef,
     FileContainerProps
 >((props, ref) => {
-    const { file, deleteCallback, disabled, inputErrorCallback } = props;
+    const { file, deleteCallback, inputErrorCallback } = props;
     const [ringCharCount, setRingCharCount] = useState<{
         value: number;
         color: string;
     }>({ value: 0, color: "red" });
     const [isPublic, setIsPublic] = useState(false);
-    const [isNameLenghtExceeded, setIsNameLenghtExceeded] = useState(false);
+    const [hasError, setHasError] = useState(false);
     const { classes } = useStyles();
 
     const removeExtension = (initialValue: string) => {
@@ -104,18 +103,6 @@ export const FileUploadContainer = forwardRef<
 
     const [value, setValue] = useState(removeExtension(file.name));
 
-    const calculateCharCount = useCallback(() => {
-        const percent = Math.ceil((value.length / MAXLEN) * 100);
-        let set = { value: percent, color: "violet" };
-        if (MAXLEN - value.length <= 20) {
-            set.color = "orange";
-        }
-        if (value.length >= MAXLEN) {
-            set = { value: 100, color: "red" };
-        }
-        return set;
-    }, [value.length]);
-
     const showNum = () => {
         const len = MAXLEN - value.length;
         if (len > 20) {
@@ -133,24 +120,44 @@ export const FileUploadContainer = forwardRef<
     };
 
     useEffect(() => {
+        const calculateCharCount = () => {
+            const percent = Math.ceil((value.length / MAXLEN) * 100);
+            let set = { value: percent, color: "violet" };
+            if (MAXLEN - value.length <= 20) {
+                set.color = "orange";
+            }
+            if (value.length >= MAXLEN) {
+                set = { value: 100, color: "red" };
+            }
+            return set;
+        };
+
         setRingCharCount(calculateCharCount());
-        if (value.length > MAXLEN && !isNameLenghtExceeded) {
+    }, [value]);
+
+    useEffect(() => {
+        if (value.length > MAXLEN) {
+            setHasError(true);
             inputErrorCallback(true);
-            setIsNameLenghtExceeded(true);
-        } else if (value.length <= MAXLEN && isNameLenghtExceeded) {
+        } else if (value.length <= MAXLEN && hasError) {
+            setHasError(false);
             inputErrorCallback(false);
-            setIsNameLenghtExceeded(false);
         }
-    }, [value, calculateCharCount, inputErrorCallback, isNameLenghtExceeded]);
+    }, [value, hasError, inputErrorCallback]);
 
     useImperativeHandle(ref, () => ({
         fileName: value,
-        isPublic: isPublic
+        isPublic: isPublic,
     }));
 
     return (
         <Paper withBorder shadow="xs" p="sm" className={classes.paperStyle}>
-            <Group position="apart" mb="xs" noWrap className={classes.groupStyle}>
+            <Group
+                position="apart"
+                mb="xs"
+                noWrap
+                className={classes.groupStyle}
+            >
                 <Text
                     lineClamp={1}
                     weight="bold"
@@ -161,20 +168,19 @@ export const FileUploadContainer = forwardRef<
                 </Text>
                 <ActionIcon
                     title="Remove file"
-                    disabled={disabled}
                     color="red"
                     variant="outline"
-                    onClick={() => deleteCallback(file, isNameLenghtExceeded)}
+                    onClick={() => {
+                        inputErrorCallback(false);
+                        deleteCallback(file);
+                    }}
                 >
                     <TbTrash size={24} />
                 </ActionIcon>
             </Group>
             <TextInput
-                disabled={disabled}
                 classNames={
-                    !isNameLenghtExceeded
-                        ? classes
-                        : { ...classes, input: classes.invalid }
+                    !hasError ? classes : { ...classes, input: classes.invalid }
                 }
                 value={value}
                 onChange={(e) => {
@@ -184,23 +190,24 @@ export const FileUploadContainer = forwardRef<
                 label={"File name"}
                 styles={{ label: { fontWeight: "bold" } }}
                 rightSection={
-                    <>
-                        <RingProgress
-                            size={30}
-                            thickness={3}
-                            sections={[ringCharCount]}
-                            label={showNum()}
-                        />
-                    </>
+                    MAXLEN - value.length <= 20 ? (
+                        <>
+                            <RingProgress
+                                size={30}
+                                thickness={3}
+                                sections={[ringCharCount]}
+                                label={showNum()}
+                            />
+                        </>
+                    ) : undefined
                 }
             />
-            {isNameLenghtExceeded && (
+            {hasError && (
                 <Text color="red" size="xs">
                     Maximum name lenght exceeded!
                 </Text>
             )}
             <Checkbox
-                disabled={disabled}
                 mt="xs"
                 checked={isPublic}
                 label={"Public"}

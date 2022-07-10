@@ -161,6 +161,11 @@ export type PublicFiles = {
     files: SoundFile[];
 };
 
+export type UploadedFile = {
+    uploaded: boolean;
+    sound_file: SoundFile;
+};
+
 export const ApiRequest = {
     revokeToken: (
         token: RevokeAccessToken
@@ -312,7 +317,9 @@ export const ApiRequest = {
         formData: FormData,
         accessToken: string,
         setProgressValue: Dispatch<SetStateAction<number>>
-    ): Promise<AxiosResponse<SoundFile[]>> => {
+    ): Promise<
+        AxiosResponse<UploadedFile[]>
+    > => {
         return axiosInstance.post(FilesRoute.postUpload, formData, {
             headers: {
                 "Content-Type": "multipart/form-data",

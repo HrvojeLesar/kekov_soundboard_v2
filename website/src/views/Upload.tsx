@@ -16,7 +16,6 @@ import {
     Group,
     MantineTheme,
     Paper,
-    Progress,
     RingProgress,
     ScrollArea,
     Text,
@@ -38,8 +37,10 @@ import {
 } from "../components/Upload/UploadGuildWindow";
 import { useCookies } from "react-cookie";
 import { useDocumentTitle } from "@mantine/hooks";
-import { ApiRequest, SoundFile } from "../utils/utils";
+import { ApiRequest, UploadedFile } from "../utils/utils";
 import { IconType } from "react-icons";
+import UploadModal from "../components/Upload/UploadModal";
+import { useNavigate } from "react-router-dom";
 
 const MAX_TOTAL_SIZE = 10_000_000;
 const ACCEPTED_MIMES = [
@@ -58,7 +59,18 @@ const ACCEPTED_MIMES = [
 
 type FileWithId = {
     id: string;
-    file: File;
+    fileHandle: File;
+};
+
+export type InputFile = {
+    file: FileWithId;
+    inputHasError: boolean;
+    displayName?: string;
+};
+
+export type SeparatedFiles = {
+    successfullFiles: InputFile[];
+    failedFiles: InputFile[];
 };
 
 const getIconColor = (status: DropzoneStatus, theme: MantineTheme) => {
@@ -84,31 +96,7 @@ const UploadIcon = ({
 
 const useStyles = createStyles((theme) => {
     return {
-        disabled: {
-            backgroundColor:
-                theme.colorScheme === "dark"
-                    ? theme.colors.dark[6]
-                    : theme.colors.gray[0],
-            borderColor:
-                theme.colorScheme === "dark"
-                    ? theme.colors.dark[5]
-                    : theme.colors.gray[2],
-            cursor: "not-allowed",
-
-            "& *": {
-                color:
-                    theme.colorScheme === "dark"
-                        ? theme.colors.dark[3]
-                        : theme.colors.gray[5],
-            },
-        },
         uploadPaperStyle: {
-            width: "100%",
-        },
-        uploadControlsBoxStyle: {
-            width: "300px",
-        },
-        uploadControlsGroupStyle: {
             width: "100%",
         },
         dropzoneBoxStyle: {
@@ -149,129 +137,129 @@ export default function Upload() {
     const openRef = useRef<() => void>(() => {});
     const containerRefs = useRef<FileContainerRef[]>([]);
     const selectedGuildsRef = useRef<UploadGuildWindowRef>(null!);
-    const [files, setFiles] = useState<FileWithId[]>([]);
+    const [inputFiles, setInputFiles] = useState<InputFile[]>([]);
     const [totalSize, setTotalSize] = useState<number>(0);
     const [progressValue, setProgressValue] = useState(0);
     const [isLimitExceeded, setIsLimitExceeded] = useState(false);
-    const [isUploadDisabled, setIsUploadDisabled] = useState(true);
     const [isUploading, setIsUploading] = useState(false);
-    const [inputErrorsCount, setInputErrorsCount] = useState({ count: 0 });
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [hasQuickEnableFailed, setHasQuickEnableFailed] = useState(false);
+    const [separatedFiles, setSeparatedFiles] = useState<SeparatedFiles>({
+        successfullFiles: [],
+        failedFiles: [],
+    });
+    const [countdown, setCountdown] = useState(3);
+    const [successfulUpload, setSuccessfullUpload] = useState(false);
+    const [isCountdownRunning, setIsCountdownRunning] = useState(false);
+
+    const navigate = useNavigate();
+
     const theme = useMantineTheme();
     useDocumentTitle("KSv2 - Upload");
 
     const addFiles = (selectedFiles: File[]) => {
         let newFiles = selectedFiles.map((file) => {
-            return { id: uuidv4(), file: file };
+            return {
+                file: { fileHandle: file, id: uuidv4() },
+                inputHasError: false,
+            };
         });
-        setFiles([...files, ...newFiles]);
+        setInputFiles([...inputFiles, ...newFiles]);
     };
 
-    const removeFile = (file: File, hasError: boolean) => {
-        let others = files.filter((f) => {
-            if (f.file === file) {
+    const removeFile = (fileHandle: File) => {
+        let others = inputFiles.filter((inputFile) => {
+            if (inputFile.file.fileHandle === fileHandle) {
                 return false;
             }
             return true;
         });
-        setFiles(others);
-        if (hasError) {
-            handleInputErrors(false);
-        }
+        setInputFiles(others);
     };
 
     const calcSize = useCallback(() => {
         let size = 0;
-        files.forEach((f) => {
-            size += f.file.size;
+        inputFiles.forEach((inputFile) => {
+            size += inputFile.file.fileHandle.size;
         });
         return size;
-    }, [files]);
+    }, [inputFiles]);
 
-    const compareUploaded: (uploadedFiles: SoundFile[]) => FileWithId[] = (
-        uploadedFiles: SoundFile[]
-    ) => {
-        const maxLen = files.length - uploadedFiles.length;
-        let len = 0;
-        if (uploadedFiles.length !== files.length) {
-            return files.filter((file, index) => {
-                if (len > maxLen) {
-                    return false;
-                }
-                let { fileName } = containerRefs.current[index];
-                fileName = fileName.trim() === "" ? file.file.name : fileName;
-                if (
-                    uploadedFiles.find((userFile) => {
-                        return userFile.display_name === fileName;
-                    }) === undefined
-                ) {
-                    len++;
-                    return true;
-                }
-                return false;
-            });
+    useEffect(() => {
+        if (countdown === 0) {
+            return navigate("/user");
         }
-        return [];
-    };
+        if (isCountdownRunning) {
+            var timeout = setTimeout(() => {
+                setCountdown((old) => old - 1);
+            }, 1000);
+        }
+        return () => {
+            clearTimeout(timeout);
+        };
+    }, [countdown, isCountdownRunning, navigate]);
 
     const upload = () => {
         if (!cookies.access_token) {
             return;
         }
         const formData = new FormData();
-        files.forEach((file, index) => {
+        inputFiles.forEach((inputFile, index) => {
             let { fileName, isPublic } = containerRefs.current[index];
-            fileName = fileName.trim() === "" ? file.file.name : fileName;
+            fileName =
+                fileName.trim() === ""
+                    ? inputFile.file.fileHandle.name
+                    : fileName;
+
+            inputFile.displayName = fileName;
+
             formData.append(
                 isPublic ? fileName.concat("_p") : fileName.concat("_n"),
-                file.file
+                inputFile.file.fileHandle
             );
         });
+
         setIsUploading(true);
+        setIsModalOpen(true);
+        setSuccessfullUpload(false);
+        setIsCountdownRunning(false);
+        setCountdown(3);
+
         ApiRequest.upload(formData, cookies.access_token, setProgressValue)
             .then(async ({ data }) => {
                 const selectedGuildIds =
                     selectedGuildsRef.current.selectedGuildIds;
 
-                const failedFiles = compareUploaded(data);
-                const hasFailedFiles = failedFiles.length > 0;
-                let hasQuickEnableFailed = false;
-
                 if (selectedGuildIds.length > 0 && data.length > 0) {
-                    await quickEnable(selectedGuildIds, data).catch((err) => {
-                        console.log(err);
-                        hasQuickEnableFailed = true;
-                    });
+                    await quickEnable(selectedGuildIds, data)
+                        .then(() => {
+                            setHasQuickEnableFailed(false);
+                        })
+                        .catch((err) => {
+                            console.log(err);
+                            setHasQuickEnableFailed(true);
+                        });
                 }
 
-                showNotification({
-                    title: hasFailedFiles
-                        ? hasQuickEnableFailed
-                            ? "Error"
-                            : "Some files failed to upload"
-                        : hasQuickEnableFailed
-                        ? "Upload successful, server addition failed"
-                        : "All files uploaded",
-                    message: hasFailedFiles
-                        ? hasQuickEnableFailed
-                            ? "Files left in selected files have failed to upload and successfully uploaded files failed to be added to selected servers!"
-                            : "Files left in selected files have failed to upload!"
-                        : hasQuickEnableFailed
-                        ? "Failed to add files to servers but files have successfully uploaded and are available in user files!"
-                        : "All files have been successfully uploaded!",
-                    autoClose:
-                        hasFailedFiles || hasQuickEnableFailed ? false : 3000,
-                    color:
-                        hasFailedFiles || hasQuickEnableFailed
-                            ? "red"
-                            : "green",
-                    icon:
-                        hasFailedFiles || hasQuickEnableFailed ? (
-                            <TbX size={24} />
-                        ) : null,
+                const successfullFiles = inputFiles.filter(
+                    (_f, idx) => data[idx].uploaded
+                );
+                const failedFiles = inputFiles.filter(
+                    (_f, idx) => !data[idx].uploaded
+                );
+
+                setSeparatedFiles({
+                    successfullFiles: successfullFiles,
+                    failedFiles: failedFiles,
                 });
 
-                setFiles(failedFiles);
-                setIsUploading(false);
+                setInputFiles(failedFiles);
+
+                if (successfullFiles.length > 0 && failedFiles.length === 0) {
+                    setSuccessfullUpload(true);
+                    setIsCountdownRunning(true);
+                }
             })
             .catch((e) => {
                 console.log(e);
@@ -282,36 +270,46 @@ export default function Upload() {
                     color: "red",
                     icon: <TbX size={24} />,
                 });
+            })
+            .finally(() => {
+                setIsUploading(false);
             });
     };
 
-    const quickEnable = (guilds: string[], files: SoundFile[]) => {
+    const quickEnable = (guilds: string[], files: UploadedFile[]) => {
         if (!cookies.access_token) {
             return Promise.reject("Access token not set");
         }
         const bulk = {
             guilds: guilds,
-            files: files.map((f) => f.id),
+            files: files.filter((f) => f.uploaded).map((f) => f.sound_file.id),
         };
         return ApiRequest.bulkEnable(bulk, cookies.access_token);
     };
 
-    useEffect(() => {
-        setTotalSize(calcSize());
-    }, [files, calcSize]);
-
-    const handleInputErrors = (inputError: boolean) => {
-        if (inputError) {
-            inputErrorsCount.count += 1;
-        } else {
-            inputErrorsCount.count -= 1;
+    const handleInputErrors = (inputHasError: boolean, index: number) => {
+        if (index >= 0 && index < inputFiles.length) {
+            inputFiles[index].inputHasError = inputHasError;
+            setInputFiles([...inputFiles]);
         }
-        setInputErrorsCount({ ...inputErrorsCount });
     };
 
     const limitPercentage = useMemo(() => {
         return Math.round((totalSize / MAX_TOTAL_SIZE) * 100);
     }, [totalSize]);
+
+    const hasInputErrors = () => {
+        for (const inputFile of inputFiles) {
+            if (inputFile.inputHasError) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    useEffect(() => {
+        setTotalSize(calcSize());
+    }, [inputFiles, calcSize]);
 
     useEffect(() => {
         if (totalSize > MAX_TOTAL_SIZE) {
@@ -320,14 +318,6 @@ export default function Upload() {
             setIsLimitExceeded(false);
         }
     }, [totalSize]);
-
-    useEffect(() => {
-        if (files.length > 0 && isUploadDisabled) {
-            setIsUploadDisabled(false);
-        } else if (files.length === 0 && !isUploadDisabled) {
-            setIsUploadDisabled(true);
-        }
-    }, [files, isUploadDisabled]);
 
     return (
         <>
@@ -342,72 +332,55 @@ export default function Upload() {
                         Upload
                     </Title>
                     <Group>
-                        {/* TODO: Animate ring ?? */}
-                        <RingProgress
-                            sections={[
-                                {
-                                    value: limitPercentage,
-                                    color: isLimitExceeded ? "red" : "violet",
-                                },
-                            ]}
-                            label={
-                                <>
-                                    <Text align="center" size="sm">
-                                        Total size:
-                                    </Text>
-                                    <Text align="center" size="sm">
-                                        {limitPercentage}%
-                                    </Text>
-                                </>
-                            }
-                        />
-                        <Box className={classes.uploadControlsBoxStyle}>
+                        <Group direction="column" position="center">
+                            <RingProgress
+                                sections={[
+                                    {
+                                        value: limitPercentage,
+                                        color: isLimitExceeded
+                                            ? "red"
+                                            : "violet",
+                                    },
+                                ]}
+                                label={
+                                    <>
+                                        <Text align="center" size="sm">
+                                            Total size:
+                                        </Text>
+                                        <Text align="center" size="sm">
+                                            {limitPercentage}%
+                                        </Text>
+                                    </>
+                                }
+                            />
+                            <Button
+                                disabled={
+                                    isUploading ||
+                                    isLimitExceeded ||
+                                    inputFiles.length === 0 ||
+                                    hasInputErrors()
+                                }
+                                onClick={() => upload()}
+                            >
+                                Upload
+                            </Button>
+                        </Group>
+                        <Box>
                             <Group direction="column">
-                                <Group
-                                    position="apart"
-                                    className={classes.uploadControlsGroupStyle}
-                                >
-                                    <Button
-                                        onClick={() => openRef.current()}
-                                        disabled={isUploading}
-                                    >
+                                <Group>
+                                    <Button onClick={() => openRef.current()}>
                                         Select files
                                     </Button>
-                                    <Text>
-                                        {isUploading
-                                            ? `${progressValue}%`
-                                            : null}
-                                    </Text>
-                                    <Button
-                                        disabled={
-                                            isUploading ||
-                                            isUploadDisabled ||
-                                            isLimitExceeded ||
-                                            inputErrorsCount.count !== 0
-                                        }
-                                        onClick={() => upload()}
-                                    >
-                                        Upload
-                                    </Button>
                                 </Group>
-                                <Progress
-                                    className={classes.uploadControlsGroupStyle}
-                                    animate
-                                    value={progressValue}
-                                />
                             </Group>
                         </Box>
                         <Box className={classes.dropzoneBoxStyle}>
                             <Dropzone
-                                disabled={isUploading}
                                 onDrop={addFiles}
                                 onReject={(file) =>
                                     console.log("rejected: ", file)
                                 }
                                 openRef={openRef}
-                                className={
-                                    isUploading ? classes.disabled : undefined
-                                }
                                 accept={ACCEPTED_MIMES}
                             >
                                 {(status) => {
@@ -466,13 +439,13 @@ export default function Upload() {
                         <Title order={3} pb="xs">
                             Selected files
                         </Title>
-                        {files.length > 0 ? (
+                        {inputFiles.length > 0 ? (
                             <ScrollArea className={classes.scrollAreaStyle}>
                                 <Group>
-                                    {files.map((file, index) => {
+                                    {inputFiles.map((inputFile, index) => {
                                         return (
                                             <FileUploadContainer
-                                                key={file.id}
+                                                key={inputFile.file.id}
                                                 ref={(ref) => {
                                                     if (ref) {
                                                         containerRefs.current[
@@ -480,15 +453,20 @@ export default function Upload() {
                                                         ] = ref;
                                                     }
                                                 }}
-                                                disabled={isUploading}
-                                                file={file.file}
+                                                file={inputFile.file.fileHandle}
                                                 deleteCallback={(
-                                                    file: File,
-                                                    hasError: boolean
-                                                ) => removeFile(file, hasError)}
-                                                inputErrorCallback={
-                                                    handleInputErrors
-                                                }
+                                                    file: File
+                                                ) => {
+                                                    removeFile(file);
+                                                }}
+                                                inputErrorCallback={(
+                                                    hasErr: boolean
+                                                ) => {
+                                                    handleInputErrors(
+                                                        hasErr,
+                                                        index
+                                                    );
+                                                }}
                                             />
                                         );
                                     })}
@@ -513,6 +491,19 @@ export default function Upload() {
                     />
                 </Grid.Col>
             </Grid>
+            <UploadModal
+                inputFiles={inputFiles}
+                progressValue={progressValue}
+                isOpen={isModalOpen}
+                isUploading={isUploading}
+                hasQuickEnableFailed={hasQuickEnableFailed}
+                separatedFiles={separatedFiles}
+                closeCallback={() => {
+                    setIsModalOpen(false);
+                }}
+                countdown={countdown}
+                successfulUpload={successfulUpload}
+            />
         </>
     );
 }

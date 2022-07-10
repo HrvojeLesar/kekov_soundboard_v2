@@ -214,7 +214,7 @@ export default function PublicFiles() {
                                 })
                                 : !isFetching && (
                                     <Text size="xl" weight="bold">
-                                        There is no public sounds.
+                                        There are no sounds to display.
                                     </Text>
                                 )}
                         </Group>

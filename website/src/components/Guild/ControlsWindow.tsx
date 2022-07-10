@@ -54,7 +54,8 @@ export default function ControlsWindow({ guildId }: ControlsWindowProps) {
                         title: "Queue",
                         message: "Queue is empty!",
                         autoClose: 3000,
-                        color: "green",
+                        color: "red",
+                        icon: <TbX size={24} />,
                     });
                 } else {
                     setQueueData(data);

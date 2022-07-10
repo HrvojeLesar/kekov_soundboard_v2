@@ -8,7 +8,7 @@ use actix_web::{
 };
 use futures_util::TryStreamExt;
 use log::error;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use snowflake::SnowflakeIdGenerator;
 use sqlx::PgPool;
 use tokio::{
@@ -47,7 +47,7 @@ pub fn config(cfg: &mut ServiceConfig) {
     );
 }
 
-async fn delete_file(sound_file: SoundFile) -> Result<(), KekServerError> {
+async fn delete_file(sound_file: &SoundFile) -> Result<(), KekServerError> {
     let full_file_path = format!("{}{}", dotenv::var("SOUNDFILE_DIR")?, sound_file.id.0);
     return Ok(remove_file(full_file_path).await?);
 }
@@ -83,30 +83,27 @@ fn parse_display_name(field: &Field) -> String {
 }
 
 async fn insert_valid_files(
-    files: Vec<SoundFile>,
+    mut files: Vec<UploadedFile>,
     db_pool: Data<PgPool>,
-) -> Result<Vec<SoundFile>, KekServerError> {
-    let mut uploaded = Vec::with_capacity(files.len());
+) -> Result<Vec<UploadedFile>, KekServerError> {
     let mut transaction = db_pool.begin().await?;
-    for file in files {
-        match validate_audio_mime(&file).await {
-            Ok(_) => {
-                file.insert(&mut transaction).await?;
-                uploaded.push(file);
+    for entry in &mut files {
+        if let Some(file) = &entry.sound_file {
+            match validate_audio_mime(&file).await {
+                Ok(_) => {
+                    file.insert(&mut transaction).await?;
+                    entry.uploaded = true;
+                }
+                Err(e) => {
+                    error!("{}", e);
+                    delete_file(file).await?;
+                }
             }
-            Err(e) => {
-                error!("{}", e);
-                delete_file(file).await?;
-            }
-        }
+        } 
     }
     transaction.commit().await?;
 
-    if uploaded.is_empty() {
-        return Err(KekServerError::NoFilesUploadedError);
-    }
-
-    return Ok(uploaded);
+    return Ok(files);
 }
 
 fn is_file_public(file_name: &str) -> bool {
@@ -118,6 +115,12 @@ fn create_new_file(id: i64, user_id: UserId, field: &Field) -> SoundFile {
     let is_public = is_file_public(&name);
     name.truncate(name.len() - PUBLIC_SUFFIX.len());
     return SoundFile::new(SoundFileId(id as u64), name, Some(user_id), is_public);
+}
+
+#[derive(Debug, Serialize)]
+struct UploadedFile {
+    uploaded: bool,
+    sound_file: Option<SoundFile>,
 }
 
 // TODO: full path code repeats, make nicer
@@ -135,10 +138,12 @@ pub async fn upload_file(
 
     let mut uploaded_files_size = 0;
     let mut max_file_size_exceeded = false;
-    let mut files: Vec<SoundFile> = Vec::new();
+
+    let mut uploaded_files: Vec<UploadedFile> = Vec::new();
 
     while let Some(mut field) = payload.try_next().await? {
         if mime::AUDIO != field.content_type().type_() {
+            uploaded_files.push(UploadedFile { uploaded: false, sound_file: None });
             continue;
         }
 
@@ -152,7 +157,7 @@ pub async fn upload_file(
         let full_file_path = format!("{}{}", dotenv::var("SOUNDFILE_DIR")?, sound_file.id.0);
         let mut file_handle = File::create(full_file_path).await?;
 
-        files.push(sound_file);
+        uploaded_files.push(UploadedFile { uploaded: false, sound_file: Some(sound_file) });
 
         while let Some(chunk) = field.try_next().await? {
             uploaded_files_size += chunk.len();
@@ -165,13 +170,15 @@ pub async fn upload_file(
     }
 
     if max_file_size_exceeded {
-        for file in files {
-            delete_file(file).await?;
+        for UploadedFile { sound_file, .. } in uploaded_files {
+            if let Some(file) = sound_file {
+                delete_file(&file).await?;
+            }
         }
         return Err(KekServerError::FileTooLargeError);
     }
 
-    let uploaded_files = insert_valid_files(files, db_pool).await?;
+    let uploaded_files = insert_valid_files(uploaded_files, db_pool).await?;
 
     return Ok(HttpResponse::Ok().json(uploaded_files));
 }

@@ -4,14 +4,15 @@ Enviromental variables can be set in .env file
 Required: 
 - **DISCORD_CLIENT_ID**: Application client id (from Discord).
 - **DISCORD_CLIENT_SECRET**: Applications secret **(DO NOT LEAK)** (from Discord).
-- **DATABASE_URL**: PotsgreSQL database url
-- **SOUNDFILE_DIR**: Directory to which files are saved to (Database only cares for file ids, not their location)
+- **DATABASE_URL**: PotsgreSQL database url.
+- **SOUNDFILE_DIR**: Directory to which files are saved to (Database only cares for file ids, not their location).
 - **WS_TOKEN**: Communication with bot application is done over websockets and this token is used to limit incoming websocket connections to only ones who hold this token.
 
 Optional:
-- **PORT**: Defaults to 8080
+- **PORT**: Defaults to 8080.
 - **MAX_FILE_SIZE**: Total maximum file size of all files in one upload request in bytes. Defaults
-  to 10_000_000 bytes (10 MB)
+  to 10_000_000 bytes (10 MB).
+- **TESTING_DATABASE_URL**: Database url for database to run tests on.
 
 # Routes
 Api available at route **`/v1`**.
@@ -42,24 +43,30 @@ Api available at route **`/v1`**.
 
 # Protected routes
 For these routes user authentication is required.
-Authentication is done through [Auth routes](#auth).
+Authentication is done through [auth routes](#auth).
 
 ## File
 
 ### File upload
 **POST** `/files/upload`
 - Uploaded files require to be audio files. 
-- Returns successfully uploaded files in json format.
+- Returns a json array of uploaded files. Successfully uploaded files return with their valid data, failed files are marked with `uploaded: false` in the array.
+
+**GET** `/files/public`
+- Supports query params: `search_query, page, limit` (Upper limit is 200 files).
+- Returns the first page of public files (first 200 files) if no query params are specified.
 
 ## Guild
 
 ### Add sound to guild
 **POST** `/guilds/{guild_id}/{file_id}`
 - Adds a sound to a chosen guild.
+- Returns the sound file in json object.
 
 ### Delete sound from guild
 **POST** `/guilds/{guild_id}/{file_id}`
 - Deletes a sound from a chosen guild.
+- Returns the sound file in json object.
 
 ### Get guild files
 **GET** `/guilds/{guild_id}`
@@ -102,6 +109,23 @@ Example:
 **GET** `/user/guilds`
 - Returns a json of guilds shared by the user and bot.
 
+### Toggle file visibility
+**PATCH** `/user/togglevisibility/{file_id}`
+- Toggles files visibility from public to private or vice versa.
+- Returns the toggled sound file json object.
+
+### Get user guilds
+**GET** `/user/guilds`
+- Returns Discord guilds user is a part of.
+
+### Get guilds with files
+**GET** `/user/guilds/{file_id}`
+- Returns a json array of guilds that have the sound file enabled (doesn't return guilds user is not a part of).
+
+### Get enabled user files
+**GET** `/user/{guild_id}`
+- Returns a json array of sound files that are enabled in guild.
+
 ## Controls
 Routes for sending commands to Discord bot.
 
@@ -123,16 +147,36 @@ Routes for sending commands to Discord bot.
 
 # Websocket routes
 
-## Protected ws routes
+## Protected websocket routes
 Routes are protected with a token that should match on the backend and bots websocket client.
 
 ### Controls websocket
-**GET** `/ws/controls`
+`/ws/controls`
 - Used for bot application to communicate with backend.
 - Receiving and responding to commands from controls routes.
 
 ### Sync websocket
-**GET** `/ws/sync`
+`/ws/sync`
 - Used for bot application to communicate with backend.
 - Tries to sync bot being added/kicked/banned from various Discord servers.
 - Updates guilds cache for users leaving guilds.
+
+## Public websocket routes
+
+### Channels websocket
+`/ws/channels`
+- Used to provide live preview of guilds voice channels.
+- Requires authorization by sending an Identify payload in json format and responding to re-identify messages (failing to identify will terminate connection).
+
+Example:
+```json
+{ "op": "Identify", "access_token": "stringified_access_token" }
+```
+
+- Can subscribe to a single guild at a time by sending a subscribe message. Server will not respond to if user is not identified or has tried to subscribe to a guild that they are not a part of.
+
+Example:
+```json
+{ "op": "Subscribe", "guild_id": "00000000000" }
+```
+

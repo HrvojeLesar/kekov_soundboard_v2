@@ -2,7 +2,7 @@
 
 **Website and Discord bot for playing sounds over Discord**
 
-<img src="WIP.png" height="300px" alt="Work in progress">
+<img src="imgs/WIP.png" height="300px" alt="Work in progress">
 
 ## Features
 
@@ -21,3 +21,5 @@ Project is separated into three parts:
 1. [Backend and web api](backend_api)
 2. [Discord bot](discord_bot) + [Lavalink](https://github.com/freyacodes/Lavalink)
 3. [Website](website)
+
+![](imgs/website_preview.png)

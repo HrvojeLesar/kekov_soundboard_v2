@@ -18,6 +18,7 @@ use crate::{
 #[derive(Debug, Serialize, Deserialize)]
 struct PartialGuild {
     id: GuildId,
+    name: String,
 }
 
 #[derive(Serialize)]
@@ -135,18 +136,18 @@ impl ActiveGuildsCheck {
         let mut removed_count = 0;
 
         let mut transaction = self.pg_pool.begin().await?;
-        for PartialGuild { id } in &discord_guilds {
+        for PartialGuild { id, name } in &discord_guilds {
             match db_guilds.binary_search_by(|g| g.id.0.cmp(&id.0)) {
                 Ok(idx) => {
                     let guild = &db_guilds[idx];
                     if !guild.active {
-                        Guild::insert_guild(&guild.id, &guild.name, &mut transaction).await?;
+                        Guild::insert_guild(&guild.id, &name, &mut transaction).await?;
                         inserted_count += 1;
                     }
                 }
                 Err(_) => {
-                    Guild::remove_guild(id, &mut transaction).await?;
-                    removed_count += 1;
+                    Guild::insert_guild(&id, &name, &mut transaction).await?;
+                    inserted_count += 1;
                 }
             }
         }

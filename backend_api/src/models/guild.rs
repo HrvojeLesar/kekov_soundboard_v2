@@ -52,7 +52,7 @@ impl Guild {
             VALUES ($1, $2)
             ON CONFLICT (id)
             DO UPDATE
-            SET active = true
+            SET active = true, name = $2
             RETURNING *
             ",
             id.0 as i64,

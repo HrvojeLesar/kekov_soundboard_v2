@@ -62,6 +62,12 @@ pub enum KekServerError {
     ToStrError(#[from] actix_http::header::ToStrError),
     #[error(transparent)]
     ParseFloatError(#[from] std::num::ParseFloatError),
+    #[error(transparent)]
+    ParseIntError(#[from] std::num::ParseIntError),
+    #[error(transparent)]
+    ReqwestError(#[from] reqwest::Error),
+    #[error(transparent)]
+    SerdeUrlencodedError(#[from] serde_urlencoded::ser::Error),
     #[error("Provided files faild to upload")]
     NoFilesUploadedError,
     #[error("Invalid Authorization Credentials")]
@@ -129,6 +135,9 @@ impl ResponseError for KekServerError {
             KekServerError::WsBotClientError(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::ToStrError(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::ParseFloatError(..) => StatusCode::INTERNAL_SERVER_ERROR,
+            KekServerError::ParseIntError(..) => StatusCode::INTERNAL_SERVER_ERROR,
+            KekServerError::ReqwestError(..) => StatusCode::INTERNAL_SERVER_ERROR,
+            KekServerError::SerdeUrlencodedError(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::NoFilesUploadedError => StatusCode::BAD_REQUEST,
             KekServerError::InvalidCredentialsError => StatusCode::UNAUTHORIZED,
             KekServerError::DiscordRequestError => StatusCode::INTERNAL_SERVER_ERROR,
@@ -172,7 +181,10 @@ impl ResponseError for KekServerError {
                 KekServerError::ElapsedError(..) => "elapsed_error",
                 KekServerError::WsBotClientError(..) => "ws_bot_client_error",
                 KekServerError::ToStrError(..) => "to_str_error",
+                KekServerError::SerdeUrlencodedError(..) => "serde_urlencoded_error",
                 KekServerError::ParseFloatError(..) => "parse_float_error",
+                KekServerError::ParseIntError(..) => "parse_int_error",
+                KekServerError::ReqwestError(..) => "reqwest_error",
                 KekServerError::NoFilesUploadedError => "no_files_uploaded_error",
                 KekServerError::InvalidCredentialsError => "invalid_credentials_error",
                 KekServerError::DiscordRequestError => "discord_request_error",

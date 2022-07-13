@@ -4,10 +4,11 @@ use std::{
     time::UNIX_EPOCH,
 };
 
+use active_guilds_check::ActiveGuildsCheck;
 use actix_cors::Cors;
 use actix_web::{web::Data, App, HttpServer};
 use env::check_required_env_variables;
-use log::{info, warn, error};
+use log::{error, info, warn};
 use routes::{not_found::not_found, routes_config, status::Status};
 
 use dotenv::dotenv;
@@ -23,6 +24,7 @@ use ws::{
     ws_session::WsSessionCommChannels,
 };
 
+mod active_guilds_check;
 mod database;
 mod discord_client_config;
 mod env;
@@ -160,7 +162,7 @@ async fn main() -> std::io::Result<()> {
             .execute(&mut transaction)
             .await
             {
-                Ok(_) => {},
+                Ok(_) => {}
                 Err(e) => {
                     error!("Failed to delete stale state records: {}", e);
                     return;
@@ -173,6 +175,28 @@ async fn main() -> std::io::Result<()> {
                     "Failed to commit transaction deleting stale state records: {}",
                     e
                 ),
+            }
+        }
+    });
+
+    let pool_ref = pool.clone();
+    scheduler.run(std::time::Duration::from_secs(3600), move || {
+        let pool_ref = pool_ref.clone();
+        info!("ActiveGuildCheck running");
+        async move {
+            let mut check = match ActiveGuildsCheck::new(pool_ref) {
+                Ok(c) => c,
+                Err(e) => {
+                    error!("Active guild constructor failed: {}", e);
+                    return;
+                }
+            };
+            match check.start().await {
+                Ok(_) => info!("Finished active guild check"),
+                Err(e) => {
+                    error!("Active guild check failed: {}", e);
+                    return;
+                }
             }
         }
     });

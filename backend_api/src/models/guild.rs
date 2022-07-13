@@ -92,7 +92,7 @@ impl Guild {
                 id: r.id.into(),
                 name: r.name,
                 time_added: r.time_added,
-                active: r.active
+                active: r.active,
             })
             .collect::<Vec<Self>>();
         return Ok(guilds);
@@ -125,6 +125,27 @@ impl Guild {
             None => return Ok(None),
         }
     }
+
+    pub async fn get_all_guilds(
+        transaction: &mut Transaction<'_, Postgres>,
+    ) -> Result<Vec<Self>, KekServerError> {
+        return Ok(sqlx::query!(
+            "
+            SELECT * FROM guild
+            ORDER BY id
+            "
+        )
+        .fetch_all(&mut *transaction)
+        .await?
+        .into_iter()
+        .map(|r| Guild {
+            id: r.id.into(),
+            name: r.name,
+            time_added: r.time_added,
+            active: r.active,
+        })
+        .collect());
+    }
 }
 
 #[cfg(test)]
@@ -135,7 +156,10 @@ mod tests {
     use crate::{
         database::tests_db_helper::db_connection,
         models::ids::GuildId,
-        utils::{cache::DiscordGuild, test_utils::{insert_guild_test_util, self}},
+        utils::{
+            cache::DiscordGuild,
+            test_utils::{self, insert_guild_test_util},
+        },
     };
 
     use super::Guild;
@@ -153,7 +177,10 @@ mod tests {
         transaction.commit().await.unwrap();
 
         assert_eq!(guild.id, inserted_guild.id);
-        assert_eq!(guild.time_added.timestamp(), inserted_guild.time_added.timestamp());
+        assert_eq!(
+            guild.time_added.timestamp(),
+            inserted_guild.time_added.timestamp()
+        );
         assert!(guild.active);
     }
 

@@ -89,7 +89,7 @@ async fn insert_valid_files(
     let mut transaction = db_pool.begin().await?;
     for entry in &mut files {
         if let Some(file) = &entry.sound_file {
-            match validate_audio_mime(&file).await {
+            match validate_audio_mime(file).await {
                 Ok(_) => {
                     file.insert(&mut transaction).await?;
                     entry.uploaded = true;

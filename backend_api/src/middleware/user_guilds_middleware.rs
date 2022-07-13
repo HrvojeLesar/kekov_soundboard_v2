@@ -1,7 +1,6 @@
 use std::{
     future::{ready, Ready},
     rc::Rc,
-    sync::Mutex,
 };
 
 use actix_web::{
@@ -10,6 +9,7 @@ use actix_web::{
     Error, HttpMessage,
 };
 use log::warn;
+use tokio::sync::Mutex;
 
 use crate::{
     error::errors::KekServerError,
@@ -59,12 +59,14 @@ where
         let service = Rc::clone(&self.service);
         return Box::pin(async move {
             {
-                let extensions = req.extensions();
-                let authorized_user = match extensions.get::<AuthorizedUserServiceType>() {
-                    Some(a) => a,
-                    None => {
-                        warn!("AuthorizedUser is added to extensions with middlware. Possible reason for missing user.");
-                        return Err(KekServerError::AuthorizedUserNotFoundError.into());
+                let authorized_user = {
+                    let extensions = req.extensions();
+                    match extensions.get::<AuthorizedUserServiceType>() {
+                        Some(a) => a.clone(),
+                        None => {
+                            warn!("AuthorizedUser is added to extensions with middlware. Possible reason for missing user.");
+                            return Err(KekServerError::AuthorizedUserNotFoundError.into());
+                        }
                     }
                 };
                 let cache = match req.app_data::<Data<UserGuildsCache>>() {

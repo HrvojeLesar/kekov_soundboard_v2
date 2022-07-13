@@ -145,7 +145,7 @@ impl ActiveGuildsCheck {
                     }
                 }
                 Err(_) => {
-                    Guild::remove_guild(&id, &mut transaction).await?;
+                    Guild::remove_guild(id, &mut transaction).await?;
                     removed_count += 1;
                 }
             }
@@ -154,7 +154,7 @@ impl ActiveGuildsCheck {
             match discord_guilds.binary_search_by(|g| g.id.0.cmp(&id.0)) {
                 Ok(_) => {}
                 Err(_) => {
-                    Guild::remove_guild(&id, &mut transaction).await?;
+                    Guild::remove_guild(id, &mut transaction).await?;
                     removed_count += 1;
                 }
             }

@@ -13,7 +13,7 @@ use routes::{not_found::not_found, routes_config, status::Status};
 
 use dotenv::dotenv;
 use snowflake::SnowflakeIdGenerator;
-use tokio::sync::RwLock;
+use tokio::sync::{RwLock, Mutex as AsyncMutex};
 use utils::cache::{
     create_auth_middlware_queue_cache, create_authorized_user_cache, create_user_guilds_cache,
     create_user_guilds_middlware_queue_cache,
@@ -81,8 +81,8 @@ async fn main() -> std::io::Result<()> {
     let authorized_users_cache = Data::new(create_authorized_user_cache());
     let status = Data::new(RwLock::new(Status::new()));
     let user_guilds_middleware_queue =
-        Data::new(Mutex::new(create_user_guilds_middlware_queue_cache()));
-    let auth_middleware_queue = Data::new(Mutex::new(create_auth_middlware_queue_cache()));
+        Data::new(AsyncMutex::new(create_user_guilds_middlware_queue_cache()));
+    let auth_middleware_queue = Data::new(AsyncMutex::new(create_auth_middlware_queue_cache()));
 
     let channels_server = Data::new(ChannelsServer::new(
         authorized_users_cache.clone(),
@@ -119,8 +119,8 @@ async fn main() -> std::io::Result<()> {
                 }
             }
             {
-                status.auth_queue_cache = ugmq_ref.lock().unwrap().0.entry_count() as usize;
-                status.guilds_queue_cache = amq_ref.lock().unwrap().0.entry_count() as usize;
+                status.auth_queue_cache = ugmq_ref.lock().await.0.entry_count() as usize;
+                status.guilds_queue_cache = amq_ref.lock().await.0.entry_count() as usize;
             }
             match channels_server_ref.send(channels_server::Status {}).await {
                 Ok(n) => {

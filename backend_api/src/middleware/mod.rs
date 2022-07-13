@@ -1,8 +1,8 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use actix_web::web::Data;
 use log::debug;
-use tokio::sync::Notify;
+use tokio::sync::{Notify, Mutex};
 
 use crate::{
     error::errors::KekServerError,
@@ -25,7 +25,7 @@ pub async fn authorize_user(
 ) -> Result<Arc<AuthorizedUser>, KekServerError> {
     let authorized_user;
     if !cache.contains_key(&access_token) {
-        let lock = queue_cache.lock().unwrap();
+        let lock = queue_cache.lock().await;
         let notify;
         if let Some(n) = lock.0.get(&access_token) {
             drop(lock);
@@ -44,7 +44,7 @@ pub async fn authorize_user(
                 Ok(u) => u,
                 Err(e) => {
                     notify.notify_one();
-                    return Err(e.into());
+                    return Err(e);
                 }
             };
             authorized_user = Arc::new(AuthorizedUser {
@@ -56,19 +56,19 @@ pub async fn authorize_user(
                 .insert(access_token.clone(), Arc::clone(&authorized_user))
                 .await;
             notify.notify_waiters();
-            let lock = queue_cache.lock().unwrap();
+            let lock = queue_cache.lock().await;
             lock.0.invalidate(&access_token).await;
         } else {
             authorized_user = match cache.get(&access_token) {
                 Some(au) => au,
-                None => return Err(KekServerError::UserNotInCacheError.into()),
+                None => return Err(KekServerError::UserNotInCacheError),
             };
             debug!("Skip auth");
         }
     } else {
         authorized_user = match cache.get(&access_token) {
             Some(au) => au,
-            None => return Err(KekServerError::UserNotInCacheError.into()),
+            None => return Err(KekServerError::UserNotInCacheError),
         }
     }
     return Ok(authorized_user);
@@ -81,7 +81,7 @@ pub async fn cache_authorized_user_guilds(
 ) -> Result<(), KekServerError> {
     let user_id = &authorized_user.discord_user.id;
     if !cache.contains_key(user_id) {
-        let lock = queue_cache.lock().unwrap();
+        let lock = queue_cache.lock().await;
         let notify;
         if let Some(n) = lock.0.get(&authorized_user.access_token) {
             drop(lock);
@@ -100,13 +100,13 @@ pub async fn cache_authorized_user_guilds(
                 Ok(g) => Arc::new(g),
                 Err(e) => {
                     notify.notify_one();
-                    return Err(e.into());
+                    return Err(e);
                 }
             };
             // let user_guilds = Arc::new(authorized_user.get_guilds().await?);
             cache.insert(user_id.clone(), user_guilds).await;
             notify.notify_waiters();
-            let lock = queue_cache.lock().unwrap();
+            let lock = queue_cache.lock().await;
             lock.0.invalidate(&authorized_user.access_token).await;
         } else {
             debug!("Skip guilds");

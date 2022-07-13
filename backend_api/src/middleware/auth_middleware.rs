@@ -1,7 +1,7 @@
 use std::{
     future::{ready, Ready},
     rc::Rc,
-    sync::{Arc, Mutex},
+    sync::Arc,
 };
 
 use actix_web::{
@@ -9,6 +9,7 @@ use actix_web::{
     web::Data,
     Error, HttpMessage,
 };
+use tokio::sync::Mutex;
 
 use crate::utils::{
     auth::{get_access_token, AuthorizedUserServiceType},

@@ -1,15 +1,15 @@
 use std::{
     collections::HashMap,
-    sync::{Arc, Mutex},
+    sync::Arc,
 };
 
 use actix::{
-    Actor, Addr, Context, Handler, Message, MessageResult, ResponseFuture,
-    Supervised, Supervisor,
+    Actor, Addr, Context, Handler, Message, MessageResult, ResponseFuture, Supervised, Supervisor,
 };
 
 use actix_web::web::Data;
 use log::{debug, error, info};
+use tokio::sync::Mutex;
 
 use crate::{
     middleware::{authorize_user, cache_authorized_user_guilds},
@@ -147,7 +147,7 @@ impl ChannelsServer {
         match self.channels_cache.get_mut(guild_id) {
             Some(o) => {
                 o.0.remove(id);
-                if o.0.len() == 0 {
+                if o.0.is_empty() {
                     self.channels_cache.remove(guild_id);
                     for sync_client in self.sync_sessions.values() {
                         sync_client.do_send(RemoveGuild {
@@ -187,7 +187,7 @@ impl ChannelsServer {
                 }
                 return true;
             });
-            if guilds.0.len() == 0 {
+            if guilds.0.is_empty() {
                 empty_guild_ids.push(guild_id.clone());
             }
         }
@@ -231,7 +231,7 @@ impl Handler<DisconnectSyncSession> for ChannelsServer {
     fn handle(&mut self, msg: DisconnectSyncSession, _ctx: &mut Self::Context) -> Self::Result {
         debug!("DisconnectSyncSession");
         self.sync_sessions.remove(&msg.id);
-        if self.sync_sessions.len() == 0 {
+        if self.sync_sessions.is_empty() {
             for guild in self.channels_cache.values() {
                 for client in guild.0.iter() {
                     (client.1).0.do_send(CacheClearing {});
@@ -247,12 +247,12 @@ impl Handler<Subscribe> for ChannelsServer {
     type Result = ();
 
     fn handle(&mut self, msg: Subscribe, _ctx: &mut Self::Context) -> Self::Result {
-        if self.sync_sessions.len() == 0 {
+        if self.sync_sessions.is_empty() {
             return;
         }
 
         if let Some(old) = &msg.old_guild {
-            self.remove_client(&msg.id, &old);
+            self.remove_client(&msg.id, old);
         }
 
         let authorized_user = match self.authorized_users_cache.get(&msg.access_token) {
@@ -271,7 +271,7 @@ impl Handler<Subscribe> for ChannelsServer {
         let sync = self
             .sync_sessions
             .values()
-            .map(|addr| addr.clone())
+            .cloned()
             .collect::<Vec<Addr<SyncSession>>>();
 
         let mut channels_message = None;

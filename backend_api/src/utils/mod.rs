@@ -1,13 +1,16 @@
 use std::{str::FromStr, time::Duration};
 
 use actix::clock::sleep;
-use actix_http::{encoding::Decoder, Payload, StatusCode};
-use actix_web::http::header::AUTHORIZATION;
-use awc::{error::SendRequestError, ClientResponse};
+
 use log::{debug, warn};
 use serde::{Deserialize, Deserializer, Serializer};
 
 use crate::{error::errors::KekServerError, models::ids::Id};
+
+use reqwest::{
+    header::{AUTHORIZATION},
+    Client, Error, Response, StatusCode,
+};
 
 use self::auth::AuthorizedUser;
 
@@ -44,16 +47,12 @@ where
     return serializer.serialize_str(&num.get_id().to_string());
 }
 
-async fn get_request(
-    autorized_user: &AuthorizedUser,
-    url: &str,
-) -> Result<ClientResponse<Decoder<Payload>>, SendRequestError> {
-    return awc::Client::new()
+async fn get_request(autorized_user: &AuthorizedUser, url: &str) -> Result<Response, Error> {
+
+    return Client::new()
         .get(format!("https://discord.com/api/v9{}", url))
-        .append_header((
-            AUTHORIZATION,
-            format!("Bearer {}", &autorized_user.access_token.0),
-        ))
+        .header(AUTHORIZATION, format!("Bearer {}", &autorized_user.access_token.0))
+        // .headers(headers)
         .send()
         .await;
 }
@@ -61,7 +60,7 @@ async fn get_request(
 pub async fn make_discord_get_request(
     autorized_user: &AuthorizedUser,
     url: &str,
-) -> Result<ClientResponse<Decoder<Payload>>, KekServerError> {
+) -> Result<Response, KekServerError> {
     let mut resp = get_request(autorized_user, url).await?;
     let mut retries = 0;
     while resp.status() == StatusCode::TOO_MANY_REQUESTS {

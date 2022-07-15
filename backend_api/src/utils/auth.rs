@@ -1,5 +1,4 @@
-use actix_http::StatusCode;
-use actix_web::{dev::ServiceRequest, http::header::AUTHORIZATION, FromRequest, HttpMessage};
+use actix_web::{dev::ServiceRequest, FromRequest, HttpMessage};
 use log::debug;
 use serde::Deserialize;
 use std::{future::Future, pin::Pin, sync::Arc};
@@ -7,6 +6,11 @@ use std::{future::Future, pin::Pin, sync::Arc};
 use crate::{error::errors::KekServerError, models::user::User};
 
 use super::{cache::DiscordGuild, make_discord_get_request, USERGUILDS};
+
+use reqwest::{
+    header::{HeaderMap, HeaderValue, AUTHORIZATION},
+    Client, StatusCode,
+};
 
 pub type AuthorizedUserServiceType = Arc<AuthorizedUser>;
 
@@ -71,9 +75,13 @@ pub async fn get_access_token(req: &ServiceRequest) -> Result<AccessToken, KekSe
 pub async fn get_discord_user_from_token(
     access_token: &AccessToken,
 ) -> Result<User, KekServerError> {
-    let mut resp = awc::Client::new()
+    let mut headers = HeaderMap::new();
+    let token_header = HeaderValue::from_str(&format!("Bearer {}", access_token.0))?;
+    headers.insert(AUTHORIZATION, token_header);
+
+    let resp = Client::new()
         .get("https://discord.com/api/v9/users/@me")
-        .append_header((AUTHORIZATION, format!("Bearer {}", access_token.0)))
+        .headers(headers)
         .send()
         .await?;
 

@@ -141,12 +141,12 @@ impl ActiveGuildsCheck {
                 Ok(idx) => {
                     let guild = &db_guilds[idx];
                     if !guild.active {
-                        Guild::insert_guild(&guild.id, &name, &mut transaction).await?;
+                        Guild::insert_guild(&guild.id, name, &mut transaction).await?;
                         inserted_count += 1;
                     }
                 }
                 Err(_) => {
-                    Guild::insert_guild(&id, &name, &mut transaction).await?;
+                    Guild::insert_guild(id, name, &mut transaction).await?;
                     inserted_count += 1;
                 }
             }

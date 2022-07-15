@@ -7,11 +7,11 @@ use actix_web::{
     web::{scope, Data, Form, Json, Query, ServiceConfig},
     HttpResponse,
 };
-use awc::Client;
+
 use chrono::Utc;
 use oauth2::{
     basic::BasicTokenType, url::Url, AccessToken, AuthorizationCode, CsrfToken, PkceCodeChallenge,
-    PkceCodeVerifier, RefreshToken, StandardRevocableToken, StandardTokenResponse, TokenResponse,
+    PkceCodeVerifier, RefreshToken, StandardRevocableToken, StandardTokenResponse, TokenResponse, reqwest::async_http_client,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -63,30 +63,6 @@ pub fn config(cfg: &mut ServiceConfig) {
     );
 }
 
-async fn send_oauth_request(
-    request: oauth2::HttpRequest,
-) -> Result<oauth2::HttpResponse, KekServerError> {
-    let http_client = Client::new();
-    let mut request_builder = http_client.request(request.method, request.url.to_string());
-
-    for header in &request.headers {
-        request_builder = request_builder.append_header(header);
-    }
-
-    let mut response = request_builder.send_body(request.body).await?;
-
-    let mut headers = oauth2::http::HeaderMap::new();
-    for (name, value) in response.headers().iter() {
-        headers.insert(name, value.to_owned());
-    }
-
-    return Ok(oauth2::HttpResponse {
-        status_code: response.status(),
-        headers,
-        body: response.body().await?.to_vec(),
-    });
-}
-
 async fn fetch_access_token(
     oauth_client: Data<OAuthClient>,
     params_code: String,
@@ -96,7 +72,7 @@ async fn fetch_access_token(
         .get_client()
         .exchange_code(AuthorizationCode::new(params_code))
         .set_pkce_verifier(PkceCodeVerifier::new(pkce_verifier))
-        .request_async(send_oauth_request)
+        .request_async(async_http_client)
         .await
     {
         Ok(resp) => Ok(resp),
@@ -228,7 +204,7 @@ pub async fn auth_revoke(
         ))?,
     };
 
-    match request.request_async(send_oauth_request).await {
+    match request.request_async(async_http_client).await {
         Ok(_) => {
             if revoke_token.token_type == TokenType::AccessToken
                 || revoke_token.token_type == TokenType::Invalid
@@ -257,7 +233,7 @@ pub async fn auth_refresh(
     let client = oauth_client.get_client();
     let request = client.exchange_refresh_token(&payload.refresh_token);
 
-    let new_tokens = match request.request_async(send_oauth_request).await {
+    let new_tokens = match request.request_async(async_http_client).await {
         Ok(token) => token,
         Err(err) => return Err(KekServerError::RequestTokenError(Box::new(err))),
     };

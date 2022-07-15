@@ -7,15 +7,13 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum KekServerError {
     #[error(transparent)]
-    SendRequestError(#[from] awc::error::SendRequestError),
-    #[error(transparent)]
     PayloadError(#[from] actix_web::error::PayloadError),
     #[error(transparent)]
     RequestTokenError(
         #[from]
         Box<
             oauth2::RequestTokenError<
-                KekServerError,
+                oauth2::reqwest::Error<reqwest::Error>,
                 StandardErrorResponse<BasicErrorResponseType>,
             >,
         >,
@@ -25,7 +23,7 @@ pub enum KekServerError {
         #[from]
         Box<
             oauth2::RequestTokenError<
-                KekServerError,
+                oauth2::reqwest::Error<reqwest::Error>,
                 StandardErrorResponse<RevocationErrorResponseType>,
             >,
         >,
@@ -46,8 +44,6 @@ pub enum KekServerError {
     BlockingError(#[from] actix_web::error::BlockingError),
     #[error(transparent)]
     IOError(#[from] std::io::Error),
-    #[error(transparent)]
-    WsClientError(#[from] awc::error::WsClientError),
     #[error(transparent)]
     ActixWebError(#[from] actix_web::Error),
     #[error(transparent)]
@@ -86,8 +82,6 @@ pub enum KekServerError {
     FileTooLargeError,
     #[error("Enviroment Error")]
     EnvError(#[from] dotenv::Error),
-    #[error("Error while parsing JSON: {0}")]
-    JsonParseError(#[from] awc::error::JsonPayloadError),
     #[error("Request extensions error")]
     RequestExtensionsError,
     #[error("Authorized user not found error")]
@@ -119,7 +113,6 @@ struct ApiError<'a> {
 impl ResponseError for KekServerError {
     fn status_code(&self) -> StatusCode {
         match self {
-            KekServerError::SendRequestError(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::PayloadError(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::RequestTokenError(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::RevocationRequestTokenError(..) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -131,7 +124,6 @@ impl ResponseError for KekServerError {
             KekServerError::MultipartError(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::BlockingError(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::IOError(..) => StatusCode::INTERNAL_SERVER_ERROR,
-            KekServerError::WsClientError(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::ActixWebError(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::ActixMailboxError(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::TokioOneshotRecvError(..) => StatusCode::INTERNAL_SERVER_ERROR,
@@ -151,7 +143,6 @@ impl ResponseError for KekServerError {
             KekServerError::WrongMimeTypeError => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::FileTooLargeError => StatusCode::BAD_REQUEST,
             KekServerError::EnvError(..) => StatusCode::INTERNAL_SERVER_ERROR,
-            KekServerError::JsonParseError(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::RequestExtensionsError => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::AuthorizedUserNotFoundError => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::UserNotInCacheError => StatusCode::UNAUTHORIZED,
@@ -168,7 +159,6 @@ impl ResponseError for KekServerError {
     fn error_response(&self) -> HttpResponse {
         return HttpResponse::build(self.status_code()).json(ApiError {
             error: match self {
-                KekServerError::SendRequestError(..) => "awc_send_request_error",
                 KekServerError::PayloadError(..) => "payload_error",
                 KekServerError::RequestTokenError(..) => "request_token_error",
                 KekServerError::RevocationRequestTokenError(..) => "revocation_request_token_error",
@@ -180,7 +170,6 @@ impl ResponseError for KekServerError {
                 KekServerError::MultipartError(..) => "multipart_error",
                 KekServerError::BlockingError(..) => "blocking_error",
                 KekServerError::IOError(..) => "io_error",
-                KekServerError::WsClientError(..) => "ws_client_error",
                 KekServerError::ActixWebError(..) => "actix_web_error",
                 KekServerError::ActixMailboxError(..) => "actix_mailbox_error",
                 KekServerError::TokioOneshotRecvError(..) => "tokio_oneshot_recv_error",
@@ -200,7 +189,6 @@ impl ResponseError for KekServerError {
                 KekServerError::WrongMimeTypeError => "wrong_mime_type_error",
                 KekServerError::FileTooLargeError => "file_too_large_error",
                 KekServerError::EnvError(..) => "enviroment_error",
-                KekServerError::JsonParseError(..) => "json_parse_error",
                 KekServerError::RequestExtensionsError => "request_extension_error",
                 KekServerError::AuthorizedUserNotFoundError => "user_not_found_error",
                 KekServerError::UserNotInCacheError => "user_not_in_cache_error",

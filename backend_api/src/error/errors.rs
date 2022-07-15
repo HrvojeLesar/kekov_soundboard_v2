@@ -67,6 +67,8 @@ pub enum KekServerError {
     #[error(transparent)]
     ReqwestError(#[from] reqwest::Error),
     #[error(transparent)]
+    InvalidHeaderValue(#[from] reqwest::header::InvalidHeaderValue),
+    #[error(transparent)]
     SerdeUrlencodedError(#[from] serde_urlencoded::ser::Error),
     #[error("Provided files faild to upload")]
     NoFilesUploadedError,
@@ -102,6 +104,8 @@ pub enum KekServerError {
     InvalidFileIdError,
     #[error("Unauthorized file access: {0}")]
     UnauthorizedFileAccessError(String),
+    #[error("Preview file not found")]
+    PreviewFileNotFound,
     #[error("{0}")]
     Other(String),
 }
@@ -137,6 +141,7 @@ impl ResponseError for KekServerError {
             KekServerError::ParseFloatError(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::ParseIntError(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::ReqwestError(..) => StatusCode::INTERNAL_SERVER_ERROR,
+            KekServerError::InvalidHeaderValue(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::SerdeUrlencodedError(..) => StatusCode::INTERNAL_SERVER_ERROR,
             KekServerError::NoFilesUploadedError => StatusCode::BAD_REQUEST,
             KekServerError::InvalidCredentialsError => StatusCode::UNAUTHORIZED,
@@ -155,6 +160,7 @@ impl ResponseError for KekServerError {
             KekServerError::GuildFileDoesNotExistError => StatusCode::NOT_FOUND,
             KekServerError::InvalidFileIdError => StatusCode::NOT_FOUND,
             KekServerError::UnauthorizedFileAccessError(..) => StatusCode::UNAUTHORIZED,
+            KekServerError::PreviewFileNotFound => StatusCode::NOT_FOUND,
             KekServerError::Other(..) => StatusCode::BAD_REQUEST,
         }
     }
@@ -185,6 +191,7 @@ impl ResponseError for KekServerError {
                 KekServerError::ParseFloatError(..) => "parse_float_error",
                 KekServerError::ParseIntError(..) => "parse_int_error",
                 KekServerError::ReqwestError(..) => "reqwest_error",
+                KekServerError::InvalidHeaderValue(..) => "invalid_header_value",
                 KekServerError::NoFilesUploadedError => "no_files_uploaded_error",
                 KekServerError::InvalidCredentialsError => "invalid_credentials_error",
                 KekServerError::DiscordRequestError => "discord_request_error",
@@ -202,6 +209,7 @@ impl ResponseError for KekServerError {
                 KekServerError::GuildFileDoesNotExistError => "guild_file_does_not_exist_error",
                 KekServerError::InvalidFileIdError => "invalid_file_id_error",
                 KekServerError::UnauthorizedFileAccessError(..) => "unauthorized_file_access_error",
+                KekServerError::PreviewFileNotFound => "preview_file_not_found",
                 KekServerError::Other(..) => "other",
             },
             description: &self.to_string(),

@@ -222,6 +222,7 @@ impl Handler<ConnectSyncSession> for ChannelsServer {
     fn handle(&mut self, msg: ConnectSyncSession, _ctx: &mut Self::Context) -> Self::Result {
         debug!("ConnectSyncSession");
         self.sync_sessions.insert(msg.id, msg.address);
+        // TODO: Send already subscribed to guilds
     }
 }
 
@@ -231,6 +232,8 @@ impl Handler<DisconnectSyncSession> for ChannelsServer {
     fn handle(&mut self, msg: DisconnectSyncSession, _ctx: &mut Self::Context) -> Self::Result {
         debug!("DisconnectSyncSession");
         self.sync_sessions.remove(&msg.id);
+        // TODO: Remove full cache clearing
+        // Notify users of this so they handle this in their own way
         if self.sync_sessions.is_empty() {
             for guild in self.channels_cache.values() {
                 for client in guild.0.iter() {

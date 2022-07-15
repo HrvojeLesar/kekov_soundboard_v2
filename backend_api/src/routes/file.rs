@@ -3,8 +3,8 @@ use std::sync::Mutex;
 use actix_multipart::{Field, Multipart};
 use actix_web::{
     get, post,
-    web::{self, scope, Data, Query, ServiceConfig},
-    HttpResponse,
+    web::{self, scope, Data, Path, Query, ServiceConfig},
+    HttpRequest, HttpResponse,
 };
 use futures_util::TryStreamExt;
 use log::error;
@@ -41,9 +41,9 @@ const PUBLIC_SUFFIX: &str = "_p";
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(
         scope("/files")
-            .wrap(AuthService)
             .service(upload_file)
-            .service(get_public_files),
+            .service(get_public_files)
+            .service(preview),
     );
 }
 
@@ -99,7 +99,7 @@ async fn insert_valid_files(
                     delete_file(file).await?;
                 }
             }
-        } 
+        }
     }
     transaction.commit().await?;
 
@@ -124,7 +124,7 @@ struct UploadedFile {
 }
 
 // TODO: full path code repeats, make nicer
-#[post("/upload")]
+#[post("/upload", wrap = "AuthService")]
 pub async fn upload_file(
     mut payload: Multipart,
     snowflake: Data<Mutex<SnowflakeIdGenerator>>,
@@ -143,7 +143,10 @@ pub async fn upload_file(
 
     while let Some(mut field) = payload.try_next().await? {
         if mime::AUDIO != field.content_type().type_() {
-            uploaded_files.push(UploadedFile { uploaded: false, sound_file: None });
+            uploaded_files.push(UploadedFile {
+                uploaded: false,
+                sound_file: None,
+            });
             continue;
         }
 
@@ -157,7 +160,10 @@ pub async fn upload_file(
         let full_file_path = format!("{}{}", dotenv::var("SOUNDFILE_DIR")?, sound_file.id.0);
         let mut file_handle = File::create(full_file_path).await?;
 
-        uploaded_files.push(UploadedFile { uploaded: false, sound_file: Some(sound_file) });
+        uploaded_files.push(UploadedFile {
+            uploaded: false,
+            sound_file: Some(sound_file),
+        });
 
         while let Some(chunk) = field.try_next().await? {
             uploaded_files_size += chunk.len();
@@ -190,7 +196,7 @@ pub struct PublicFilesQueryParams {
     search_query: Option<String>,
 }
 
-#[get("/public")]
+#[get("/public", wrap = "AuthService")]
 pub async fn get_public_files(
     Query(query): Query<PublicFilesQueryParams>,
     db_pool: Data<PgPool>,
@@ -215,4 +221,27 @@ pub async fn get_public_files(
     }
     transaction.commit().await?;
     return Ok(HttpResponse::Ok().json(files));
+}
+
+#[get("/preview/{owner_id}/{file_id}")]
+pub async fn preview(
+    db_pool: Data<PgPool>,
+    path: Path<(UserId, SoundFileId)>,
+    req: HttpRequest,
+) -> Result<HttpResponse, KekServerError> {
+    let (user_id, file_id) = path.into_inner();
+    let mut transaction = db_pool.begin().await?;
+    let file = SoundFile::get_file(&file_id, &user_id, &mut transaction).await?;
+    transaction.commit().await?;
+
+    if let Some(file) = file {
+        return Ok(actix_files::NamedFile::open(format!(
+            "{}{}",
+            dotenv::var("SOUNDFILE_DIR")?,
+            file.id.0
+        ))?
+        .into_response(&req));
+    } else {
+        return Err(KekServerError::PreviewFileNotFound);
+    }
 }

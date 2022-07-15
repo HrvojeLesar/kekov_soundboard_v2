@@ -1,0 +1,1087 @@
+{
+  "db": "PostgreSQL",
+  "05a0a666022e209e13ea3b3fc95700a32622ac85a58343d1e8bfd969c672bc21": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            UPDATE guild_file\n            SET is_deleted = true\n            WHERE guild_id = $1 AND file_id = $2\n            "
+  },
+  "064ddb4fa7b36ebca06be92ab58e8df975119bc8c4655d7df9e9d48af0150e8f": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "display_name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "owner",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "is_deleted",
+          "ordinal": 3,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_public",
+          "ordinal": 4,
+          "type_info": "Bool"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8Array",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            UPDATE files\n            SET is_deleted = true\n            WHERE id = ANY($1) AND owner = $2\n            RETURNING *\n            "
+  },
+  "0c7e0d46343bee2ee2d16fe2e63ebc0e5e3f785b27dd9f24b444d40ce3a3d5fa": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "display_name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "owner",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "is_deleted",
+          "ordinal": 3,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_public",
+          "ordinal": 4,
+          "type_info": "Bool"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM files\n            WHERE is_public = true AND is_deleted = false\n            LIMIT $1 OFFSET $2\n            "
+  },
+  "10335310b73e1ce1a87d1dfe7a75bc1e77abdf2843a96e51d608febfcfc0c14f": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "display_name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "owner",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "is_deleted",
+          "ordinal": 3,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_public",
+          "ordinal": 4,
+          "type_info": "Bool"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM files\n            WHERE is_public = true AND is_deleted = false\n            AND display_name ILIKE $3\n            LIMIT $1 OFFSET $2\n            "
+  },
+  "19797352d20e7bedb5982275b716f33fe212392b7b3d796e534d721b6905ee40": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n            SELECT COUNT(*) as count FROM files\n            WHERE is_public = true AND is_deleted = false\n            "
+  },
+  "1ee5c14b82c38233f590c744980dced2999db697a4a1ac1550f88c68527068af": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 2,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "active",
+          "ordinal": 3,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Varchar"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO guild (id, name)\n            VALUES ($1, $2)\n            ON CONFLICT (id)\n            DO UPDATE\n            SET active = true, name = $2\n            RETURNING *\n            "
+  },
+  "2d40d88d69526c57ae74e1f93e8b4065a4072236ab4fc656c8962b7920624cc7": {
+    "describe": {
+      "columns": [
+        {
+          "name": "count",
+          "ordinal": 0,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT COUNT(*) as count FROM files\n            WHERE is_public = true AND is_deleted = false\n            AND display_name ILIKE $1\n            "
+  },
+  "3fa9ad7a6f23855fd33855a2ee7e48ca7c96c38bb9f718dc9082e76b7bc68a33": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "display_name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "owner",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "is_deleted",
+          "ordinal": 3,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_public",
+          "ordinal": 4,
+          "type_info": "Bool"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            UPDATE files\n            SET is_public = NOT is_public\n            WHERE id = $1 AND owner = $2\n            RETURNING *\n            "
+  },
+  "4ba2441f5c120a21f4c512843e5ed8e18fd75692ecbc764f120d9eab2a470ca6": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n                DELETE FROM state\n                WHERE expires < CURRENT_TIMESTAMP\n                "
+  },
+  "531d1d3a6d9d5cc855b15354f6e3b36f48f5c7ea41cc4856087e47638e6d14f6": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            DELETE FROM state\n            WHERE csrf_token = $1\n            "
+  },
+  "55cce325dc0a2f6ae9a63537c7fea9f6517d686bee2422e3179cfba35163898c": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "display_name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "owner",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "file_time_added",
+          "ordinal": 3,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "file_is_public",
+          "ordinal": 4,
+          "type_info": "Bool"
+        },
+        {
+          "name": "file_is_deleted",
+          "ordinal": 5,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        false,
+        true,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT \n                id,\n                display_name,\n                owner,\n                files.time_added as file_time_added,\n                files.is_public as file_is_public,\n                files.is_deleted as file_is_deleted\n            FROM guild_file\n            INNER JOIN files ON files.id = guild_file.file_id \n            AND owner = $1 \n            AND guild_id = $2\n            AND guild_file.is_deleted = false\n            "
+  },
+  "5e522ea53abc45df9430da548df3bc1d61fa1cfb9f7213a76a35ef4e567a0484": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "avatar",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 3,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Varchar",
+          "Varchar"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO users (id, username, avatar)\n            VALUES ($1, $2, $3)\n            RETURNING *\n            "
+  },
+  "67de1a41c47781fad87b8d8340efa6fb0c9a05288d16dccaeb9161c387433327": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "display_name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "owner",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "is_deleted",
+          "ordinal": 3,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_public",
+          "ordinal": 4,
+          "type_info": "Bool"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "guild_id",
+          "ordinal": 6,
+          "type_info": "Int8"
+        },
+        {
+          "name": "file_id",
+          "ordinal": 7,
+          "type_info": "Int8"
+        },
+        {
+          "name": "gf_time_added",
+          "ordinal": 8,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "gf_is_deleted",
+          "ordinal": 9,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT\n                files.*,\n                guild_file.guild_id,\n                guild_file.file_id,\n                guild_file.time_added as gf_time_added,\n                guild_file.is_deleted as gf_is_deleted\n            FROM guild_file\n            INNER JOIN files ON files.id = $2\n            WHERE guild_file.guild_id = $1 AND guild_file.file_id = $2\n            AND guild_file.is_deleted = false\n            "
+  },
+  "711aad9d762583836fa2c7e1b543d3a5374c293f16b453a8fd81264466edce81": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "display_name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "owner",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "is_deleted",
+          "ordinal": 3,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_public",
+          "ordinal": 4,
+          "type_info": "Bool"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM files\n            WHERE id = $1 AND is_deleted = false\n            AND (is_public = true OR owner = $2)\n            "
+  },
+  "7c9f23ce4ea5225752d6dcc0f08c3631d00c72290f3a59faa430a261eb91911f": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 2,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "active",
+          "ordinal": 3,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM guild\n            WHERE id = $1 AND active = true\n            "
+  },
+  "83689c785a2a6056d3d8f8b0ff8f233983cb73165dd9702ddffbfbdca48bf1c8": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "display_name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "owner",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "is_deleted",
+          "ordinal": 3,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_public",
+          "ordinal": 4,
+          "type_info": "Bool"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM files\n            WHERE owner = $1 AND is_deleted = false\n            "
+  },
+  "83b2df9e9f4ca94a12d00491580248f379d1bce052e5346a795a09e23a3017df": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "display_name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "owner",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "is_deleted",
+          "ordinal": 3,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_public",
+          "ordinal": 4,
+          "type_info": "Bool"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Varchar",
+          "Int8",
+          "Bool"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO files (id, display_name, owner, is_public)\n            VALUES ($1, $2, $3, $4)\n            RETURNING *\n            "
+  },
+  "8d62fa2739eec8df644701ed7f78b71c3082d327592327049c04dc6bf4124f7a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "display_name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "owner",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "is_deleted",
+          "ordinal": 3,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_public",
+          "ordinal": 4,
+          "type_info": "Bool"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "guild_id",
+          "ordinal": 6,
+          "type_info": "Int8"
+        },
+        {
+          "name": "file_id",
+          "ordinal": 7,
+          "type_info": "Int8"
+        },
+        {
+          "name": "gf_time_added",
+          "ordinal": 8,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "gf_is_deleted",
+          "ordinal": 9,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT \n                files.*,\n                guild_file.guild_id,\n                guild_file.file_id,\n                guild_file.time_added as gf_time_added,\n                guild_file.is_deleted as gf_is_deleted\n            FROM files\n            INNER JOIN guild_file ON guild_file.guild_id = $1\n            AND files.id = guild_file.file_id\n            AND guild_file.is_deleted = false\n            "
+  },
+  "9918ef5594da7a1d1aa4ded63cfedc260ac7b8e0583803719a74c203f8179202": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 2,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "active",
+          "ordinal": 3,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            UPDATE guild\n            SET active = false\n            WHERE id = $1 AND active = true\n            RETURNING *\n            "
+  },
+  "a48afd8e2d5c8dd278edefb1712eadb7508ed962827899f98bad2debd5601f2e": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 2,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "active",
+          "ordinal": 3,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n            SELECT * FROM guild\n            ORDER BY id\n            "
+  },
+  "a7da26ab1348cd70027e19dc9e49edc9a1d82133343b144a642d93029a0ae1d4": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "username",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "avatar",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 3,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM users\n            WHERE id = $1\n            "
+  },
+  "ab6beff7e824ddd6ef8f7fb921e5a8d895491e728542977a4305a28a27e64efb": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO state (csrf_token, pkce_verifier)\n            VALUES ($1, $2)\n            "
+  },
+  "aec86025a27da6d16841a2ab52d2f9e268ced8af4b8fe299e4ed430c9941bd44": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "display_name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "owner",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "is_deleted",
+          "ordinal": 3,
+          "type_info": "Bool"
+        },
+        {
+          "name": "is_public",
+          "ordinal": 4,
+          "type_info": "Bool"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 5,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            UPDATE files\n            SET is_deleted = true\n            WHERE id = $1 AND owner = $2\n            RETURNING *\n            "
+  },
+  "ccca22f4bb1f75b9c57f5b9812e181a4843def4aae87e824168f141782d8c672": {
+    "describe": {
+      "columns": [
+        {
+          "name": "guild_id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "file_id",
+          "ordinal": 1,
+          "type_info": "Int8"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 2,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "is_deleted",
+          "ordinal": 3,
+          "type_info": "Bool"
+        },
+        {
+          "name": "id",
+          "ordinal": 4,
+          "type_info": "Int8"
+        },
+        {
+          "name": "name",
+          "ordinal": 5,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "active",
+          "ordinal": 6,
+          "type_info": "Bool"
+        },
+        {
+          "name": "guild_time_added",
+          "ordinal": 7,
+          "type_info": "Timestamp"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8Array",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT\n                guild_id,\n                file_id,\n                guild_file.time_added,\n                is_deleted,\n                guild.id,\n                guild.name,\n                guild.active,\n                guild.time_added as guild_time_added \n            FROM guild_file\n            INNER JOIN guild ON id = guild_file.guild_id\n            AND guild_id = ANY($1)\n            AND file_id = $2\n            AND guild_file.is_deleted = false\n            "
+  },
+  "cd07a224689d1f26686491721b3c820c2d597df8fe061e47be82d663abc35944": {
+    "describe": {
+      "columns": [
+        {
+          "name": "csrf_token",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "pkce_verifier",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "expires",
+          "ordinal": 2,
+          "type_info": "Timestamptz"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM state\n            WHERE csrf_token = $1\n            "
+  },
+  "e32275b53d4dac73b6b8745a8039f4518b6a8840423e85ad07d389b936dd9ead": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8Array",
+          "Int8Array"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO guild_file (guild_id, file_id)\n            SELECT guild_id, file_id FROM UNNEST($1::bigint[]) as guild_id, UNNEST($2::bigint[]) as file_id\n            "
+  },
+  "e6f072805aa37f1cbe11f9b13f6de8118fddd8195f9cb9c97d51df5b955a39af": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO guild_file (guild_id, file_id)\n            VALUES ($1, $2)\n            ON CONFLICT (guild_id, file_id)\n            DO UPDATE\n            SET is_deleted = false;\n            "
+  },
+  "f954ed68114decedbd018541ba1b5a06ee347eb87de2b77a0918300371e66a45": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "time_added",
+          "ordinal": 2,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "active",
+          "ordinal": 3,
+          "type_info": "Bool"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8Array"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM guild\n            WHERE id = ANY($1) AND active = true\n            "
+  }
+}

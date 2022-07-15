@@ -41,6 +41,13 @@ Api available at route **`/v1`**.
 **POST** `/auth/revoke`
 - Revokes token sent in form-data (token, optional token_type).
 
+## Files
+
+### Sound file preview
+**GET** `/files/preview/{owner_id}/{file_id}`
+- Returns the file
+- Fails if file is deleted
+
 # Protected routes
 For these routes user authentication is required.
 Authentication is done through [auth routes](#auth).
@@ -50,7 +57,8 @@ Authentication is done through [auth routes](#auth).
 ### File upload
 **POST** `/files/upload`
 - Uploaded files require to be audio files. 
-- Returns a json array of uploaded files. Successfully uploaded files return with their valid data, failed files are marked with `uploaded: false` in the array.
+- Returns a json array of uploaded files in order they were sent to in form-multipart.
+Files that have failed have no `sound_file` field and `uploaded` field is set to false.
 
 **GET** `/files/public`
 - Supports query params: `search_query, page, limit` (Upper limit is 200 files).

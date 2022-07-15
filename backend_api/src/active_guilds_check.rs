@@ -37,11 +37,11 @@ impl ActiveGuildsCheck {
     pub fn new(pg_pool: Data<Pool<Postgres>>) -> Result<Self, KekServerError> {
         let token = dotenv::var("DISCORD_BOT_TOKEN").expect("DISCORD_BOT_TOKEN is not set!");
         let mut headers = HeaderMap::new();
-        let mut token_header = HeaderValue::from_str(&format!("Bot {}", token)).unwrap();
+        let mut token_header = HeaderValue::from_str(&format!("Bot {}", token))?;
         token_header.set_sensitive(true);
         headers.insert(AUTHORIZATION, token_header);
 
-        let client = Client::builder().default_headers(headers).build().unwrap();
+        let client = Client::builder().default_headers(headers).build()?;
 
         return Ok(Self {
             client,
@@ -151,7 +151,10 @@ impl ActiveGuildsCheck {
                 }
             }
         }
-        for Guild { id, .. } in &db_guilds {
+        for Guild { id, active, .. } in &db_guilds {
+            if !*active {
+                continue;
+            }
             match discord_guilds.binary_search_by(|g| g.id.0.cmp(&id.0)) {
                 Ok(_) => {}
                 Err(_) => {

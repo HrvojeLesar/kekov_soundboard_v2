@@ -17,6 +17,7 @@ import { useCookies } from "react-cookie";
 import { TbX } from "react-icons/tb";
 import { COOKIE_NAMES } from "../auth/AuthProvider";
 import SearchBar from "../components/SearchBar";
+import SoundPreview from "../components/SoundPreview";
 import DeleteFile from "../components/UserFiles/DeleteFile";
 import ServerSelect from "../components/UserFiles/ServerSelect";
 import SelectableFileContainer from "../components/UserFiles/UserFileContainer";
@@ -276,6 +277,9 @@ export default function UserFiles() {
                                 "No file selected"
                             )}
                         </Paper>
+                        {selectedFile && (
+                            <SoundPreview selectedFile={selectedFile} />
+                        )}
                         <ServerSelect file={selectedFile} />
                     </Box>
                 </Grid.Col>

@@ -32,7 +32,6 @@ const useStyle = createStyles((_theme) => {
             flexDirection: "column",
             overflow: "hidden",
             position: "relative",
-            height: "calc(100vh - 34px)",
         },
     };
 });

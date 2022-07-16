@@ -53,16 +53,16 @@ const useStyles = createStyles((theme) => {
             alignItems: "center",
             transition: "background-color 150ms ease, border-color 150ms ease",
             border: `1px solid ${
-                    theme.colorScheme === "dark"
+                theme.colorScheme === "dark"
                     ? theme.colors.dark[shade]
                     : theme.colors.gray[shade]
             }`,
             borderRadius: theme.radius.sm,
             padding: 0,
-            backgroundColor: 
+            backgroundColor:
                 theme.colorScheme === "dark"
-                ? theme.colors.dark[8]
-                : theme.white,
+                    ? theme.colors.dark[8]
+                    : theme.white,
 
             "&:hover": {
                 transition: "150ms ease",
@@ -200,11 +200,15 @@ export default function Guild() {
                     />
                 </Grid.Col>
                 {adminMode ? (
-                        <></>
-                    ) : (
-                        <Grid.Col xs={3}>
+                    <></>
+                ) : (
+                    <Grid.Col xs={3}>
                         <Box className={classes.sideWindowsStyle}>
                             <ControlsWindow guildId={guildId ?? "1"} />
+                            <QuickEnableWindow
+                                guildId={guildId ?? "1"}
+                                enableCallback={quickEnableFilesCallback}
+                            />
                             <DiscordChannelsWindow
                                 guildId={guildId ?? "1"}
                                 selectChannelCallback={(channelId) => {
@@ -212,12 +216,8 @@ export default function Guild() {
                                 }}
                                 selectedChannelId={selectedChannelId}
                             />
-                            <QuickEnableWindow
-                                guildId={guildId ?? "1"}
-                                enableCallback={quickEnableFilesCallback}
-                            />
                         </Box>
-                </Grid.Col>
+                    </Grid.Col>
                 )}
             </Grid>
         </>

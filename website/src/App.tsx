@@ -88,7 +88,15 @@ export default function App() {
                                     >
                                         <Route
                                             path="/"
-                                            element={<Paper>Landing page</Paper>}
+                                            element={
+                                                Math.floor(
+                                                    Math.random() * 100
+                                                ) === 0 ? (
+                                                    <Paper>Lading page</Paper>
+                                                ) : (
+                                                    <Paper>Landing page</Paper>
+                                                )
+                                            }
                                         />
                                         <Route
                                             path="/guilds/:guildId"

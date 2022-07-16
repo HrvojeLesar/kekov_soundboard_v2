@@ -16,6 +16,7 @@ import { useCookies } from "react-cookie";
 import { useSearchParams } from "react-router-dom";
 import { COOKIE_NAMES } from "../auth/AuthProvider";
 import SearchBar from "../components/SearchBar";
+import SoundPreview from "../components/SoundPreview";
 import ServerSelect from "../components/UserFiles/ServerSelect";
 import SelectableFileContainer from "../components/UserFiles/UserFileContainer";
 import {
@@ -47,40 +48,41 @@ const useStyle = createStyles(
                 alignItems: "center",
                 transition:
                     "background-color 150ms ease, border-color 150ms ease",
-                border: `1px solid ${isSelected
-                    ? theme.colors[theme.primaryColor][shade]
-                    : theme.colorScheme === "dark"
+                border: `1px solid ${
+                    isSelected
+                        ? theme.colors[theme.primaryColor][shade]
+                        : theme.colorScheme === "dark"
                         ? theme.colors.dark[shade]
                         : theme.colors.gray[shade]
-                    }`,
+                }`,
                 borderRadius: theme.radius.sm,
                 padding: 0,
                 backgroundColor: isSelected
                     ? theme.colorScheme === "dark"
                         ? theme.fn.rgba(
-                            theme.colors[theme.primaryColor][shade],
-                            0.3
-                        )
+                              theme.colors[theme.primaryColor][shade],
+                              0.3
+                          )
                         : theme.fn.rgba(
-                            theme.colors[theme.primaryColor][shade],
-                            0.3
-                        )
+                              theme.colors[theme.primaryColor][shade],
+                              0.3
+                          )
                     : theme.colorScheme === "dark"
-                        ? theme.colors.dark[8]
-                        : theme.white,
+                    ? theme.colors.dark[8]
+                    : theme.white,
 
                 "&:hover": {
                     transition: "150ms ease",
                     backgroundColor:
                         theme.colorScheme === "dark"
                             ? theme.fn.rgba(
-                                theme.colors[theme.primaryColor][shade],
-                                0.3
-                            )
+                                  theme.colors[theme.primaryColor][shade],
+                                  0.3
+                              )
                             : theme.fn.rgba(
-                                theme.colors[theme.primaryColor][shade],
-                                0.3
-                            ),
+                                  theme.colors[theme.primaryColor][shade],
+                                  0.3
+                              ),
                 },
             },
             unstyledButtonStyle: { width: "100%", height: "100%" },
@@ -89,6 +91,12 @@ const useStyle = createStyles(
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
+            },
+            sideWindowsStyle: {
+                display: "flex",
+                flexDirection: "column",
+                gap: theme.spacing.sm,
+                height: "calc(100vh - 34px)",
             },
         };
     }
@@ -118,11 +126,14 @@ export default function PublicFiles() {
     const paramsLimit = searchParams.get("limit");
     const paramsSearchQuery = searchParams.get("search_query");
 
-    const handleSearch = useCallback((search: string) => {
-        searchParams.set("page", "1");
-        searchParams.set("search_query", search);
-        setSearchParams(searchParams);
-    }, [searchParams, setSearchParams]);
+    const handleSearch = useCallback(
+        (search: string) => {
+            searchParams.set("page", "1");
+            searchParams.set("search_query", search);
+            setSearchParams(searchParams);
+        },
+        [searchParams, setSearchParams]
+    );
 
     useEffect(() => {
         const fetchFiles = async () => {
@@ -148,12 +159,7 @@ export default function PublicFiles() {
         setIsFetching(true);
         fetchFiles();
         setSelectedFile(undefined);
-    }, [
-        cookies.access_token,
-        paramsPage,
-        paramsLimit,
-        paramsSearchQuery
-    ]);
+    }, [cookies.access_token, paramsPage, paramsLimit, paramsSearchQuery]);
 
     useEffect(() => {
         setTotal((old) => {
@@ -166,8 +172,8 @@ export default function PublicFiles() {
                     ? publicFiles.max
                     : 50
                 : paramsNumCalc > publicFiles.max
-                    ? publicFiles.max
-                    : paramsNumCalc;
+                ? publicFiles.max
+                : paramsNumCalc;
             return Math.ceil(publicFiles?.count / limit);
         });
     }, [publicFiles, paramsLimit]);
@@ -198,25 +204,25 @@ export default function PublicFiles() {
                         <Group>
                             {publicFiles && publicFiles.files.length > 0
                                 ? !isFetching &&
-                                publicFiles.files.map((f) => {
-                                    return (
-                                        <SelectableFileContainer
-                                            key={f.id}
-                                            file={f}
-                                            isSelected={
-                                                selectedFile?.id === f.id
-                                            }
-                                            onClickCallback={(f) => {
-                                                setSelectedFile(f);
-                                            }}
-                                        />
-                                    );
-                                })
+                                  publicFiles.files.map((f) => {
+                                      return (
+                                          <SelectableFileContainer
+                                              key={f.id}
+                                              file={f}
+                                              isSelected={
+                                                  selectedFile?.id === f.id
+                                              }
+                                              onClickCallback={(f) => {
+                                                  setSelectedFile(f);
+                                              }}
+                                          />
+                                      );
+                                  })
                                 : !isFetching && (
-                                    <Text size="xl" weight="bold">
-                                        There are no sounds to display.
-                                    </Text>
-                                )}
+                                      <Text size="xl" weight="bold">
+                                          There are no sounds to display.
+                                      </Text>
+                                  )}
                         </Group>
                     </ScrollArea>
                     <Center>
@@ -232,7 +238,12 @@ export default function PublicFiles() {
                 </Paper>
             </Grid.Col>
             <Grid.Col xs={3}>
-                <ServerSelect file={selectedFile} />
+                <Box className={classes.sideWindowsStyle}>
+                    {selectedFile && (
+                        <SoundPreview selectedFile={selectedFile} />
+                    )}
+                    <ServerSelect file={selectedFile} />
+                </Box>
             </Grid.Col>
         </Grid>
     );

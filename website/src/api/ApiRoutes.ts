@@ -63,4 +63,5 @@ export enum ControlsRoute {
 export enum FilesRoute {
     postUpload = "/files/upload",
     getPublic = "/files/public",
+    getPreview = "/files/preview/",
 }

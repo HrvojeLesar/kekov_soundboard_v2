@@ -12,7 +12,6 @@ pub const MAX_LIMIT: i64 = 200;
 pub struct SoundFile {
     pub id: SoundFileId,
     pub display_name: Option<String>,
-    #[serde(skip)]
     pub owner: Option<UserId>,
     pub time_added: NaiveDateTime,
     #[serde(skip)]

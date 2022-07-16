@@ -27,7 +27,7 @@ export function Login() {
     const [cookies] = useCookies(COOKIE_NAMES);
 
     if (cookies.access_token && cookies.refresh_token && cookies.expires) {
-        return <Navigate to="/" replace />;
+        return <Navigate to="/user" replace />;
     }
 
     return (

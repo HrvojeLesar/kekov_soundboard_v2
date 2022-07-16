@@ -196,7 +196,7 @@ export default function ServerSoundsWindow({
                                           </>
                                       );
                                   })
-                            : isUpdating && (
+                            : guildFiles.length === 0 && (
                                   <Text size="xl" weight="bold">
                                       Server has no sounds.
                                   </Text>

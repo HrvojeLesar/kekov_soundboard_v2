@@ -126,7 +126,7 @@ const useStyles = createStyles((theme) => {
 });
 
 export const uploadMaximumWindowHeight: CSSProperties = {
-    height: "calc(100vh - 255px)",
+    height: "calc(100vh - 293px)",
 };
 
 // TODO: Make progressbar cover whole screen
@@ -328,7 +328,7 @@ export default function Upload() {
                     p="sm"
                     className={classes.uploadPaperStyle}
                 >
-                    <Title order={2} pb="xs">
+                    <Title order={3} pb="xs">
                         Upload
                     </Title>
                     <Group>

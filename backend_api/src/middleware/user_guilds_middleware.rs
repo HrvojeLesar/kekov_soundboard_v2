@@ -136,6 +136,7 @@ mod tests {
                     name: "test_guild".to_owned(),
                     icon: None,
                     icon_hash: None,
+                    permissions: None,
                 }]),
             )
             .await;

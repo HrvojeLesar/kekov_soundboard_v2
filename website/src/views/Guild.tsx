@@ -10,7 +10,20 @@ import DiscordChannelsWindow from "../components/Guild/DiscordChannelsWindow";
 import QuickEnableWindow from "../components/Guild/QuickEnableWindow";
 import ServerSoundsWindow from "../components/Guild/ServerSoundsWindow";
 import { windowTitleOverflow } from "../GlobalStyles";
-import { ApiRequest, GuildFile, primaryShade } from "../utils/utils";
+import {
+    ADMINISTRATOR,
+    ApiRequest,
+    BAN_MEMBERS,
+    GuildFile,
+    KICK_MEMBERS,
+    MANAGE_CHANNELS,
+    MANAGE_GUILD,
+    MANAGE_MESSAGES,
+    MANAGE_ROLES,
+    MANAGE_THREADS,
+    MODERATE_MEMBERS,
+    primaryShade,
+} from "../utils/utils";
 
 export const guildMaximumWindowHeight: CSSProperties = {
     height: "calc(100vh - 34px)",
@@ -99,6 +112,7 @@ export default function Guild() {
     const [guildFiles, setGuildFiles] = useState<GuildFile[]>([]);
     const [isUpdating, setIsUpdating] = useState(true);
     // TODO: admin
+    const [isAdmin, setIsAdmin] = useState(false);
     const [adminMode, setAdminMode] = useState(false);
     const { classes } = useStyles();
     const [invalidServer, setInvalidServer] = useState(false);
@@ -166,11 +180,32 @@ export default function Guild() {
             }
         };
 
+        const checkAdminPermissions = () => {
+            let guild = guilds.find((g) => g.id === guildId);
+            if (guild && guild.permissions) {
+                let permissions = Number(guild.permissions);
+                if (
+                    (permissions & ADMINISTRATOR) === ADMINISTRATOR ||
+                    (permissions & KICK_MEMBERS) === KICK_MEMBERS ||
+                    (permissions & BAN_MEMBERS) === BAN_MEMBERS ||
+                    (permissions & MANAGE_GUILD) === MANAGE_GUILD ||
+                    (permissions & MANAGE_CHANNELS) === MANAGE_CHANNELS ||
+                    (permissions & MANAGE_MESSAGES) === MANAGE_MESSAGES ||
+                    (permissions & MANAGE_ROLES) === MANAGE_ROLES ||
+                    (permissions & MANAGE_THREADS) === MANAGE_THREADS ||
+                    (permissions & MODERATE_MEMBERS) === MODERATE_MEMBERS
+                ) {
+                    setIsAdmin(true);
+                }
+            }
+        };
+
+        checkAdminPermissions();
         setInvalidServer(false);
         abortController?.abort();
         setIsUpdating(true);
         fetchGuildFiles();
-    }, [guildId, cookies.access_token]);
+    }, [guildId, guilds, cookies.access_token]);
 
     return invalidServer ? (
         <Paper
@@ -191,6 +226,7 @@ export default function Guild() {
                     <ServerSoundsWindow
                         isUpdating={isUpdating}
                         adminMode={adminMode}
+                        isAdmin={isAdmin}
                         toggleAdminMode={toggleAdminMode}
                         guildId={guildId ?? "1"}
                         guildFiles={guildFiles}
@@ -199,7 +235,7 @@ export default function Guild() {
                         selectedChannelId={selectedChannelId}
                     />
                 </Grid.Col>
-                {adminMode ? (
+                {isAdmin && adminMode ? (
                     <></>
                 ) : (
                     <Grid.Col xs={3}>

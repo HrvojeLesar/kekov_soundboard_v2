@@ -212,6 +212,7 @@ mod tests {
                 name: guild.name,
                 icon: None,
                 icon_hash: None,
+                permissions: None,
             };
             test_guilds.push(dguild);
         }

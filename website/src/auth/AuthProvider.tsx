@@ -34,6 +34,7 @@ export type Guild = {
     icon?: string;
     icon_hash?: string;
     time_added: string;
+    permissions?: string;
 };
 
 type AuthContextType = {

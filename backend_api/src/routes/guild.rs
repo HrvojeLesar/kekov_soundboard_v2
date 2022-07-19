@@ -63,6 +63,9 @@ pub async fn delete_sound_from_guild(
 ) -> Result<HttpResponse, KekServerError> {
     let (guild_id, file_id) = path.into_inner();
     Validation::is_user_in_guild(&authorized_user, &guild_id, &user_guilds_cache)?;
+    if !Validation::has_permissions(&authorized_user, &guild_id, &user_guilds_cache)? {
+        return Err(KekServerError::Other("No permissions".to_string()));
+    }
 
     let mut transaction = db_pool.begin().await?;
     let guild_file = GuildFile::delete_guild_file(&guild_id, &file_id, &mut transaction).await?;

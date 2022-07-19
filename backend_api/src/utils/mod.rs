@@ -17,6 +17,7 @@ use self::auth::AuthorizedUser;
 pub mod auth;
 pub mod cache;
 pub mod validation;
+pub mod permissions;
 
 pub const USERGUILDS: &str = "/users/@me/guilds";
 pub const MAX_RETRIES: u8 = 3;
@@ -52,7 +53,6 @@ async fn get_request(autorized_user: &AuthorizedUser, url: &str) -> Result<Respo
     return Client::new()
         .get(format!("https://discord.com/api/v9{}", url))
         .header(AUTHORIZATION, format!("Bearer {}", &autorized_user.access_token.0))
-        // .headers(headers)
         .send()
         .await;
 }

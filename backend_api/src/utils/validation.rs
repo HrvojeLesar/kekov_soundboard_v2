@@ -83,4 +83,25 @@ impl Validation {
         }
         return Ok(());
     }
+
+    pub fn has_permissions(
+        authorized_user: &AuthorizedUser,
+        guild_id: &GuildId,
+        user_guilds_cache: &Data<UserGuildsCache>,
+    ) -> Result<bool, KekServerError> {
+        let user_guilds = user_guilds_cache
+            .get(&authorized_user.discord_user.id)
+            .ok_or(KekServerError::UserNotInCacheError)?;
+
+        let guild = user_guilds
+            .iter()
+            .find(|g| &g.id == guild_id)
+            .ok_or(KekServerError::InvalidGuildIdError)?;
+
+        let permissions = guild.permissions.as_ref().ok_or(KekServerError::Other(
+            "Missing user permissions!".to_string(),
+        ))?;
+
+        return Ok(permissions.is_admin() || permissions.other());
+    }
 }

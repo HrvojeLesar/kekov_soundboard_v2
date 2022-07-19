@@ -17,6 +17,15 @@ import { EnabledUserFile } from "../components/Guild/QuickEnableWindow";
 
 export const LOADINGOVERLAY_ZINDEX = 100;
 export const MODAL_ZINDEX = 200;
+export const KICK_MEMBERS = 1 << 1;
+export const BAN_MEMBERS = 1 << 2;
+export const ADMINISTRATOR = 1 << 3;
+export const MANAGE_CHANNELS = 1 << 4;
+export const MANAGE_GUILD = 1 << 5;
+export const MANAGE_MESSAGES = 1 << 13;
+export const MANAGE_ROLES = 1 << 28;
+export const MANAGE_THREADS = 1 << 34;
+export const MODERATE_MEMBERS = 1 << 40;
 
 export const nameToInitials = (guildName: string): string => {
     let initials = "";

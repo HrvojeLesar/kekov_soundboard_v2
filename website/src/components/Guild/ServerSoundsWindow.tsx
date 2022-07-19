@@ -45,6 +45,7 @@ type ServerSoundsWindowProps = {
     toggleAdminMode: () => void;
     isUpdating: boolean;
     selectedChannelId: string | undefined;
+    isAdmin: boolean;
 };
 
 export default function ServerSoundsWindow({
@@ -56,6 +57,7 @@ export default function ServerSoundsWindow({
     toggleAdminMode,
     isUpdating,
     selectedChannelId,
+    isAdmin,
 }: ServerSoundsWindowProps) {
     const [filterTerm, setFilterTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -113,20 +115,22 @@ export default function ServerSoundsWindow({
                             Server sounds
                         </Title>
                     </Box>
-                    <Tooltip
-                        label="Toggle admin mode"
-                        position={adminMode ? "left" : undefined}
-                        withArrow
-                    >
-                        <ActionIcon
-                            pb="xs"
-                            onClick={() => {
-                                toggleAdminMode();
-                            }}
+                    {isAdmin && (
+                        <Tooltip
+                            label="Toggle admin mode"
+                            position={"left"}
+                            withArrow
                         >
-                            <FaHatWizard size={18} />
-                        </ActionIcon>
-                    </Tooltip>
+                            <ActionIcon
+                                pb="xs"
+                                onClick={() => {
+                                    toggleAdminMode();
+                                }}
+                            >
+                                <FaHatWizard size={18} />
+                            </ActionIcon>
+                        </Tooltip>
+                    )}
                 </Group>
                 <Box py="sm">
                     <SearchBar onSearch={handleSearch} />
@@ -149,51 +153,46 @@ export default function ServerSoundsWindow({
                                   })
                                 : filterFiles().map((file) => {
                                       return (
-                                          <>
-                                              <Paper
-                                                  withBorder
-                                                  shadow="xs"
-                                                  className={classes.button}
+                                          <Paper
+                                              key={file.file_id}
+                                              withBorder
+                                              shadow="xs"
+                                              className={classes.button}
+                                          >
+                                              <UnstyledButton
+                                                  p="sm"
+                                                  className={
+                                                      classes.unstyledButtonStyle
+                                                  }
+                                                  onClick={() => {
+                                                      setLastClickedFile(file);
+                                                      setIsModalOpen(true);
+                                                  }}
                                               >
-                                                  <UnstyledButton
-                                                      p="sm"
-                                                      className={
-                                                          classes.unstyledButtonStyle
-                                                      }
-                                                      onClick={() => {
-                                                          setLastClickedFile(
-                                                              file
-                                                          );
-                                                          setIsModalOpen(true);
-                                                      }}
-                                                  >
-                                                      <Group noWrap>
-                                                          <MdVolumeUp
-                                                              size={24}
-                                                              className={
-                                                                  classes.iconStyle
-                                                              }
-                                                          />
-                                                          <Text
-                                                              className={
-                                                                  classes.textStyle
-                                                              }
-                                                              title={
-                                                                  file
-                                                                      .sound_file
-                                                                      .display_name
-                                                              }
-                                                          >
-                                                              {
-                                                                  file
-                                                                      .sound_file
-                                                                      .display_name
-                                                              }
-                                                          </Text>
-                                                      </Group>
-                                                  </UnstyledButton>
-                                              </Paper>
-                                          </>
+                                                  <Group noWrap>
+                                                      <MdVolumeUp
+                                                          size={24}
+                                                          className={
+                                                              classes.iconStyle
+                                                          }
+                                                      />
+                                                      <Text
+                                                          className={
+                                                              classes.textStyle
+                                                          }
+                                                          title={
+                                                              file.sound_file
+                                                                  .display_name
+                                                          }
+                                                      >
+                                                          {
+                                                              file.sound_file
+                                                                  .display_name
+                                                          }
+                                                      </Text>
+                                                  </Group>
+                                              </UnstyledButton>
+                                          </Paper>
                                       );
                                   })
                             : guildFiles.length === 0 && (

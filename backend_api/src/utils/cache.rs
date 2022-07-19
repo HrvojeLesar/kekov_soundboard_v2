@@ -10,14 +10,14 @@ use crate::{
     models::ids::{GuildId, UserId},
 };
 
-use super::auth::{AccessToken, AuthorizedUser};
+use super::{auth::{AccessToken, AuthorizedUser}, permissions::Permissions};
 
 pub type UserGuildsCache = Cache<UserId, Arc<Vec<DiscordGuild>>>;
 pub type AuthorizedUsersCache = Cache<Arc<AccessToken>, Arc<AuthorizedUser>>;
 pub struct UserGuildsMiddlwareQueueCache(pub Cache<Arc<AccessToken>, Arc<Notify>>);
 pub struct AuthMiddlewareQueueCache(pub Cache<Arc<AccessToken>, Arc<Notify>>);
 
-pub const USER_GUILDS_CACHE_TTL: u64 = 60 * 60;
+pub const USER_GUILDS_CACHE_TTL: u64 = 60 * 5;
 pub const AUTHORIZED_USER_CACHE_TTL: u64 = 60 * 5;
 pub const QUEUE_CACHE_TTL: u64 = 60 * 5;
 
@@ -27,6 +27,7 @@ pub struct DiscordGuild {
     pub name: String,
     pub icon: Option<String>,
     pub icon_hash: Option<String>,
+    pub permissions: Option<Permissions>,
 }
 
 pub fn create_user_guilds_cache() -> UserGuildsCache {

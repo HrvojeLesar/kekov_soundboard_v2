@@ -1,5 +1,4 @@
 import {
-    ComponentProps,
     CSSProperties,
     useCallback,
     useContext,
@@ -14,15 +13,15 @@ import {
     createStyles,
     Grid,
     Group,
-    MantineTheme,
     Paper,
     RingProgress,
     ScrollArea,
+    Stack,
     Text,
     Title,
     useMantineTheme,
 } from "@mantine/core";
-import { Dropzone, DropzoneStatus } from "@mantine/dropzone";
+import { Dropzone } from "@mantine/dropzone";
 import {
     FileUploadContainer,
     FileContainerRef,
@@ -38,7 +37,6 @@ import {
 import { useCookies } from "react-cookie";
 import { useDocumentTitle } from "@mantine/hooks";
 import { ApiRequest, UploadedFile } from "../utils/utils";
-import { IconType } from "react-icons";
 import UploadModal from "../components/Upload/UploadModal";
 import { useNavigate } from "react-router-dom";
 
@@ -73,28 +71,7 @@ export type SeparatedFiles = {
     failedFiles: InputFile[];
 };
 
-const getIconColor = (status: DropzoneStatus, theme: MantineTheme) => {
-    return status.accepted
-        ? theme.colors[theme.primaryColor][theme.colorScheme === "dark" ? 4 : 6]
-        : status.rejected
-        ? theme.colors.red[theme.colorScheme === "dark" ? 4 : 6]
-        : theme.colorScheme === "dark"
-        ? theme.colors.dark[0]
-        : theme.colors.gray[7];
-};
-
-const UploadIcon = ({
-    status,
-    ...props
-}: ComponentProps<IconType> & { status: DropzoneStatus }) => {
-    if (status.rejected) {
-        return <TbX {...props} />;
-    }
-
-    return <TbFileUpload {...props} />;
-};
-
-const useStyles = createStyles((theme) => {
+const useStyles = createStyles((_theme) => {
     return {
         uploadPaperStyle: {
             width: "100%",
@@ -321,7 +298,7 @@ export default function Upload() {
 
     return (
         <>
-            <Group direction="column">
+            <Stack>
                 <Paper
                     withBorder
                     shadow="sm"
@@ -332,7 +309,7 @@ export default function Upload() {
                         Upload
                     </Title>
                     <Group>
-                        <Group direction="column" position="center">
+                        <Stack align="center">
                             <RingProgress
                                 sections={[
                                     {
@@ -364,14 +341,12 @@ export default function Upload() {
                             >
                                 Upload
                             </Button>
-                        </Group>
+                        </Stack>
                         <Box>
-                            <Group direction="column">
-                                <Group>
-                                    <Button onClick={() => openRef.current()}>
-                                        Select files
-                                    </Button>
-                                </Group>
+                            <Group>
+                                <Button onClick={() => openRef.current()}>
+                                    Select files
+                                </Button>
                             </Group>
                         </Box>
                         <Box className={classes.dropzoneBoxStyle}>
@@ -383,51 +358,74 @@ export default function Upload() {
                                 openRef={openRef}
                                 accept={ACCEPTED_MIMES}
                             >
-                                {(status) => {
-                                    return (
-                                        <Group
-                                            direction="column"
-                                            position="center"
-                                            spacing="sm"
-                                            className={
-                                                classes.dropzoneGroupStyle
+                                <Stack
+                                    align="center"
+                                    spacing="sm"
+                                    className={classes.dropzoneGroupStyle}
+                                >
+                                    <Dropzone.Accept>
+                                        <TbFileUpload
+                                            size={32}
+                                            color={
+                                                theme.colors[
+                                                    theme.primaryColor
+                                                ][
+                                                    theme.colorScheme === "dark"
+                                                        ? 4
+                                                        : 6
+                                                ]
                                             }
+                                        />
+                                    </Dropzone.Accept>
+                                    <Dropzone.Idle>
+                                        <TbFileUpload
+                                            size={32}
+                                            color={
+                                                theme.colors[
+                                                    theme.primaryColor
+                                                ][
+                                                    theme.colorScheme === "dark"
+                                                        ? 4
+                                                        : 6
+                                                ]
+                                            }
+                                        />
+                                    </Dropzone.Idle>
+                                    <Dropzone.Reject>
+                                        <TbX
+                                            size={32}
+                                            color={
+                                                theme.colors.red[
+                                                    theme.colorScheme === "dark"
+                                                        ? 4
+                                                        : 6
+                                                ]
+                                            }
+                                        />
+                                    </Dropzone.Reject>
+                                    <Box>
+                                        <Text
+                                            align="center"
+                                            weight="bold"
+                                            size="lg"
                                         >
-                                            <UploadIcon
-                                                status={status}
-                                                size={32}
-                                                style={{
-                                                    color: getIconColor(
-                                                        status,
-                                                        theme
-                                                    ),
-                                                }}
-                                            />
-                                            <div>
-                                                <Text
-                                                    align="center"
-                                                    weight="bold"
-                                                    size="lg"
-                                                >
-                                                    Sound file upload
-                                                </Text>
-                                                <Text
-                                                    align="center"
-                                                    size="sm"
-                                                    color="dimmed"
-                                                >
-                                                    Drag sound files here or
-                                                    click to select files
-                                                </Text>
-                                            </div>
-                                        </Group>
-                                    );
-                                }}
+                                            Sound file upload
+                                        </Text>
+                                        <Text
+                                            align="center"
+                                            size="sm"
+                                            color="dimmed"
+                                        >
+                                            Drag sound files here or click to
+                                            select files
+                                        </Text>
+                                    </Box>
+                                </Stack>
                             </Dropzone>
                         </Box>
                     </Group>
                 </Paper>
-            </Group>
+            </Stack>
             <Grid mt="sm">
                 <Grid.Col xs={9}>
                     <Paper

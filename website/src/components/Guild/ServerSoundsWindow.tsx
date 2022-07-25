@@ -104,7 +104,7 @@ export default function ServerSoundsWindow({
                     zIndex={LOADINGOVERLAY_ZINDEX}
                     visible={isUpdating}
                 />
-                <Group position="apart" direction="row" noWrap>
+                <Group position="apart" noWrap>
                     <Box>
                         <Title
                             title="Server sounds"

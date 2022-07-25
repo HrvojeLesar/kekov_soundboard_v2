@@ -161,7 +161,7 @@ export default function UploadModal({
                 </Text>
             )}
             {!isUploading && !successfulUpload && (
-                <Group direction="row" noWrap>
+                <Group noWrap>
                     {separatedFiles.successfullFiles.length > 0 && (
                         <Paper
                             my="xs"
@@ -202,7 +202,8 @@ export default function UploadModal({
                                     withArrow
                                     opened={popoverOpened}
                                     width={250}
-                                    target={
+                                >
+                                    <Popover.Target>
                                         <ActionIcon
                                             onClick={() =>
                                                 setPopoverOpened((o) => !o)
@@ -210,8 +211,8 @@ export default function UploadModal({
                                         >
                                             <FaInfo />
                                         </ActionIcon>
-                                    }
-                                >
+                                    </Popover.Target>
+                                    <Popover.Dropdown>
                                     <Paper
                                         className={classes.popoverPaperStyle}
                                     >
@@ -224,6 +225,7 @@ export default function UploadModal({
                                             selected files.
                                         </Text>
                                     </Paper>
+                                    </Popover.Dropdown>
                                 </Popover>
                             </Group>
                             <Box className={classes.scrollAreaContainer}>

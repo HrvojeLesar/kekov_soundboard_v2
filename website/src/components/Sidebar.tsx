@@ -1,19 +1,20 @@
 import {
+    ActionIcon,
     Box,
     Center,
     createStyles,
     Divider,
-    Group,
     Menu,
     Navbar,
     ScrollArea,
     Skeleton,
+    Stack,
     Tooltip,
     UnstyledButton,
     useMantineColorScheme,
 } from "@mantine/core";
 import { useContext, useEffect } from "react";
-import { FaSignOutAlt, FaDiscord, FaGlobe } from "react-icons/fa";
+import { FaSignOutAlt, FaDiscord, FaGlobe, FaEllipsisH } from "react-icons/fa";
 import { TbMoonStars, TbSun, TbUpload, TbX } from "react-icons/tb";
 import { API_URL, AuthRoute, DISCORD_CND_USER_AVATAR } from "../api/ApiRoutes";
 import { AuthContext } from "../auth/AuthProvider";
@@ -24,11 +25,10 @@ const useStyles = createStyles((theme) => ({
     navbarDivider: {
         marginTop: theme.spacing.xs,
         marginBottom: theme.spacing.xs,
-        borderBottom: `3px solid ${
-            theme.colorScheme === "dark"
+        borderBottom: `3px solid ${theme.colorScheme === "dark"
                 ? theme.colors.dark[5]
                 : theme.colors.gray[3]
-        }`,
+            }`,
     },
 
     botInviteButton: {
@@ -138,7 +138,7 @@ export default function Sidebar() {
                 scrollbarSize={0}
                 mx="-xs"
             >
-                <Group direction="column" align="center" spacing="xs">
+                <Stack align="center" spacing="xs">
                     {!isFetchingGuilds ? (
                         guilds.length > 0 ? (
                             guilds.map((guild) => {
@@ -154,9 +154,10 @@ export default function Sidebar() {
                                 label="You don't share any Discord servers with the bot, try inviting the bot to a server. Clicking here will redirect you to Discords bot invitation."
                                 position="right"
                                 color="red"
-                                wrapLines
+                                multiline
                                 width={200}
                                 withArrow
+                                withinPortal
                             >
                                 <UnstyledButton
                                     className={classes.noServers}
@@ -170,18 +171,14 @@ export default function Sidebar() {
                     ) : (
                         spawnSkeletons()
                     )}
-                </Group>
+                </Stack>
             </Navbar.Section>
             <Navbar.Section className={classes.navbarDivider}>
                 {}
             </Navbar.Section>
             <Navbar.Section>
                 <Center>
-                    <Group
-                        direction="column"
-                        spacing="xs"
-                        className={classes.sidebarBottomGroup}
-                    >
+                    <Stack spacing="xs" className={classes.sidebarBottomGroup}>
                         <Tooltip
                             label="Invite bot to server"
                             position="right"
@@ -195,8 +192,15 @@ export default function Sidebar() {
                                 <FaDiscord size={32} />
                             </UnstyledButton>
                         </Tooltip>
-                        <Tooltip label="Options" position="right" withArrow>
-                            <Menu>
+                        <Menu
+                            width={200}
+                        >
+                            <Menu.Target>
+                                <ActionIcon>
+                                    <FaEllipsisH />
+                                </ActionIcon>
+                            </Menu.Target>
+                            <Menu.Dropdown>
                                 <Menu.Label>Options</Menu.Label>
                                 <Menu.Item
                                     icon={
@@ -223,9 +227,9 @@ export default function Sidebar() {
                                 >
                                     Logout
                                 </Menu.Item>
-                            </Menu>
-                        </Tooltip>
-                    </Group>
+                            </Menu.Dropdown>
+                        </Menu>
+                    </Stack>
                 </Center>
             </Navbar.Section>
         </Navbar>

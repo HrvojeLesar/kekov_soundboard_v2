@@ -73,7 +73,7 @@ export const baseSidebarButtonStyles = createStyles(
                 borderRadius: "0px 4px 4px 0px",
                 transition: ".2s",
 
-                [`.${getRef("tooltip")}:hover + &`]: {
+                [`.${getRef("baseLinkButton")}:hover + &`]: {
                     transition: ".2s",
                     height: "20px",
                 },
@@ -93,11 +93,9 @@ export const baseSidebarButtonStyles = createStyles(
             },
             tooltip: {
                 ref: getRef("tooltip"),
-                borderRadius: "50%",
             },
             tooltipActive: {
                 ref: getRef("tooltipActive"),
-                borderRadius: "40%",
             },
         };
     }
@@ -125,7 +123,7 @@ export default function BaseSidebarButton({ children, route, label }: Props) {
 
     return (
         <Box className={classes.container}>
-            <Tooltip label={label} position="right" withArrow
+            <Tooltip label={label} position="right" withArrow withinPortal
                 className={
                     isActive ? classes.tooltipActive : classes.tooltip}>
                 <UnstyledButton

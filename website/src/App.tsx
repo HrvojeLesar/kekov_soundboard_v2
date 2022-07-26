@@ -10,7 +10,13 @@ import { useDocumentTitle, useLocalStorage } from "@mantine/hooks";
 import { NotificationsProvider } from "@mantine/notifications";
 import React from "react";
 import { CookiesProvider } from "react-cookie";
-import { BrowserRouter, Outlet, Route, Routes } from "react-router-dom";
+import {
+    BrowserRouter,
+    Navigate,
+    Outlet,
+    Route,
+    Routes,
+} from "react-router-dom";
 import AuthProvider from "./auth/AuthProvider";
 import ProtectedRoutes from "./auth/ProtectedRoutes";
 import { Login } from "./Login";
@@ -89,13 +95,7 @@ export default function App() {
                                         <Route
                                             path="/"
                                             element={
-                                                Math.floor(
-                                                    Math.random() * 100
-                                                ) === 0 ? (
-                                                    <Paper>Lading page</Paper>
-                                                ) : (
-                                                    <Paper>Landing page</Paper>
-                                                )
+                                                <Navigate to="/user" replace />
                                             }
                                         />
                                         <Route

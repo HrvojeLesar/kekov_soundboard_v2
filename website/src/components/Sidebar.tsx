@@ -25,10 +25,11 @@ const useStyles = createStyles((theme) => ({
     navbarDivider: {
         marginTop: theme.spacing.xs,
         marginBottom: theme.spacing.xs,
-        borderBottom: `3px solid ${theme.colorScheme === "dark"
+        borderBottom: `3px solid ${
+            theme.colorScheme === "dark"
                 ? theme.colors.dark[5]
                 : theme.colors.gray[3]
-            }`,
+        }`,
     },
 
     botInviteButton: {
@@ -183,6 +184,7 @@ export default function Sidebar() {
                             label="Invite bot to server"
                             position="right"
                             withArrow
+                            withinPortal
                         >
                             <UnstyledButton
                                 className={classes.botInviteButton}
@@ -192,9 +194,7 @@ export default function Sidebar() {
                                 <FaDiscord size={32} />
                             </UnstyledButton>
                         </Tooltip>
-                        <Menu
-                            width={200}
-                        >
+                        <Menu width={200}>
                             <Menu.Target>
                                 <ActionIcon>
                                     <FaEllipsisH />

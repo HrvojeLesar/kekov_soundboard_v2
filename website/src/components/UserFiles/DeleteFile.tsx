@@ -1,4 +1,4 @@
-import { ActionIcon, Modal } from "@mantine/core";
+import { ActionIcon, createStyles, Modal } from "@mantine/core";
 import { useState } from "react";
 import { TbTrash } from "react-icons/tb";
 import { MODAL_ZINDEX, SoundFile } from "../../utils/utils";
@@ -9,8 +9,17 @@ type DeleteFileProps = {
     deleteCallback: () => Promise<void>;
 };
 
+const useStyle = createStyles((theme) => {
+    return {
+        actionIconColor: {
+            color: theme.colors.red[5],
+        },
+    };
+});
+
 export default function DeleteFile({ file, deleteCallback }: DeleteFileProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const { classes } = useStyle();
 
     return (
         <>
@@ -37,7 +46,10 @@ export default function DeleteFile({ file, deleteCallback }: DeleteFileProps) {
                     deleteCallback={deleteCallback}
                 />
             </Modal>
-            <ActionIcon onClick={() => setIsModalOpen(true)} color="red">
+            <ActionIcon
+                onClick={() => setIsModalOpen(true)}
+                className={classes.actionIconColor}
+            >
                 <TbTrash size={24} />
             </ActionIcon>
         </>

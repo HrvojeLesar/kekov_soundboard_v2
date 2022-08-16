@@ -55,7 +55,7 @@ async fn main() -> std::io::Result<()> {
     check_required_env_variables();
 
     let bind_address = format!(
-        "localhost:{}",
+        "0.0.0.0:{}",
         dotenv::var("PORT").unwrap_or_else(|_| "8080".to_string())
     );
 
@@ -201,6 +201,7 @@ async fn main() -> std::io::Result<()> {
         }
     });
 
+    warn!("Starting server on address: {}", bind_address);
     return HttpServer::new(move || {
         // Per thread snowflake generator
         let snowflakes;

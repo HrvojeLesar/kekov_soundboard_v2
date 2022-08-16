@@ -1,0 +1,68 @@
+version: "2.6"
+
+services:
+  ksv2_db:
+    build:
+      context: ./
+      dockerfile: docker/db/Dockerfile
+      args:
+        - PG_USER=${PG_USER}
+        - PG_USER_PASSWORD=${PG_USER_PASSWORD}
+    environment:
+      POSTGRES_PASSWORD: $PG_PASSWORD
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  ksv2_api:
+    tty: true
+    build:
+      context: ./
+      dockerfile: docker/api/Dockerfile
+    environment:
+      DISCORD_CLIENT_ID: $DISCORD_CLIENT_ID
+      DISCORD_CLIENT_SECRET: $DISCORD_CLIENT_SECRET
+      DISCORD_BOT_TOKEN: $DISCORD_BOT_TOKEN
+      DATABASE_URL: postgresql://$PG_USER:$PG_USER_PASSWORD@ksv2_db/$PG_DB_NAME
+      SOUNDFILE_DIR: $SOUNDFILE_DIR
+      WS_TOKEN: $WS_TOKEN
+      PORT: $PORT
+    ports:
+      - "6666:$PORT"
+    depends_on:
+      - ksv2_db
+    volumes:
+      - sounds:$SOUNDFILE_DIR
+
+  ksv2_bot:
+    tty: true
+    build:
+      context: ./
+      dockerfile: docker/bot/Dockerfile
+    environment:
+      DISCORD_BOT_TOKEN: $DISCORD_BOT_TOKEN
+      LAVALINK_HOSTNAME: lavalink
+      LAVALINK_PORT: 2331
+      LAVALINK_PASSWORD: ""
+      WS_TOKEN: $WS_TOKEN
+      WS_CONTROLS_URL: ws://ksv2_api:$PORT/v1/ws/controls
+      WS_SYNC_URL: ws://ksv2_api:$PORT/v1/ws/sync
+    depends_on:
+      - api
+    volumes:
+      - sounds:$SOUNDFILE_DIR
+
+  lavalink:
+    tty: true
+    build:
+      context: ./
+      dockerfile: docker/lavalink/Dockerfile
+    volumes:
+      - sounds:$SOUNDFILE_DIR
+    ports:
+      - "2331:2331"
+
+volumes:
+  db_data:
+    external: false
+  sounds:
+    external: false

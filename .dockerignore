@@ -1,0 +1,41 @@
+*.env 
+*.vscode
+
+# rust
+backend_api/target
+
+# private, public keys for tls testing
+*.pem
+
+todo.md
+
+bin
+obj
+
+logs
+.json
+*.bat
+Lavalink.jar
+sound_files
+
+# dependencies
+*/node_modules
+*/.pnp
+*.pnp.js
+
+# testing
+*/coverage
+
+# production
+*/build
+
+# misc
+*.DS_Store
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
+
+*npm-debug.log*
+*yarn-debug.log*
+*yarn-error.log*

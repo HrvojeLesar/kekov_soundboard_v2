@@ -8,5 +8,4 @@ WORKDIR /app
 COPY --from=builder /app/out .
 COPY docker/bot/copy_dotenv_and_start.sh .
 RUN chmod +x copy_dotenv_and_start.sh
-RUN apt-get update && apt-get install nodejs npm curl -y && npm install -g wscat
 CMD ["./copy_dotenv_and_start.sh"]

@@ -1,12 +1,12 @@
 export const API_URL =
     process.env.NODE_ENV !== "production"
-        ? "http://localhost:8080/v1"
-        : "https://api.hrveklesarov.com/v1";
+        ? process.env.REACT_APP_DOCKER ? `http://localhost:5556/v1` : "http://localhost:8080/v1"
+        : process.env.REACT_APP_DOCKER ? `http://localhost:5556/v1`: "https://api.hrveklesarov.com/v1";
 
 export const WEBSOCKET_URL =
     process.env.NODE_ENV !== "production"
-        ? "ws://localhost:8080/v1/ws/channels"
-        : "wss://api.hrveklesarov.com/v1/ws/channels";
+        ? process.env.REACT_APP_DOCKER ? `ws://localhost:5556/v1/ws/channels` : "ws://localhost:8080/v1/ws/channels"
+        : process.env.REACT_APP_DOCKER ? `wss://localhost:5556/v1/ws/channels` : "wss://api.hrveklesarov.com/v1/ws/channels";
 
 export const DISCORD_CND_USER_AVATAR = (
     id?: string,

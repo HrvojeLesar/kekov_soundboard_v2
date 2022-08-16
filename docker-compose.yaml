@@ -25,9 +25,9 @@ services:
       DATABASE_URL: postgresql://$PG_USER:$PG_USER_PASSWORD@ksv2_db/$PG_DB_NAME
       SOUNDFILE_DIR: $SOUNDFILE_DIR
       WS_TOKEN: $WS_TOKEN
-      PORT: $PORT
+      PORT: $API_PORT
     ports:
-      - "6666:$PORT"
+      - "6666:$API_PORT"
     depends_on:
       - ksv2_db
     volumes:
@@ -44,12 +44,26 @@ services:
       LAVALINK_PORT: 2331
       LAVALINK_PASSWORD: ""
       WS_TOKEN: $WS_TOKEN
-      WS_CONTROLS_URL: ws://ksv2_api:$PORT/v1/ws/controls
-      WS_SYNC_URL: ws://ksv2_api:$PORT/v1/ws/sync
+      WS_CONTROLS_URL: ws://ksv2_api:$API_PORT/v1/ws/controls
+      WS_SYNC_URL: ws://ksv2_api:$API_PORT/v1/ws/sync
+      SOUNDFILE_DIR: $SOUNDFILE_DIR
     depends_on:
       - api
     volumes:
       - sounds:$SOUNDFILE_DIR
+
+  ksv2_website:
+    build:
+      context: ./
+      dockerfile: docker/website/Dockerfile
+      args:
+        - REACT_APP_URL=ksv2_api:$API_PORT
+        - API_PORT=$API_PORT
+    ports:
+      - "5555:80"
+      - "5556:81"
+    depends_on:
+      - ksv2_api
 
   lavalink:
     tty: true

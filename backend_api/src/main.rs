@@ -13,7 +13,7 @@ use routes::{not_found::not_found, routes_config, status::Status};
 
 use dotenv::dotenv;
 use snowflake::SnowflakeIdGenerator;
-use tokio::sync::{RwLock, Mutex as AsyncMutex};
+use tokio::sync::{Mutex as AsyncMutex, RwLock};
 use utils::cache::{
     create_auth_middlware_queue_cache, create_authorized_user_cache, create_user_guilds_cache,
     create_user_guilds_middlware_queue_cache,
@@ -24,7 +24,10 @@ use ws::{
     ws_session::WsSessionCommChannels,
 };
 
+use crate::config::Config;
+
 mod active_guilds_check;
+mod config;
 mod database;
 mod discord_client_config;
 mod env;
@@ -36,17 +39,6 @@ mod routes;
 mod scheduler;
 mod utils;
 mod ws;
-
-// WARN: HARDCODED LIMITS
-pub static ALLOWED_USERS: [u64; 7] = [
-    132286945031094272, // jo
-    344472419085582347, // fejbijan
-    245956125713760258, // fijip
-    268420122090274816, // gospon menadzer
-    170561008786604034, // Hetosh
-    344121954124431360, // Sebek
-    252114544485335051, // Metajđoš
-];
 
 // #[cfg(debug_assertions)]
 #[actix_web::main]
@@ -201,6 +193,8 @@ async fn main() -> std::io::Result<()> {
         }
     });
 
+    let config = Data::new(Config::load_config());
+
     warn!("Starting server on address: {}", bind_address);
     return HttpServer::new(move || {
         // Per thread snowflake generator
@@ -235,6 +229,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(user_guilds_middleware_queue.clone())
             .app_data(auth_middleware_queue.clone())
             .app_data(snowflakes)
+            .app_data(config.clone())
             .app_data(channels_server.clone())
             .configure(routes_config)
             .default_service(actix_web::web::to(not_found))

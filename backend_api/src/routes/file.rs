@@ -17,6 +17,7 @@ use tokio::{
 };
 
 use crate::{
+    config::Config,
     error::errors::KekServerError,
     middleware::auth_middleware::AuthService,
     models::{
@@ -24,7 +25,6 @@ use crate::{
         sound_file::{SoundFile, MAX_LIMIT},
     },
     utils::auth::AuthorizedUserExt,
-    ALLOWED_USERS,
 };
 use lazy_static::lazy_static;
 
@@ -129,11 +129,19 @@ pub async fn upload_file(
     mut payload: Multipart,
     snowflake: Data<Mutex<SnowflakeIdGenerator>>,
     AuthorizedUserExt(authorized_user): AuthorizedUserExt,
+    config: Data<Option<Config>>,
     db_pool: Data<PgPool>,
 ) -> Result<HttpResponse, KekServerError> {
-    // WARN: HARDCODED BETA LIMIT
-    if !ALLOWED_USERS.contains(&authorized_user.discord_user.id.0) {
-        return Ok(HttpResponse::Forbidden().finish());
+    match config.as_ref() {
+        Some(cfg) => {
+            if !cfg
+                .get_allowed_uploaders()
+                .contains(&authorized_user.discord_user.id.0.into())
+            {
+                return Ok(HttpResponse::Forbidden().finish());
+            }
+        }
+        None => {}
     }
 
     let mut uploaded_files_size = 0;
